@@ -18,15 +18,19 @@ val commonOptions = Seq(
   "-unchecked"
 )
 
+val consoleOptions = commonOptions diff Seq(
+  "-Ywarn-unused-import"
+)
+
 lazy val commonSettings = Seq(
   name := "hyponome",
   organization := "net.xngns",
   version := "0.1.0",
   scalaVersion := "2.11.7",
   scalacOptions := commonOptions,
-  scalacOptions in (Compile, console) := commonOptions diff Seq(
-    "-Ywarn-unused-import"
-  ),
+  scalacOptions in (Compile, console) := consoleOptions,
+  scalacOptions in (Test, console) := consoleOptions,
+  fork in Test := true,
   wartremoverErrors in (Compile, compile) ++= Warts.allBut(Wart.Throw)
 )
 
