@@ -1,6 +1,5 @@
 package hyponome
 
-import hyponome.Types._
 import java.lang.SuppressWarnings
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext

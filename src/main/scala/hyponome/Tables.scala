@@ -1,9 +1,19 @@
 package hyponome
 
-import hyponome.Types._
 import java.sql.Timestamp
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
+
+final case class SHA256Hash(value: String) {
+  override def toString: String = value
+}
+
+object SHA256Hash {
+  implicit val SHA256HashColumnType: BaseColumnType[SHA256Hash] = MappedColumnType.base[SHA256Hash, String](
+    { case SHA256Hash(v: String) => v   },
+    { case (v: String) => SHA256Hash(v) }
+  )
+}
 
 sealed trait Operation
 case object Add extends Operation

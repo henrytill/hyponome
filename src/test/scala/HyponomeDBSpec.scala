@@ -30,7 +30,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
   }
 
   val add = Addition(
-    "01814411d889d10d474fff484e74c0f90ff5259e241de28851c2561b4ceb28a7",
+    SHA256Hash("01814411d889d10d474fff484e74c0f90ff5259e241de28851c2561b4ceb28a7"),
     "ShouldMLbeOO.pdf",
     "application/pdf",
     164943,
@@ -38,12 +38,12 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
   )
 
   val remove = Removal(
-    "01814411d889d10d474fff484e74c0f90ff5259e241de28851c2561b4ceb28a7",
+    SHA256Hash("01814411d889d10d474fff484e74c0f90ff5259e241de28851c2561b4ceb28a7"),
     "192.168.1.253"
   )
 
   val expected = File(
-    "01814411d889d10d474fff484e74c0f90ff5259e241de28851c2561b4ceb28a7",
+    SHA256Hash("01814411d889d10d474fff484e74c0f90ff5259e241de28851c2561b4ceb28a7"),
     "ShouldMLbeOO.pdf",
     "application/pdf",
     164943
