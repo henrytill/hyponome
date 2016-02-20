@@ -31,11 +31,10 @@ lazy val commonSettings = Seq(
   scalacOptions in (Compile, console) := consoleOptions,
   scalacOptions in (Test, console) := consoleOptions,
   fork in Test := true,
+  initialCommands in console := """import hyponome._, db._, actor._""",
   wartremoverErrors in (Compile, compile) ++= Warts.allBut(Wart.Throw)
 )
 
 lazy val root = (project in file("."))
   .settings(commonSettings: _*)
   .settings(libraryDependencies ++= coreDeps)
-
-initialCommands in console := """import hyponome._"""
