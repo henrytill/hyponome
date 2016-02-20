@@ -1,4 +1,4 @@
-package hyponome
+package hyponome.db
 
 import java.util.UUID.randomUUID
 import org.scalatest.concurrent.ScalaFutures

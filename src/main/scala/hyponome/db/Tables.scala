@@ -1,4 +1,4 @@
-package hyponome
+package hyponome.db
 
 import java.sql.Timestamp
 import slick.driver.H2Driver.api._

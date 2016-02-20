@@ -1,6 +1,7 @@
 package hyponome
 
 import akka.actor._
+import hyponome.db._
 import scala.concurrent.Future
 import scala.util.{Success, Failure}
 import slick.driver.H2Driver.api._

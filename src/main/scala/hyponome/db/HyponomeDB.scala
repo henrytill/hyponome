@@ -1,4 +1,4 @@
-package hyponome
+package hyponome.db
 
 import java.lang.SuppressWarnings
 import scala.concurrent.Future
