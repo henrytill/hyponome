@@ -2,7 +2,7 @@ package hyponome.actor
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{TestActors, TestKit, ImplicitSender}
-import hyponome.db.{Addition, File, Removal, SHA256Hash}
+import hyponome.core._
 import java.util.UUID.randomUUID
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import slick.driver.H2Driver.api._

@@ -1,24 +1,12 @@
 package hyponome.db
 
+import hyponome.core._
 import java.lang.SuppressWarnings
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Try}
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
-
-final case class Addition(
-  hash: SHA256Hash,
-  name: String,
-  contentType: String,
-  length: Long,
-  remoteAddress: String
-)
-
-final case class Removal(
-  hash: SHA256Hash,
-  remoteAddress: String
-)
 
 trait HyponomeDB {
 

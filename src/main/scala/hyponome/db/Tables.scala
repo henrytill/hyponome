@@ -1,45 +1,8 @@
 package hyponome.db
 
+import hyponome.core._
 import java.sql.Timestamp
 import slick.driver.H2Driver.api._
-import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
-
-final case class SHA256Hash(value: String) {
-  override def toString: String = value
-}
-
-object SHA256Hash {
-  implicit val SHA256HashColumnType: BaseColumnType[SHA256Hash] = MappedColumnType.base[SHA256Hash, String](
-    { case SHA256Hash(v: String) => v   },
-    { case (v: String) => SHA256Hash(v) }
-  )
-}
-
-sealed trait Operation
-case object Add extends Operation
-case object Remove extends Operation
-
-object Operation {
-  implicit val operationColumnType: BaseColumnType[Operation] = MappedColumnType.base[Operation, Int](
-    { case Add => 1; case Remove => -1 },
-    { case 1 => Add; case -1 => Remove }
-  )
-}
-
-final case class File(
-  hash: SHA256Hash,
-  filename: String,
-  contentType: String,
-  length: Long
-)
-
-final case class Event(
-  id: Long,
-  timestamp: Timestamp,
-  operation: Operation,
-  hash: SHA256Hash,
-  remoteAddress: String
-)
 
 @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
 class Files(tag: Tag) extends Table[File](tag, "FILES") {

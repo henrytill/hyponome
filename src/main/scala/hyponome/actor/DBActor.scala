@@ -1,6 +1,7 @@
 package hyponome.actor
 
 import akka.actor._
+import hyponome.core._
 import hyponome.db._
 import scala.concurrent.Future
 import scala.util.{Success, Failure}

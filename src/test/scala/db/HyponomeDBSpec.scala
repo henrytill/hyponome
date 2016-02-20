@@ -1,5 +1,6 @@
 package hyponome.db
 
+import hyponome.core._
 import java.util.UUID.randomUUID
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpecLike}
