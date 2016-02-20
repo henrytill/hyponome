@@ -1,4 +1,4 @@
-package hyponome
+package hyponome.actor
 
 import akka.actor._
 import hyponome.db._
