@@ -42,7 +42,7 @@ final case class Removal(
 
 final case class File(
   hash: SHA256Hash,
-  filename: String,
+  name: String,
   contentType: String,
   length: Long
 )

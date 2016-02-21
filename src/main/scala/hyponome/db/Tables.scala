@@ -7,10 +7,10 @@ import slick.driver.H2Driver.api._
 @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
 class Files(tag: Tag) extends Table[File](tag, "FILES") {
   def hash = column[SHA256Hash]("HASH", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
-  def filename = column[String]("FILENAME")
+  def name = column[String]("NAME")
   def contentType = column[String]("CONTENT_TYPE")
   def length = column[Long]("LENGTH")
-  def * = (hash, filename, contentType, length) <> (File.tupled, File.unapply)
+  def * = (hash, name, contentType, length) <> (File.tupled, File.unapply)
 }
 
 @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
@@ -31,10 +31,10 @@ class Objects(tag: Tag) extends Table[(Long, Timestamp, Operation, String, Strin
   def timestamp = column[Timestamp]("TIMESTAMP", O.SqlType("TIMESTAMP AS CURRENT_TIMESTAMP"))
   def operation = column[Operation]("OPERATION")
   def hash = column[String]("HASH", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
-  def filename = column[String]("FILENAME")
+  def name = column[String]("NAME")
   def contentType = column[String]("CONTENT_TYPE")
   def length = column[Long]("LENGTH")
   def remoteAddress = column[String]("REMOTE_ADDRESS")
-  def * = (id, timestamp, operation, hash, filename, contentType, length, remoteAddress)
+  def * = (id, timestamp, operation, hash, name, contentType, length, remoteAddress)
 }
   */
