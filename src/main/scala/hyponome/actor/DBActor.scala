@@ -86,10 +86,11 @@ class DBActor(dbDef: DatabaseDef) extends Actor with HyponomeDB {
       }
     case FindFile(h: SHA256Hash) =>
       val replyToRef: ActorRef = sender
-      val findFut: Future[File] = this.findFile(h)
+      val findFut: Future[Option[File]] = this.findFile(h)
       findFut onComplete {
-        case Success(f: File) => replyToRef ! f
-        case Failure(_)       => replyToRef ! FileNotFound
+        case Success(Some(f: File)) => replyToRef ! f
+        case Success(None)          => replyToRef ! FileNotFound
+        case Failure(_)             => replyToRef ! FileNotFound
       }
     case CountFiles =>
       val replyToRef: ActorRef = sender

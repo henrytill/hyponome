@@ -98,7 +98,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       argument of that file's hash""" in withTestDBInstance { t =>
         t.createDB.futureValue should equal(())
         t.addFile(add).futureValue should equal(())
-        t.findFile(add.hash).futureValue should equal(expected)
+        t.findFile(add.hash).futureValue should equal(Some(expected))
       }
       """returns a Future value of Failure(IllegalArgumentException)
       when called with an argument of the hash of a file that has been
@@ -106,7 +106,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
         t.createDB.futureValue should equal(())
         t.addFile(add).futureValue should equal(())
         t.removeFile(remove).futureValue should equal(())
-        t.findFile(add.hash).failed.futureValue shouldBe a [IllegalArgumentException]
+        t.findFile(add.hash).futureValue should equal(None)
       }
     }
   }

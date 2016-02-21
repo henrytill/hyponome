@@ -61,12 +61,12 @@ trait HyponomeDB {
   }
 
   @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
-  def findFile(hash: SHA256Hash)(implicit ec: ExecutionContext): Future[File] =
+  def findFile(hash: SHA256Hash)(implicit ec: ExecutionContext): Future[Option[File]] =
     removed(hash).flatMap {
-      case true  => Future.failed(new IllegalArgumentException)
+      case true  => Future(None)
       case false =>
         val q = files.filter(_.hash === hash)
-        db.run(q.result.head)
+        db.run(q.result.headOption)
     }
 
   def countFiles: Future[Int] = {
