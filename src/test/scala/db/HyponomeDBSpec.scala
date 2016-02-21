@@ -40,15 +40,15 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
   )
 
   val remove = Removal(
-    SHA256Hash("01814411d889d10d474fff484e74c0f90ff5259e241de28851c2561b4ceb28a7"),
+    add.hash,
     add.remoteAddress
   )
 
   val expected = File(
-    SHA256Hash("01814411d889d10d474fff484e74c0f90ff5259e241de28851c2561b4ceb28a7"),
-    "ShouldMLbeOO.pdf",
-    "application/pdf",
-    164943
+    add.hash,
+    add.name,
+    add.contentType,
+    add.length
   )
 
   "An instance of a class that extends HyponomeDB" must {
