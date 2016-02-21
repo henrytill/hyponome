@@ -1,5 +1,6 @@
 package hyponome.core
 
+import java.net.InetAddress
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
 
@@ -32,12 +33,12 @@ final case class Addition(
   name: String,
   contentType: String,
   length: Long,
-  remoteAddress: String
+  remoteAddress: Option[InetAddress]
 )
 
 final case class Removal(
   hash: SHA256Hash,
-  remoteAddress: String
+  remoteAddress: Option[InetAddress]
 )
 
 final case class File(
@@ -52,5 +53,5 @@ final case class Event(
   timestamp: java.sql.Timestamp,
   operation: Operation,
   hash: SHA256Hash,
-  remoteAddress: String
+  remoteAddress: Option[InetAddress]
 )

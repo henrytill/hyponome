@@ -2,6 +2,7 @@ package hyponome.db
 
 import hyponome.core._
 import java.lang.SuppressWarnings
+import java.net.InetAddress
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Try}
