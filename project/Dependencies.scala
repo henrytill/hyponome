@@ -6,6 +6,7 @@ object Dependencies {
 
   val coreDeps = Seq(
     "com.h2database"         %  "h2"                                % "1.4.190",
+    "com.typesafe"           %  "config"                            % "1.3.0",
     "com.typesafe.akka"      %% "akka-actor"                        % akkaVersion,
     "com.typesafe.akka"      %% "akka-http-core"                    % akkaVersion,
     "com.typesafe.akka"      %% "akka-http-experimental"            % akkaVersion,
