@@ -23,7 +23,13 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
 
   def withTestDBInstance(testCode: TestDB => Any): Unit = {
     val dbName = randomUUID.toString
-    val db = Database.forURL("jdbc:h2:mem:" + dbName, driver="org.h2.Driver", keepAliveConnection = true)
+    val db = Database.forURL(
+      url = s"jdbc:h2:mem:$dbName;CIPHER=AES",
+      user = "hyponome",
+      password = "hyponome hyponome", // password = "filepwd userpwd"
+      driver = "org.h2.Driver",
+      keepAliveConnection = true
+    )
     val t: TestDB = new TestDB(db)
     try {
       testCode(t)

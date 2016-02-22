@@ -22,7 +22,13 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
 
   def withDBActor(testCode: ActorRef => Any): Unit = {
     val dbName = randomUUID.toString
-    val db = Database.forURL("jdbc:h2:mem:" + dbName, driver="org.h2.Driver", keepAliveConnection = true)
+    val db = Database.forURL(
+      url = s"jdbc:h2:mem:$dbName;CIPHER=AES",
+      user = "hyponome",
+      password = "hyponome hyponome", // password = "filepwd userpwd"
+      driver = "org.h2.Driver",
+      keepAliveConnection = true
+    )
     val dbActor = system.actorOf(DBActor.props(db))
     try {
       testCode(dbActor)
