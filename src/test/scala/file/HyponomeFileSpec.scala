@@ -8,7 +8,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpecLike}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 class TestStore(p: Path) extends HyponomeFile {
 
@@ -50,14 +50,17 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
 
   def withTestStoreInstance(testCode: TestStore => Any): Unit = {
     val t: TestStore = new TestStore(tempStorePath)
-    val storeFuture: Future[Path] = t.createStore()
-    storeFuture onComplete {
-      case Success(_: Path) =>
-        try {
-          testCode(t)
-        }
-        finally t.deleteStore()
-      case Failure(_) => fail()
+    val delete: Try[Path] = t.deleteStore()
+    val store: Try[Path] = delete.flatMap { _ =>
+      t.createStore()
+    }
+    store match {
+      case Success(p: Path) =>
+        // println(s"New test store created at $p")
+        testCode(t)
+      case Failure(e) =>
+        // println(s"New test store couldn't be created: $e")
+        fail()
     }
   }
 

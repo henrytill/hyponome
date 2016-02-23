@@ -4,15 +4,13 @@ import hyponome.core._
 import java.nio.file._
 import org.apache.commons.codec.digest.DigestUtils.sha256Hex
 import scala.concurrent.{blocking, ExecutionContext, Future}
+import scala.util.{Success, Try}
 
 trait HyponomeFile {
 
   val storePath: Path
 
-  def createStore()(implicit ec: ExecutionContext): Future[Path] =
-    Future {
-      blocking { Files.createDirectories(storePath) }
-    }
+  def createStore(): Try[Path] = Try(Files.createDirectories(storePath))
 
   private def withInputStream[T](path: Path)(op: java.io.InputStream => T): T = {
     val fist = Files.newInputStream(path)
@@ -41,26 +39,22 @@ trait HyponomeFile {
       }
     }
 
-  private def makeSimpleFileVisitor(f: Path => Unit): SimpleFileVisitor[Path] =
+  private def makeDeleteFileVisitor: SimpleFileVisitor[Path] =
     new SimpleFileVisitor[Path] {
       override def visitFile(p: Path, attrs: attribute.BasicFileAttributes): FileVisitResult = {
-        f(p)
+        Files.delete(p)
+        FileVisitResult.CONTINUE
+      }
+      override def postVisitDirectory(p: Path, e: java.io.IOException): FileVisitResult = {
+        Files.delete(p)
         FileVisitResult.CONTINUE
       }
     }
 
-  private def deletePathAndParent(p: Path): Unit = {
-    Files.delete(p)
-    Files.delete(p.getParent)
-  }
+  private def recursiveDeletePath(p: Path): Path =
+    Files.walkFileTree(p, makeDeleteFileVisitor)
 
-  private def recursiveDeletePath(p: Path): Unit = {
-    val r: Path = Files.walkFileTree(p, makeSimpleFileVisitor(deletePathAndParent))
-    Files.delete(p)
-  }
-
-  def deleteStore()(implicit ec: ExecutionContext): Future[Unit] =
-    Future {
-      blocking { recursiveDeletePath(storePath) }
-    }
+  def deleteStore(): Try[Path] =
+    if (Files.exists(storePath)) Try(recursiveDeletePath(storePath))
+    else Success(storePath)
 }
