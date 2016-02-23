@@ -84,9 +84,13 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
     "have a copyToStore method" which {
       "copies a file to the correct Path" in withTestStoreInstance { t =>
         val sourceHash = t.getSHA256Hash(testPDF)
-        val destinationPath: Path = t.copyToStore(sourceHash, testPDF).futureValue
-        val destinationHash: SHA256Hash = t.getSHA256Hash(destinationPath)
-        destinationHash should equal(sourceHash)
+        val destinationPath: Future[Path] = t.copyToStore(sourceHash, testPDF)
+        val destinationHash: Future[SHA256Hash] = destinationPath.map { p =>
+          t.getSHA256Hash(p)
+        }
+        whenReady(destinationHash) { result =>
+          result should equal(sourceHash)
+        }
       }
     }
   }
