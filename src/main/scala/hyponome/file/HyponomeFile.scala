@@ -46,6 +46,14 @@ trait HyponomeFile {
       }
     }
 
+  def deleteFromStore(hash: SHA256Hash)(implicit ec: ExecutionContext): Future[Unit] =
+    Future {
+      blocking {
+        val p: Path = getFilePath(hash)
+        Files.delete(p)
+      }
+    }
+
   private def makeDeleteFileVisitor: SimpleFileVisitor[Path] =
     new SimpleFileVisitor[Path] {
       override def visitFile(p: Path, attrs: attribute.BasicFileAttributes): FileVisitResult = {
