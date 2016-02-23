@@ -7,6 +7,8 @@ import java.nio.file._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpecLike}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 class TestStore(p: Path) extends HyponomeFile {
 
@@ -46,29 +48,17 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
     * )
     */
 
-  private def makeSimpleFileVisitor(f: Path => Unit): SimpleFileVisitor[Path] =
-    new SimpleFileVisitor[Path] {
-      override def visitFile(p: Path, attrs: attribute.BasicFileAttributes): FileVisitResult = {
-        f(p)
-        FileVisitResult.CONTINUE
-      }
-    }
-
-  private def deletePathAndParent(p: Path): Unit = {
-    Files.delete(p)
-    Files.delete(p.getParent)
-  }
-
-  def recursiveDeletePath(p: Path): Unit = {
-    Files.walkFileTree(p, makeSimpleFileVisitor(deletePathAndParent))
-    Files.delete(p)
-  }
-
   def withTestStoreInstance(testCode: TestStore => Any): Unit = {
-    Files.createDirectory(tempStorePath)
     val t: TestStore = new TestStore(tempStorePath)
-    testCode(t)
-    recursiveDeletePath(tempStorePath)
+    val storeFuture: Future[Path] = t.createStore()
+    storeFuture onComplete {
+      case Success(_: Path) =>
+        try {
+          testCode(t)
+        }
+        finally t.deleteStore()
+      case Failure(_) => fail()
+    }
   }
 
   "An instance of a class that extends HyponomeFile" must {
