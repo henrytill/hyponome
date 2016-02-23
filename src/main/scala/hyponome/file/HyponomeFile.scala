@@ -30,6 +30,13 @@ trait HyponomeFile {
     storePath.resolve(dir).resolve(file).toAbsolutePath
   }
 
+  def existsInStore(p: Path)(implicit ec: ExecutionContext): Future[Boolean] =
+    Future {
+      blocking {
+        Files.exists(p)
+      }
+    }
+
   def copyToStore(hash: SHA256Hash, source: Path)(implicit ec: ExecutionContext): Future[Path] =
     Future {
       blocking {

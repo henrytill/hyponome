@@ -93,5 +93,29 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
         }
       }
     }
+
+    "have a existsInStore method" which {
+      """returns a Future with the value of true if the specified path
+      exists in the store""" in withTestStoreInstance { t =>
+        val sourceHash = t.getSHA256Hash(testPDF)
+        val destinationFuture: Future[Path] = t.copyToStore(sourceHash, testPDF)
+        val existsFuture: Future[Boolean] = destinationFuture.flatMap { p =>
+          t.existsInStore(p)
+        }
+        whenReady(existsFuture) { result =>
+          result should equal(true)
+        }
+      }
+      """returns a Future with the value of false if the specified path
+      doesn't exist in the store""" in withTestStoreInstance { t =>
+        val testHash: SHA256Hash = SHA256Hash(
+          "482bfece08d11246f41ce3dc43480e1b61659fbe0083b754bee09b44b940ae6c"
+        )
+        val existsFuture: Future[Boolean] = t.existsInStore(t.getFilePath(testHash))
+        whenReady(existsFuture) { result =>
+          result should equal(false)
+        }
+      }
+    }
   }
 }
