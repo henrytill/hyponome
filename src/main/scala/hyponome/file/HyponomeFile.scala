@@ -2,7 +2,6 @@ package hyponome.file
 
 import hyponome.core._
 import java.nio.file._
-import org.apache.commons.codec.digest.DigestUtils.sha256Hex
 import scala.concurrent.{blocking, ExecutionContext, Future}
 import scala.util.{Success, Try}
 
@@ -11,19 +10,6 @@ trait HyponomeFile {
   val storePath: Path
 
   def createStore(): Try[Path] = Try(Files.createDirectories(storePath))
-
-  private def withInputStream[T](path: Path)(op: java.io.InputStream => T): T = {
-    val fist = Files.newInputStream(path)
-    try {
-      op(fist)
-    }
-    finally fist.close()
-  }
-
-  def getSHA256Hash(p: Path): SHA256Hash = {
-    val s: String = withInputStream(p)(sha256Hex)
-    SHA256Hash(s)
-  }
 
   def getFilePath(h: SHA256Hash): Path = {
     val (dir, file) = h.value.splitAt(2)

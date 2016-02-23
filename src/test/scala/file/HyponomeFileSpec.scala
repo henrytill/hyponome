@@ -66,15 +66,9 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
 
   "An instance of a class that extends HyponomeFile" must {
 
-    "have a getSHA256Hash method" which {
-      "returns the correct SHA256 hash for a given file" in withTestStoreInstance { t =>
-        t.getSHA256Hash(testPDF) should equal(testPDFHash)
-      }
-    }
-
     "have a getFilePath method" which {
       "returns the correct Path" in withTestStoreInstance { t =>
-        val hash = t.getSHA256Hash(testPDF)
+        val hash = getSHA256Hash(testPDF)
         val (dir, file) = hash.value.splitAt(2)
         val expected: Path = tempStorePath.resolve(dir).resolve(file).toAbsolutePath
         t.getFilePath(hash) should equal(expected)
@@ -83,10 +77,10 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
 
     "have a copyToStore method" which {
       "copies a file to the correct Path" in withTestStoreInstance { t =>
-        val sourceHash = t.getSHA256Hash(testPDF)
+        val sourceHash = getSHA256Hash(testPDF)
         val destinationPath: Future[Path] = t.copyToStore(sourceHash, testPDF)
         val destinationHash: Future[SHA256Hash] = destinationPath.map { p =>
-          t.getSHA256Hash(p)
+          getSHA256Hash(p)
         }
         whenReady(destinationHash) { result =>
           result should equal(sourceHash)
@@ -97,7 +91,7 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
     "have a existsInStore method" which {
       """returns a Future with the value of true if the specified path
       exists in the store""" in withTestStoreInstance { t =>
-        val sourceHash = t.getSHA256Hash(testPDF)
+        val sourceHash = getSHA256Hash(testPDF)
         val destinationFuture: Future[Path] = t.copyToStore(sourceHash, testPDF)
         val existsFuture: Future[Boolean] = destinationFuture.flatMap { p =>
           t.existsInStore(p)
@@ -120,7 +114,7 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
 
     "have a deleteFromStore method" which {
       "deletes a file with the specified hash" in withTestStoreInstance { t =>
-        val sourceHash = t.getSHA256Hash(testPDF)
+        val sourceHash = getSHA256Hash(testPDF)
         val destinationFuture: Future[Path] = t.copyToStore(sourceHash, testPDF)
         val deleteFuture: Future[Unit] = destinationFuture.flatMap { _ =>
           t.deleteFromStore(sourceHash)
