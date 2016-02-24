@@ -114,8 +114,6 @@ class FileActorSpec(_system: ActorSystem) extends TestKit(_system)
 
     """respond with RemoveFileFail when attempting to remove a file
     from the store which has already been removed""" in withFileActor { fileActor =>
-      fileActor ! FileActor.DeleteStore(self)
-      expectMsg(FileActor.DeleteStoreAck(self))
       fileActor ! FileActor.CreateStore(self)
       expectMsg(FileActor.CreateStoreAck(self))
       fileActor ! FileActor.AddFile(self, add)
@@ -124,17 +122,19 @@ class FileActorSpec(_system: ActorSystem) extends TestKit(_system)
       expectMsg(FileActor.RemoveFileAck(self, remove))
       fileActor ! FileActor.RemoveFile(self, remove)
       expectMsgType[FileActor.RemoveFileFail]
+      fileActor ! FileActor.DeleteStore(self)
+      expectMsg(FileActor.DeleteStoreAck(self))
     }
 
     """respond with StoreFile when sent a FindFile msg""" in withFileActor { fileActor =>
-      fileActor ! FileActor.DeleteStore(self)
-      expectMsg(FileActor.DeleteStoreAck(self))
       fileActor ! FileActor.CreateStore(self)
       expectMsg(FileActor.CreateStoreAck(self))
       fileActor ! FileActor.AddFile(self, add)
       expectMsg(FileActor.AddFileAck(self, add))
       fileActor ! FileActor.FindFile(self, testPDFHash)
       expectMsgType[FileActor.StoreFile]
+      fileActor ! FileActor.DeleteStore(self)
+      expectMsg(FileActor.DeleteStoreAck(self))
     }
   }
 }
