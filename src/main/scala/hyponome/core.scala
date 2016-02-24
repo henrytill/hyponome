@@ -32,6 +32,7 @@ object core {
   }
 
   final case class Addition(
+    file: Path,
     hash: SHA256Hash,
     name: String,
     contentType: String,

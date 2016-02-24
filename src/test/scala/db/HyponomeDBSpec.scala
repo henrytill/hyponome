@@ -2,6 +2,7 @@ package hyponome.db
 
 import hyponome.core._
 import java.net.InetAddress
+import java.nio.file._
 import java.util.UUID.randomUUID
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpecLike}
@@ -37,12 +38,26 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
     finally t.close()
   }
 
+  val fs: FileSystem = FileSystems.getDefault()
+
+  val testPDF: Path = {
+    val s: String = getClass.getResource("/test.pdf").getPath
+    fs.getPath(s)
+  }
+
+  val testPDFHash = SHA256Hash(
+    "eba205fb9114750b2ce83db62f9c2a15dd068bcba31a2de32d8df7f7c8d85441"
+  )
+
+  val ip: Option[InetAddress] = Some(InetAddress.getByName("192.168.1.253"))
+
   val add = Addition(
-    SHA256Hash("01814411d889d10d474fff484e74c0f90ff5259e241de28851c2561b4ceb28a7"),
-    "ShouldMLbeOO.pdf",
-    "application/pdf",
-    164943,
-    Some(InetAddress.getByName("192.168.1.253"))
+    testPDF,
+    getSHA256Hash(testPDF),
+    testPDF.toFile.getName,
+    "application/octet-stream",
+    testPDF.toFile.length,
+    ip
   )
 
   val remove = Removal(

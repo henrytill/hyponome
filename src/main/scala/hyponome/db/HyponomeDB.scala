@@ -33,7 +33,7 @@ trait HyponomeDB {
   }
 
   def addFile(a: Addition): Future[Unit] = a match {
-    case Addition(hash, name, contentType, length, remoteAddress) =>
+    case Addition(_, hash, name, contentType, length, remoteAddress) =>
       val f = File(hash, name, contentType, length)
       val e = Event(0L, dummyTimestamp, Add, hash, remoteAddress)
       val s = DBIO.seq(files += f, events += e)
