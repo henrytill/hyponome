@@ -8,12 +8,12 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 object FileActor {
-  // Creating a store
+  // Creating a file store
   final case class CreateStore(client: ActorRef)
   final case class CreateStoreAck(client: ActorRef)
   final case class CreateStoreFail(client: ActorRef)
 
-  // Deleting a store
+  // Deleting a file store
   final case class DeleteStore(client: ActorRef)
   final case class DeleteStoreAck(client: ActorRef)
   final case class DeleteStoreFail(client: ActorRef)
