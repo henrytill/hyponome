@@ -1,6 +1,6 @@
 package hyponome.actor
 
-import akka.actor._
+import akka.actor.{Actor, ActorRef, Props}
 import hyponome.core._
 import hyponome.file._
 import java.nio.file.Path

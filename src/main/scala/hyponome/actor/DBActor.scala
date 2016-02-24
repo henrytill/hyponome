@@ -1,11 +1,11 @@
 package hyponome.actor
 
-import akka.actor._
+import akka.actor.{Actor, ActorRef, Props}
 import hyponome.core._
 import hyponome.db._
 import scala.concurrent.Future
 import scala.util.{Success, Failure}
-import slick.driver.H2Driver.api._
+import slick.driver.H2Driver.api.{Database, TableQuery}
 import slick.driver.H2Driver.backend.DatabaseDef
 
 object DBActor {
