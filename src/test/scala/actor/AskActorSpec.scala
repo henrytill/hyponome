@@ -4,10 +4,10 @@ import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{TestActors, TestKit, ImplicitSender}
 import hyponome.core._
 import java.net.InetAddress
-import java.nio.file._
+import java.nio.file.{FileSystem, FileSystems, Path}
 import java.util.UUID.randomUUID
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-import slick.driver.H2Driver.api._
+import slick.driver.H2Driver.api.Database
 
 class AskActorSpec(_system: ActorSystem) extends TestKit(_system)
     with ImplicitSender
@@ -66,91 +66,89 @@ class AskActorSpec(_system: ActorSystem) extends TestKit(_system)
       driver = "org.h2.Driver",
       keepAliveConnection = true
     )
-    val dbActor = system.actorOf(DBActor.props(db))
-    val fileActor = system.actorOf(FileActor.props(tempStorePath))
-    val askActor = system.actorOf(AskActor.props(dbActor, fileActor))
+    val recActor = system.actorOf(Receptionist.props(db, tempStorePath))
+    val askActor = system.actorOf(AskActor.props(recActor))
     try {
       testCode(askActor)
     }
     finally {
-      system.stop(dbActor) // dbActor's postStop() calls db.close
-      system.stop(fileActor)
       system.stop(askActor)
+      system.stop(recActor)
     }
   }
 
   "An AskActor" must {
 
     """respond with DeleteAck when attempting to delete a store""" in withAskActor { askActor =>
-      askActor ! AskActor.Delete
-      expectMsg(AskActor.DeleteAck)
+      askActor ! Delete
+      expectMsg(DeleteAck)
     }
 
     """respond with CreateAck when attempting to create a new store if
     one doesn't already exist""" in withAskActor { askActor =>
-      askActor ! AskActor.Create
-      expectMsg(AskActor.CreateAck)
-      askActor ! AskActor.Delete
-      expectMsg(AskActor.DeleteAck)
+      askActor ! Create
+      expectMsg(CreateAck)
+      askActor ! Delete
+      expectMsg(DeleteAck)
     }
 
     """respond with AdditionAck when attempting to add a file to the
     store""" in withAskActor { askActor =>
-      askActor ! AskActor.Create
-      expectMsg(AskActor.CreateAck)
+      askActor ! Create
+      expectMsg(CreateAck)
       askActor ! add
-      expectMsg(AskActor.AdditionAck(add))
-      askActor ! AskActor.Delete
-      expectMsg(AskActor.DeleteAck)
+      expectMsg(AdditionAck(add))
+      askActor ! Delete
+      expectMsg(DeleteAck)
     }
 
     """respond with AdditionFail when attempting to add a file to the
     store which has already been added""" in withAskActor { askActor =>
-      askActor ! AskActor.Create
-      expectMsg(AskActor.CreateAck)
+      askActor ! Create
+      expectMsg(CreateAck)
       askActor ! add
-      expectMsg(AskActor.AdditionAck(add))
+      expectMsg(AdditionAck(add))
       askActor ! add
-      expectMsg(AskActor.AdditionFail(add))
-      askActor ! AskActor.Delete
-      expectMsg(AskActor.DeleteAck)
+      expectMsg(AdditionFail(add))
+      askActor ! Delete
+      expectMsg(DeleteAck)
     }
 
     """respond with RemovalAck when attempting to remove a file from the
     store""" in withAskActor { askActor =>
-      askActor ! AskActor.Create
-      expectMsg(AskActor.CreateAck)
+      askActor ! Create
+      expectMsg(CreateAck)
       askActor ! add
-      expectMsg(AskActor.AdditionAck(add))
+      expectMsg(AdditionAck(add))
       askActor ! remove
-      expectMsg(AskActor.RemovalAck(remove))
-      askActor ! AskActor.Delete
-      expectMsg(AskActor.DeleteAck)
+      expectMsg(RemovalAck(remove))
+      askActor ! Delete
+      expectMsg(DeleteAck)
     }
 
     """respond with RemovalFail when attempting to remove a file from the
     store that has already been removed""" in withAskActor { askActor =>
-      askActor ! AskActor.Create
-      expectMsg(AskActor.CreateAck)
+      askActor ! Create
+      expectMsg(CreateAck)
       askActor ! add
-      expectMsg(AskActor.AdditionAck(add))
+      expectMsg(AdditionAck(add))
       askActor ! remove
-      expectMsg(AskActor.RemovalAck(remove))
+      expectMsg(RemovalAck(remove))
       askActor ! remove
-      expectMsg(AskActor.RemovalFail(remove))
-      askActor ! AskActor.Delete
-      expectMsg(AskActor.DeleteAck)
+      expectMsg(RemovalFail(remove))
+      askActor ! Delete
+      expectMsg(DeleteAck)
     }
 
     """respond with Result when sent a FindFile msg""" in withAskActor { askActor =>
-      askActor ! AskActor.Create
-      expectMsg(AskActor.CreateAck)
+      askActor ! Create
+      expectMsg(CreateAck)
       askActor ! add
-      expectMsg(AskActor.AdditionAck(add))
+      expectMsg(AdditionAck(add))
       askActor ! FindFile(add.hash)
-      expectMsgType[AskActor.Result]
-      askActor ! AskActor.Delete
-      expectMsg(AskActor.DeleteAck)
+      expectMsgType[Result]
+      askActor ! Delete
+      expectMsg(DeleteAck)
     }
   }
 }

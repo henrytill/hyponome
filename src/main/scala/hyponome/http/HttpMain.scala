@@ -1,7 +1,7 @@
 package hyponome.http
 
 // import akka.http.scaladsl.marshallers.xml.ScalaXmlSupport._
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -19,11 +19,14 @@ import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.io.StdIn
+import scala.util.{Failure, Success}
 import slick.driver.H2Driver.api.Database
 import slick.driver.H2Driver.backend.DatabaseDef
 
 @SuppressWarnings(Array(
   "org.brianmckenna.wartremover.warts.Any",
+  "org.brianmckenna.wartremover.warts.AsInstanceOf",
+  "org.brianmckenna.wartremover.warts.IsInstanceOf",
   "org.brianmckenna.wartremover.warts.Nothing"
 ))
 object HttpMain extends App {
@@ -37,12 +40,11 @@ object HttpMain extends App {
   val db: DatabaseDef = Database.forConfig("h2")
   val uploadKey       = "file"
 
-  val dbActor   = system.actorOf(DBActor.props(db))
-  val fileActor = system.actorOf(FileActor.props(store))
-  val askActor  = system.actorOf(AskActor.props(dbActor, fileActor))
+  val recActor = system.actorOf(Props(new Receptionist(db, store)))
+  val askActor = system.actorOf(AskActor.props(recActor))
 
   implicit val timeout: Timeout = Timeout(5.seconds)
-  val init: Future[Any] = ask(askActor, AskActor.Create)
+  val init: Future[Any] = ask(askActor, Create)
   init onSuccess {
     case _ => println(init.value)
   }
@@ -63,9 +65,11 @@ object HttpMain extends App {
                 file.length,
                 ip.toOption
               )
-              val resFuture: Future[Any] = ask(askActor, add)
+              val resFuture: Future[AdditionResponse] = ask(askActor, add).mapTo[AdditionResponse]
               resFuture onComplete {
-                case _ => println(resFuture.value)
+                case Success(s: AdditionAck)  => println(s)
+                case Success(f: AdditionFail) => println(f)
+                case Failure(e: Throwable)    => println(e)
               }
               complete("foo")
           }

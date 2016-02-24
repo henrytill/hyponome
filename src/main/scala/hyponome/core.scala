@@ -7,6 +7,42 @@ import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
 
 object core {
+  // Core message API
+  final case object Create
+  final case object Delete
+
+  sealed trait InitResponse
+  final case object CreateAck  extends InitResponse
+  final case object CreateFail extends InitResponse
+  final case object DeleteAck  extends InitResponse
+  final case object DeleteFail extends InitResponse
+
+  final case class Addition(
+    file: Path,
+    hash: SHA256Hash,
+    name: String,
+    contentType: String,
+    length: Long,
+    remoteAddress: Option[InetAddress]
+  )
+
+  sealed trait AdditionResponse
+  final case class AdditionAck(addition: Addition)  extends AdditionResponse
+  final case class AdditionFail(addition: Addition) extends AdditionResponse
+
+  final case class Removal(
+    hash: SHA256Hash,
+    remoteAddress: Option[InetAddress]
+  )
+
+  sealed trait RemovalResponse
+  final case class RemovalAck(removal: Removal)  extends RemovalResponse
+  final case class RemovalFail(removal: Removal) extends RemovalResponse
+
+  final case class FindFile(h: SHA256Hash) 
+  final case class Result(file: Option[Path])
+
+  // Core types
   final case class SHA256Hash(value: String) {
     override def toString: String = value
   }
@@ -19,6 +55,7 @@ object core {
       )
   }
 
+  // DB types
   sealed trait Operation
   case object Add extends Operation
   case object Remove extends Operation
@@ -31,24 +68,7 @@ object core {
       )
   }
 
-  final case class Addition(
-    file: Path,
-    hash: SHA256Hash,
-    name: String,
-    contentType: String,
-    length: Long,
-    remoteAddress: Option[InetAddress]
-  )
-
-  final case class Removal(
-    hash: SHA256Hash,
-    remoteAddress: Option[InetAddress]
-  )
-
-  final case class FindFile(
-    hash: SHA256Hash
-  )
-
+  // DB row types
   final case class File(
     hash: SHA256Hash,
     name: String,
@@ -64,6 +84,7 @@ object core {
     remoteAddress: Option[InetAddress]
   )
 
+  // Core functions
   private def withInputStream[T](path: Path)(op: java.io.InputStream => T): T = {
     val fist = Files.newInputStream(path)
     try {
