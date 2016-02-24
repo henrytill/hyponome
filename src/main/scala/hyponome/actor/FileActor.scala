@@ -9,28 +9,32 @@ import scala.util.{Failure, Success, Try}
 
 object FileActor {
   // Creating a store
-  final case object CreateStore
-  final case object CreateStoreAck
-  final case object CreateStoreFail
+  final case class CreateStore(client: ActorRef)
+  final case class CreateStoreAck(client: ActorRef)
+  final case class CreateStoreFail(client: ActorRef)
 
   // Deleting a store
-  final case object DeleteStore
-  final case object DeleteStoreAck
-  final case object DeleteStoreFail
+  final case class DeleteStore(client: ActorRef)
+  final case class DeleteStoreAck(client: ActorRef)
+  final case class DeleteStoreFail(client: ActorRef)
 
   // Adding files
-  final case class AddFile(hash: SHA256Hash, path: Path)
-  final case class AddFileAck(hash: SHA256Hash, path: Path)
-  final case class AddFileFail(hash: SHA256Hash, path: Path, exception: Throwable)
+  final case class AddFile(client: ActorRef, addition: Addition)
+  final case class AddFileAck(client: ActorRef, addition: Addition)
+  final case class AddFileFail(client: ActorRef, addition: Addition, e: Throwable)
 
   // Removing files
-  final case class RemoveFile(h: SHA256Hash)
-  final case class RemoveFileAck(h: SHA256Hash)
-  final case class RemoveFileFail(h: SHA256Hash, exception: Throwable)
+  final case class RemoveFile(client: ActorRef, removal: Removal)
+  final case class RemoveFileAck(client: ActorRef, removal: Removal)
+  final case class RemoveFileFail(client: ActorRef, removal: Removal, e: Throwable)
 
   // Finding a file
-  final case class FindFile(h: SHA256Hash)
-  final case class StoreFile(h: SHA256Hash, p: Option[Path])
+  final case class FindFile(client: ActorRef, hash: SHA256Hash)
+  final case class StoreFile(
+    client: ActorRef,
+    hash: SHA256Hash,
+    file: Option[Path]
+  )
 
   def props(p: Path): Props = Props(new FileActor(p))
 }
@@ -47,44 +51,44 @@ class FileActor(p: Path) extends Actor with HyponomeFile {
     "org.brianmckenna.wartremover.warts.Nothing"
   ))
   def prime: Receive = {
-    case CreateStore =>
+    case CreateStore(c: ActorRef) =>
       val replyToRef: ActorRef = sender
       this.createStore() match {
-        case Success(_: Path) => replyToRef ! CreateStoreAck
-        case Failure(_)       => replyToRef ! CreateStoreFail
+        case Success(_: Path) => replyToRef ! CreateStoreAck(c)
+        case Failure(_)       => replyToRef ! CreateStoreFail(c)
       }
-    case DeleteStore =>
+    case DeleteStore(c: ActorRef) =>
       val replyToRef: ActorRef = sender
       this.deleteStore() match {
-        case Success(_: Path) => replyToRef ! DeleteStoreAck
-        case Failure(_)       => replyToRef ! DeleteStoreFail
+        case Success(_: Path) => replyToRef ! DeleteStoreAck(c)
+        case Failure(_)       => replyToRef ! DeleteStoreFail(c)
       }
-    case AddFile(h: SHA256Hash, p: Path) =>
+    case AddFile(c: ActorRef, a: Addition) =>
       val replyToRef: ActorRef = sender
-      val hashPath = this.getFilePath(h)
+      val hashPath = this.getFilePath(a.hash)
       val copyFut: Future[Path] = this.existsInStore(hashPath).flatMap {
-        case false => this.copyToStore(h, p)
+        case false => this.copyToStore(a.hash, a.file)
         case true  => Future.failed(new UnsupportedOperationException)
       }
       copyFut onComplete {
-        case Success(_: Path)      => replyToRef ! AddFileAck(h, p)
-        case Failure(e: Throwable) => replyToRef ! AddFileFail(h, p, e)
+        case Success(_: Path)      => replyToRef ! AddFileAck(c, a)
+        case Failure(e: Throwable) => replyToRef ! AddFileFail(c, a, e)
       }
-    case RemoveFile(h: SHA256Hash) =>
+    case RemoveFile(c: ActorRef, r: Removal) =>
       val replyToRef: ActorRef = sender
-      val deleteFut: Future[Unit] = this.deleteFromStore(h)
+      val deleteFut: Future[Unit] = this.deleteFromStore(r.hash)
       deleteFut onComplete {
-        case Success(_: Unit) => replyToRef ! RemoveFileAck(h)
-        case Failure(e)       => replyToRef ! RemoveFileFail(h, e)
+        case Success(_: Unit) => replyToRef ! RemoveFileAck(c, r)
+        case Failure(e)       => replyToRef ! RemoveFileFail(c, r, e)
       }
-    case FindFile(h: SHA256Hash) =>
+    case FindFile(c: ActorRef, h: SHA256Hash) =>
       val replyToRef: ActorRef = sender
       val possiblePath: Path = this.getFilePath(h)
       val existsFut: Future[Boolean] = this.existsInStore(possiblePath)
       existsFut onComplete {
-        case Success(true)  => replyToRef ! StoreFile(h, Some(possiblePath))
-        case Success(false) => replyToRef ! StoreFile(h, None)
-        case Failure(_)     => replyToRef ! StoreFile(h, None)
+        case Success(true)  => replyToRef ! StoreFile(c, h, Some(possiblePath))
+        case Success(false) => replyToRef ! StoreFile(c, h, None)
+        case Failure(_)     => replyToRef ! StoreFile(c, h, None)
       }
     case _ =>
   }

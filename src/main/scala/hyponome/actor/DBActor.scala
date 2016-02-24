@@ -10,23 +10,27 @@ import slick.driver.H2Driver.backend.DatabaseDef
 
 object DBActor {
   // Creating a db
-  final case object CreateDB
-  final case object CreateDBAck
-  final case object CreateDBFail
+  final case class CreateDB(client: ActorRef)
+  final case class CreateDBAck(client: ActorRef)
+  final case class CreateDBFail(client: ActorRef)
 
   // Adding files
-  final case class AddFile(f: Addition)
-  final case object AddFileAck
-  final case object AddFileFail
+  final case class AddFile(client: ActorRef, addition: Addition)
+  final case class AddFileAck(client: ActorRef, addition: Addition)
+  final case class AddFileFail(client: ActorRef, addition: Addition, e: Throwable)
 
   // Removing files
-  final case class RemoveFile(r: Removal)
-  final case object RemoveFileAck
-  final case object RemoveFileFail
+  final case class RemoveFile(client: ActorRef, removal: Removal)
+  final case class RemoveFileAck(client: ActorRef, removal: Removal)
+  final case class RemoveFileFail(client: ActorRef, removal: Removal, e: Throwable)
 
   // Finding a file
-  final case class FindFile(h: SHA256Hash)
-  final case object FileNotFound
+  final case class FindFile(client: ActorRef, hash: SHA256Hash)
+  final case class DBFile(
+    client: ActorRef,
+    hash: SHA256Hash,
+    file: Option[hyponome.core.File]
+  )
 
   // Counting files
   final case object CountFiles
@@ -63,34 +67,33 @@ class DBActor(dbDef: DatabaseDef) extends Actor with HyponomeDB {
     "org.brianmckenna.wartremover.warts.Serializable"
   ))
   def prime: Receive = {
-    case CreateDB =>
+    case CreateDB(c: ActorRef) =>
       val replyToRef: ActorRef = sender
       val createFut: Future[Unit] = this.createDB
       createFut onComplete {
-        case Success(_: Unit) => replyToRef ! CreateDBAck
-        case Failure(_)       => replyToRef ! CreateDBFail
+        case Success(_: Unit) => replyToRef ! CreateDBAck(c)
+        case Failure(_)       => replyToRef ! CreateDBFail(c)
       }
-    case AddFile(f: Addition) =>
+    case AddFile(c: ActorRef, f: Addition) =>
       val replyToRef: ActorRef = sender
       val addFut: Future[Unit] = this.addFile(f)
       addFut onComplete {
-        case Success(_: Unit) => replyToRef ! AddFileAck
-        case Failure(_)       => replyToRef ! AddFileFail
+        case Success(_: Unit) => replyToRef ! AddFileAck(c, f)
+        case Failure(e)       => replyToRef ! AddFileFail(c, f, e)
       }
-    case RemoveFile(r: Removal) =>
+    case RemoveFile(c: ActorRef, r: Removal) =>
       val replyToRef: ActorRef = sender
       val removeFut: Future[Unit] = this.removeFile(r)
       removeFut onComplete {
-        case Success(_: Unit) => replyToRef ! RemoveFileAck
-        case Failure(_)       => replyToRef ! RemoveFileFail
+        case Success(_: Unit) => replyToRef ! RemoveFileAck(c, r)
+        case Failure(e)       => replyToRef ! RemoveFileFail(c, r, e)
       }
-    case FindFile(h: SHA256Hash) =>
+    case FindFile(c: ActorRef, h: SHA256Hash) =>
       val replyToRef: ActorRef = sender
       val findFut: Future[Option[File]] = this.findFile(h)
       findFut onComplete {
-        case Success(Some(f: File)) => replyToRef ! f
-        case Success(None)          => replyToRef ! FileNotFound
-        case Failure(_)             => replyToRef ! FileNotFound
+        case Success(f)    => replyToRef ! DBFile(c, h, f)
+        case Failure(_)    => replyToRef ! DBFile(c, h, None)
       }
     case CountFiles =>
       val replyToRef: ActorRef = sender

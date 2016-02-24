@@ -21,22 +21,6 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
     TestKit.shutdownActorSystem(system)
   }
 
-  def withDBActor(testCode: ActorRef => Any): Unit = {
-    val dbName = randomUUID.toString
-    val db = Database.forURL(
-      url = s"jdbc:h2:mem:$dbName;CIPHER=AES",
-      user = "hyponome",
-      password = "hyponome hyponome", // password = "filepwd userpwd"
-      driver = "org.h2.Driver",
-      keepAliveConnection = true
-    )
-    val dbActor = system.actorOf(DBActor.props(db))
-    try {
-      testCode(dbActor)
-    }
-    finally system.stop(dbActor) // dbActor's postStop() calls db.close
-  }
-
   val fs: FileSystem = FileSystems.getDefault()
 
   val testPDF: Path = {
@@ -71,79 +55,95 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
     add.length
   )
 
+  def withDBActor(testCode: ActorRef => Any): Unit = {
+    val dbName = randomUUID.toString
+    val db = Database.forURL(
+      url = s"jdbc:h2:mem:$dbName;CIPHER=AES",
+      user = "hyponome",
+      password = "hyponome hyponome", // password = "filepwd userpwd"
+      driver = "org.h2.Driver",
+      keepAliveConnection = true
+    )
+    val dbActor = system.actorOf(DBActor.props(db))
+    try {
+      testCode(dbActor)
+    }
+    finally system.stop(dbActor) // dbActor's postStop() calls db.close
+  }
+
   "A DBActor" must {
 
-    """respond with CreateDBAck when attempting to create a new DB if
+    """respond with CreateDBAck(self) when attempting to create a new DB if
     one doesn't already exist""" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB
-      expectMsg(DBActor.CreateDBAck)
+      dbActor ! DBActor.CreateDB(self)
+      expectMsg(DBActor.CreateDBAck(self))
     }
 
     """respond with CreateDBFail when attempting to create a new DB if
     one already exists""" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB
-      expectMsg(DBActor.CreateDBAck)
-      dbActor ! DBActor.CreateDB
-      expectMsg(DBActor.CreateDBFail)
+      dbActor ! DBActor.CreateDB(self)
+      expectMsg(DBActor.CreateDBAck(self))
+      dbActor ! DBActor.CreateDB(self)
+      expectMsg(DBActor.CreateDBFail(self))
     }
 
     "respond with AddFileAck when adding a file" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB
-      expectMsg(DBActor.CreateDBAck)
-      dbActor ! DBActor.AddFile(add)
-      expectMsg(DBActor.AddFileAck)
+      dbActor ! DBActor.CreateDB(self)
+      expectMsg(DBActor.CreateDBAck(self))
+      dbActor ! DBActor.AddFile(self, add)
+      expectMsg(DBActor.AddFileAck(self, add))
     }
 
     "respond with AddFileFail when adding a file that has already been added" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB
-      expectMsg(DBActor.CreateDBAck)
-      dbActor ! DBActor.AddFile(add)
-      expectMsg(DBActor.AddFileAck)
-      dbActor ! DBActor.AddFile(add)
-      expectMsg(DBActor.AddFileFail)
+      dbActor ! DBActor.CreateDB(self)
+      expectMsg(DBActor.CreateDBAck(self))
+      dbActor ! DBActor.AddFile(self, add)
+      expectMsg(DBActor.AddFileAck(self, add))
+      dbActor ! DBActor.AddFile(self, add)
+      expectMsgType[DBActor.AddFileFail]
     }
 
-    "respond with RemoveFileAck when removing a file" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB
-      expectMsg(DBActor.CreateDBAck)
-      dbActor ! DBActor.AddFile(add)
-      expectMsg(DBActor.AddFileAck)
-      dbActor ! DBActor.RemoveFile(remove)
-      expectMsg(DBActor.RemoveFileAck)
+    "respond with RemoveFileAck(self, remove) when removing a file" in withDBActor { dbActor =>
+      dbActor ! DBActor.CreateDB(self)
+      expectMsg(DBActor.CreateDBAck(self))
+      dbActor ! DBActor.AddFile(self, add)
+      expectMsg(DBActor.AddFileAck(self, add))
+      dbActor ! DBActor.RemoveFile(self, remove)
+      expectMsg(DBActor.RemoveFileAck(self, remove))
     }
 
     """respond with RemoveFileFail when removing a file that has already
     been removed""" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB
-      expectMsg(DBActor.CreateDBAck)
-      dbActor ! DBActor.AddFile(add)
-      expectMsg(DBActor.AddFileAck)
-      dbActor ! DBActor.RemoveFile(remove)
-      expectMsg(DBActor.RemoveFileAck)
-      dbActor ! DBActor.RemoveFile(remove)
-      expectMsg(DBActor.RemoveFileFail)
+      dbActor ! DBActor.CreateDB(self)
+      expectMsg(DBActor.CreateDBAck(self))
+      dbActor ! DBActor.AddFile(self, add)
+      expectMsg(DBActor.AddFileAck(self, add))
+      dbActor ! DBActor.RemoveFile(self, remove)
+      expectMsg(DBActor.RemoveFileAck(self, remove))
+      dbActor ! DBActor.RemoveFile(self, remove)
+      expectMsgType[DBActor.RemoveFileFail]
     }
 
-    """respond with the correct File message when sent a FindFile
+    """respond with the correct DBFile message when sent a FindFile
     message containing an added file's hash""" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB
-      expectMsg(DBActor.CreateDBAck)
-      dbActor ! DBActor.AddFile(add)
-      expectMsg(DBActor.AddFileAck)
-      dbActor ! DBActor.FindFile(add.hash)
-      expectMsg(expected)
+      dbActor ! DBActor.CreateDB(self)
+      expectMsg(DBActor.CreateDBAck(self))
+      dbActor ! DBActor.AddFile(self, add)
+      expectMsg(DBActor.AddFileAck(self, add))
+      dbActor ! DBActor.FindFile(self, add.hash)
+      expectMsg(DBActor.DBFile(self, add.hash, Some(expected)))
     }
 
-    """respond with a FileNotExpected message when sent a FindFile
+    """respond with the correct DBFile message when sent a FindFile
     message containing the hash of a file that has been removed""" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB
-      expectMsg(DBActor.CreateDBAck)
-      dbActor ! DBActor.AddFile(add)
-      expectMsg(DBActor.AddFileAck)
-      dbActor ! DBActor.RemoveFile(remove)
-      expectMsg(DBActor.RemoveFileAck)
-      dbActor ! DBActor.FindFile(add.hash)
-      expectMsg(DBActor.FileNotFound)
+      dbActor ! DBActor.CreateDB(self)
+      expectMsg(DBActor.CreateDBAck(self))
+      dbActor ! DBActor.AddFile(self, add)
+      expectMsg(DBActor.AddFileAck(self, add))
+      dbActor ! DBActor.RemoveFile(self, remove)
+      expectMsg(DBActor.RemoveFileAck(self, remove))
+      dbActor ! DBActor.FindFile(self, add.hash)
+      expectMsg(DBActor.DBFile(self, add.hash, None))
     }
   }
 }
