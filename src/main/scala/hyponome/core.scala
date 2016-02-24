@@ -45,6 +45,10 @@ object core {
     remoteAddress: Option[InetAddress]
   )
 
+  final case class FindFile(
+    hash: SHA256Hash
+  )
+
   final case class File(
     hash: SHA256Hash,
     name: String,
