@@ -19,14 +19,6 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
 
   val fs: FileSystem = FileSystems.getDefault()
 
-  /**
-    * val hyponomeConfigFile: java.io.File = new java.io.File("hyponome.conf")
-    *
-    * val config: Config = ConfigFactory.parseFile(hyponomeConfigFile)
-    *
-    * val configStorePath: Path = fs.getPath(config.getString("file-store.path"))
-    */
-
   val tempStorePath: Path = fs.getPath("/tmp/hyponome/store")
 
   val testPDF: Path = {
@@ -38,15 +30,6 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
     "eba205fb9114750b2ce83db62f9c2a15dd068bcba31a2de32d8df7f7c8d85441"
   )
 
-  /**
-    * val add = Addition(
-    *   testPDFHash,
-    *   testPDF.toFile.getName,
-    *   "application/pdf",
-    *   testPDF.toFile.length,
-    *   Some(InetAddress.getByName("192.168.1.253"))
-    * )
-    */
 
   def withTestStoreInstance(testCode: TestStore => Any): Unit = {
     val t: TestStore = new TestStore(tempStorePath)
