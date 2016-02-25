@@ -8,7 +8,7 @@ val commonOptions = Seq(
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
   "-Ywarn-unused-import",
-  // "-Ywarn-value-discard",
+  "-Ywarn-value-discard",
   "-deprecation",
   "-encoding", "UTF-8",
   "-feature",

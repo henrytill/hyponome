@@ -41,6 +41,7 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
       case Success(p: Path) =>
         // println(s"New test store created at $p")
         testCode(t)
+        ()
       case Failure(e) =>
         // println(s"New test store couldn't be created: $e")
         fail()

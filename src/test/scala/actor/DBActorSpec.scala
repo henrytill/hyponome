@@ -67,6 +67,7 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
     val dbActor = system.actorOf(DBActor.props(db))
     try {
       testCode(dbActor)
+      ()
     }
     finally system.stop(dbActor) // dbActor's postStop() calls db.close
   }

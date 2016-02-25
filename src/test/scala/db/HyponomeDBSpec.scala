@@ -35,6 +35,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
     val t: TestDB = new TestDB(db)
     try {
       testCode(t)
+      ()
     }
     finally t.close()
   }

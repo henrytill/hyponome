@@ -60,6 +60,7 @@ class FileActorSpec(_system: ActorSystem) extends TestKit(_system)
     val fileActor = system.actorOf(FileActor.props(tempStorePath))
     try {
       testCode(fileActor)
+      ()
     }
     finally system.stop(fileActor)
   }

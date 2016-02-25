@@ -70,6 +70,7 @@ class AskActorSpec(_system: ActorSystem) extends TestKit(_system)
     val askActor = system.actorOf(AskActor.props(recActor))
     try {
       testCode(askActor)
+      ()
     }
     finally {
       system.stop(askActor)
