@@ -88,14 +88,14 @@ class FileActorSpec(_system: ActorSystem) extends TestKit(_system)
       expectMsg(FileActor.DeleteStoreAck(self))
     }
 
-    """respond with AddFileFail when attempting to add a file to the
-   file store which has already been added""" in withFileActor { fileActor =>
+    """respond with PreviouslyAddedFile when attempting to add a file
+   to the file store which has already been added""" in withFileActor { fileActor =>
       fileActor ! FileActor.CreateStore(self)
       expectMsg(FileActor.CreateStoreAck(self))
       fileActor ! FileActor.AddFile(self, add)
       expectMsg(FileActor.AddFileAck(self, add))
       fileActor ! FileActor.AddFile(self, add)
-      expectMsgType[FileActor.AddFileFail]
+      expectMsg(FileActor.PreviouslyAddedFile(self, add))
       fileActor ! FileActor.DeleteStore(self)
       expectMsg(FileActor.DeleteStoreAck(self))
     }
@@ -112,8 +112,8 @@ class FileActorSpec(_system: ActorSystem) extends TestKit(_system)
       expectMsg(FileActor.DeleteStoreAck(self))
     }
 
-    """respond with RemoveFileFail when attempting to remove a file
-    from the file store which has already been removed""" in withFileActor { fileActor =>
+    """respond with PreviouslyRemovedFile when attempting to remove a
+    file from the file store which has already been removed""" in withFileActor { fileActor =>
       fileActor ! FileActor.CreateStore(self)
       expectMsg(FileActor.CreateStoreAck(self))
       fileActor ! FileActor.AddFile(self, add)
@@ -121,7 +121,7 @@ class FileActorSpec(_system: ActorSystem) extends TestKit(_system)
       fileActor ! FileActor.RemoveFile(self, remove)
       expectMsg(FileActor.RemoveFileAck(self, remove))
       fileActor ! FileActor.RemoveFile(self, remove)
-      expectMsgType[FileActor.RemoveFileFail]
+      expectMsg(FileActor.PreviouslyRemovedFile(self, remove))
       fileActor ! FileActor.DeleteStore(self)
       expectMsg(FileActor.DeleteStoreAck(self))
     }

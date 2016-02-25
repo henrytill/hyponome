@@ -22,11 +22,13 @@ object FileActor {
   final case class AddFile(client: ActorRef, addition: Addition)
   final case class AddFileAck(client: ActorRef, addition: Addition)
   final case class AddFileFail(client: ActorRef, addition: Addition, e: Throwable)
+  final case class PreviouslyAddedFile(client: ActorRef, addition: Addition)
 
   // Removing files
   final case class RemoveFile(client: ActorRef, removal: Removal)
   final case class RemoveFileAck(client: ActorRef, removal: Removal)
   final case class RemoveFileFail(client: ActorRef, removal: Removal, e: Throwable)
+  final case class PreviouslyRemovedFile(client: ActorRef, removal: Removal)
 
   // Finding a file
   final case class FindFile(client: ActorRef, hash: SHA256Hash)
@@ -48,6 +50,8 @@ class FileActor(p: Path) extends Actor with HyponomeFile {
 
   @SuppressWarnings(Array(
     "org.brianmckenna.wartremover.warts.Any",
+    "org.brianmckenna.wartremover.warts.AsInstanceOf",
+    "org.brianmckenna.wartremover.warts.IsInstanceOf",
     "org.brianmckenna.wartremover.warts.Nothing"
   ))
   def prime: Receive = {
@@ -71,15 +75,23 @@ class FileActor(p: Path) extends Actor with HyponomeFile {
         case true  => Future.failed(new UnsupportedOperationException)
       }
       copyFut onComplete {
-        case Success(_: Path)      => replyToRef ! AddFileAck(c, a)
-        case Failure(e: Throwable) => replyToRef ! AddFileFail(c, a, e)
+        case Success(_: Path) =>
+          replyToRef ! AddFileAck(c, a)
+        case Failure(_: UnsupportedOperationException) =>
+          replyToRef ! PreviouslyAddedFile(c, a)
+        case Failure(e: Throwable) =>
+          replyToRef ! AddFileFail(c, a, e)
       }
     case RemoveFile(c: ActorRef, r: Removal) =>
       val replyToRef: ActorRef = sender
       val deleteFut: Future[Unit] = this.deleteFromStore(r.hash)
       deleteFut onComplete {
-        case Success(_: Unit) => replyToRef ! RemoveFileAck(c, r)
-        case Failure(e)       => replyToRef ! RemoveFileFail(c, r, e)
+        case Success(_: Unit) =>
+          replyToRef ! RemoveFileAck(c, r)
+        case Failure(_: java.nio.file.NoSuchFileException) =>
+          replyToRef ! PreviouslyRemovedFile(c, r)
+        case Failure(e: Throwable) =>
+          replyToRef ! RemoveFileFail(c, r, e)
       }
     case FindFile(c: ActorRef, h: SHA256Hash) =>
       val replyToRef: ActorRef = sender

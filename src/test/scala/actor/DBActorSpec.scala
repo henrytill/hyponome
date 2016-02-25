@@ -94,13 +94,13 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
       expectMsg(DBActor.AddFileAck(self, add))
     }
 
-    "respond with AddFileFail when adding a file that has already been added" in withDBActor { dbActor =>
+    "respond with PreviouslyAddedFile when adding a file that has already been added" in withDBActor { dbActor =>
       dbActor ! DBActor.CreateDB(self)
       expectMsg(DBActor.CreateDBAck(self))
       dbActor ! DBActor.AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
       dbActor ! DBActor.AddFile(self, add)
-      expectMsgType[DBActor.AddFileFail]
+      expectMsg(DBActor.PreviouslyAddedFile(self, add))
     }
 
     "respond with RemoveFileAck(self, remove) when removing a file" in withDBActor { dbActor =>
@@ -112,8 +112,8 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
       expectMsg(DBActor.RemoveFileAck(self, remove))
     }
 
-    """respond with RemoveFileFail when removing a file that has already
-    been removed""" in withDBActor { dbActor =>
+    """respond with PreviouslyRemovedFile when removing a file that
+    has already been removed""" in withDBActor { dbActor =>
       dbActor ! DBActor.CreateDB(self)
       expectMsg(DBActor.CreateDBAck(self))
       dbActor ! DBActor.AddFile(self, add)
@@ -121,7 +121,7 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
       dbActor ! DBActor.RemoveFile(self, remove)
       expectMsg(DBActor.RemoveFileAck(self, remove))
       dbActor ! DBActor.RemoveFile(self, remove)
-      expectMsgType[DBActor.RemoveFileFail]
+      expectMsg(DBActor.PreviouslyRemovedFile(self, remove))
     }
 
     """respond with the correct DBFile message when sent a FindFile

@@ -30,7 +30,7 @@ import slick.driver.H2Driver.backend.DatabaseDef
   "org.brianmckenna.wartremover.warts.Nothing"
 ))
 object HttpMain extends App {
-  implicit val system: ActorSystem = ActorSystem("my-system")
+  implicit val system: ActorSystem = ActorSystem("Hyponome")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val ec: ExecutionContextExecutor = system.dispatcher
 
@@ -39,6 +39,7 @@ object HttpMain extends App {
   val store: Path     = fs.getPath(config.getString("file-store.path"))
   val db: DatabaseDef = Database.forConfig("h2")
   val uploadKey       = "file"
+  val (hostname, port) = ("thalassa.home", 3000)
 
   val recActor = system.actorOf(Props(new Receptionist(db, store)))
   val askActor = system.actorOf(AskActor.props(recActor))
@@ -53,38 +54,46 @@ object HttpMain extends App {
     path("objects") {
       post {
         extractClientIP { ip =>
-          uploadedFile(uploadKey) {
-            case (metadata, file) =>
-              val filePath: Path = file.toPath
-              val FileInfo(_, name, contentType) = metadata
-              val add: Addition = Addition(
-                filePath,
-                getSHA256Hash(filePath),
-                name,
-                contentType.toString,
-                file.length,
-                ip.toOption
-              )
-              val resFuture: Future[AdditionResponse] = ask(askActor, add).mapTo[AdditionResponse]
-              resFuture onComplete {
-                case Success(s: AdditionAck)  => println(s)
-                case Success(f: AdditionFail) => println(f)
-                case Failure(e: Throwable)    => println(e)
+          uploadedFile(uploadKey) { case (FileInfo(_, name, contentType), file) =>
+            val filePath: Path = file.toPath
+            val add: Addition = Addition(
+              filePath,
+              getSHA256Hash(filePath),
+              name,
+              contentType.toString,
+              file.length,
+              ip.toOption
+            )
+            val responseFuture: Future[String] =
+              ask(askActor, add).mapTo[AdditionResponse].map {
+                case AdditionAck(s) =>
+                  s"http://$hostname:$port/objects/${s.hash}\n"
+                case PreviouslyAdded(a) =>
+                  s"http://$hostname:$port/objects/${a.hash}\n"
+                case AdditionFail(f) =>
+                  "Fail"
               }
-              complete("foo")
+            onSuccess(responseFuture) { r => complete(r) }
           }
         }
       }
     } ~
     pathPrefix("objects" / Segment) { hash =>
       get {
-        complete(hash)
+        val query: hyponome.core.FindFile = FindFile(SHA256Hash(hash))
+        val responseFuture: Future[Option[Path]] =
+          ask(askActor, query)
+            .mapTo[Result]
+            .map(f => f.file)
+        onSuccess(responseFuture) {
+          case Some(f) => getFromFile(f.toFile)
+          case None    => reject
+        }
       }
     }
   }
 
   val route = objectsRoute
-  val (hostname, port) = ("thalassa.home", 3000)
   val bindingFuture = Http().bindAndHandle(route, hostname, port)
 
   println(s"Server online at http://$hostname:$port/\nPress RETURN to stop...")

@@ -102,14 +102,14 @@ class AskActorSpec(_system: ActorSystem) extends TestKit(_system)
       expectMsg(DeleteAck)
     }
 
-    """respond with AdditionFail when attempting to add a file to the
+    """respond with PreviouslyAdded when attempting to add a file to the
     store which has already been added""" in withAskActor { askActor =>
       askActor ! Create
       expectMsg(CreateAck)
       askActor ! add
       expectMsg(AdditionAck(add))
       askActor ! add
-      expectMsg(AdditionFail(add))
+      expectMsg(PreviouslyAdded(add))
       askActor ! Delete
       expectMsg(DeleteAck)
     }
@@ -126,7 +126,7 @@ class AskActorSpec(_system: ActorSystem) extends TestKit(_system)
       expectMsg(DeleteAck)
     }
 
-    """respond with RemovalFail when attempting to remove a file from the
+    """respond with PreviouslyRemoved when attempting to remove a file from the
     store that has already been removed""" in withAskActor { askActor =>
       askActor ! Create
       expectMsg(CreateAck)
@@ -135,7 +135,7 @@ class AskActorSpec(_system: ActorSystem) extends TestKit(_system)
       askActor ! remove
       expectMsg(RemovalAck(remove))
       askActor ! remove
-      expectMsg(RemovalFail(remove))
+      expectMsg(PreviouslyRemoved(remove))
       askActor ! Delete
       expectMsg(DeleteAck)
     }

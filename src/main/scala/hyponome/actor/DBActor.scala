@@ -3,6 +3,7 @@ package hyponome.actor
 import akka.actor.{Actor, ActorRef, Props}
 import hyponome.core._
 import hyponome.db._
+import org.h2.jdbc.JdbcSQLException
 import scala.concurrent.Future
 import scala.util.{Success, Failure}
 import slick.driver.H2Driver.api.{Database, TableQuery}
@@ -18,11 +19,13 @@ object DBActor {
   final case class AddFile(client: ActorRef, addition: Addition)
   final case class AddFileAck(client: ActorRef, addition: Addition)
   final case class AddFileFail(client: ActorRef, addition: Addition, e: Throwable)
+  final case class PreviouslyAddedFile(client: ActorRef, addition: Addition)
 
   // Removing files
   final case class RemoveFile(client: ActorRef, removal: Removal)
   final case class RemoveFileAck(client: ActorRef, removal: Removal)
   final case class RemoveFileFail(client: ActorRef, removal: Removal, e: Throwable)
+  final case class PreviouslyRemovedFile(client: ActorRef, removal: Removal)
 
   // Finding a file
   final case class FindFile(client: ActorRef, hash: SHA256Hash)
@@ -62,7 +65,10 @@ class DBActor(dbDef: DatabaseDef) extends Actor with HyponomeDB {
 
   @SuppressWarnings(Array(
     "org.brianmckenna.wartremover.warts.Any",
+    "org.brianmckenna.wartremover.warts.AsInstanceOf",
+    "org.brianmckenna.wartremover.warts.IsInstanceOf",
     "org.brianmckenna.wartremover.warts.NonUnitStatements",
+    "org.brianmckenna.wartremover.warts.Nothing",
     "org.brianmckenna.wartremover.warts.Product",
     "org.brianmckenna.wartremover.warts.Serializable"
   ))
@@ -78,15 +84,23 @@ class DBActor(dbDef: DatabaseDef) extends Actor with HyponomeDB {
       val replyToRef: ActorRef = sender
       val addFut: Future[Unit] = this.addFile(f)
       addFut onComplete {
-        case Success(_: Unit) => replyToRef ! AddFileAck(c, f)
-        case Failure(e)       => replyToRef ! AddFileFail(c, f, e)
+        case Success(_: Unit) =>
+          replyToRef ! AddFileAck(c, f)
+        case Failure(_: UnsupportedOperationException) =>
+          replyToRef ! PreviouslyAddedFile(c, f)
+        case Failure(e) =>
+          replyToRef ! AddFileFail(c, f, e)
       }
     case RemoveFile(c: ActorRef, r: Removal) =>
       val replyToRef: ActorRef = sender
       val removeFut: Future[Unit] = this.removeFile(r)
       removeFut onComplete {
-        case Success(_: Unit) => replyToRef ! RemoveFileAck(c, r)
-        case Failure(e)       => replyToRef ! RemoveFileFail(c, r, e)
+        case Success(_: Unit) =>
+          replyToRef ! RemoveFileAck(c, r)
+        case Failure(_: UnsupportedOperationException) =>
+          replyToRef ! PreviouslyRemovedFile(c, r)
+        case Failure(e) =>
+          replyToRef ! RemoveFileFail(c, r, e)
       }
     case FindFile(c: ActorRef, h: SHA256Hash) =>
       val replyToRef: ActorRef = sender

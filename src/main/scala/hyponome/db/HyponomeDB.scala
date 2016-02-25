@@ -32,32 +32,52 @@ trait HyponomeDB {
     db.run(events.result)
   }
 
-  def addFile(a: Addition): Future[Unit] = a match {
-    case Addition(_, hash, name, contentType, length, remoteAddress) =>
-      val f = File(hash, name, contentType, length)
-      val e = Event(0L, dummyTimestamp, Add, hash, remoteAddress)
-      val s = DBIO.seq(files += f, events += e)
-      db.run(s)
+  def added(hash: SHA256Hash)(implicit ec: ExecutionContext): Future[Boolean] = {
+    val q = events.filter(_.hash === hash).sortBy(_.tx.desc)
+    db.run(q.result.headOption).map {
+      case Some(Event(_, _, Add, _, _)) => true
+      case _                            => false
+    }
   }
 
   def removed(hash: SHA256Hash)(implicit ec: ExecutionContext): Future[Boolean] = {
     val q = events.filter(_.hash === hash).sortBy(_.tx.desc)
-    db.run(q.result.head).map {
-      case Event(_, _, Remove, _, _) => true
-      case _                         => false
+    db.run(q.result.headOption).map {
+      case Some(Event(_, _, Remove, _, _)) => true
+      case _                               => false
     }
   }
 
   @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
-  def removeFile(r: Removal)(implicit ec: ExecutionContext): Future[Unit] = r match {
-    case Removal(hash, remoteAddress) =>
-      removed(hash).flatMap {
+  def addFile(a: Addition)(implicit ec: ExecutionContext): Future[Unit] = a match {
+    case Addition(_, hash, name, contentType, length, remoteAddress) =>
+      val f = File(hash, name, contentType, length)
+      val e = Event(0L, dummyTimestamp, Add, hash, remoteAddress)
+      added(hash) flatMap {
         case true  => Future.failed(new UnsupportedOperationException)
-        case false =>
+        case false => removed(hash).flatMap {
+          case true =>
+            val s = DBIO.seq(events += e)
+            db.run(s)
+          case false =>
+            val s = DBIO.seq(files += f, events += e)
+            db.run(s)
+          }
+      }
+  }
+
+  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
+  def removeFile(r: Removal)(implicit ec: ExecutionContext): Future[Unit] = r match {
+    case Removal(hash, remoteAddress) => removed(hash).flatMap {
+      case true  => Future.failed(new UnsupportedOperationException)
+      case false => added(hash).flatMap {
+        case false => Future.failed(new UnsupportedOperationException)
+        case true  =>
           val e = Event(0L, dummyTimestamp, Remove, hash, remoteAddress)
           val s = DBIO.seq(events += e)
           db.run(s)
       }
+    }
   }
 
   @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))

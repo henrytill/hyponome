@@ -11,11 +11,13 @@ object core {
   final case object Create
   final case object Delete
 
-  sealed trait InitResponse
-  final case object CreateAck  extends InitResponse
-  final case object CreateFail extends InitResponse
-  final case object DeleteAck  extends InitResponse
-  final case object DeleteFail extends InitResponse
+  sealed trait CreateResponse
+  final case object CreateAck extends CreateResponse
+  final case object CreateFail extends CreateResponse
+
+  sealed trait DeleteResponse
+  final case object DeleteAck extends DeleteResponse
+  final case object DeleteFail extends DeleteResponse
 
   final case class Addition(
     file: Path,
@@ -27,8 +29,9 @@ object core {
   )
 
   sealed trait AdditionResponse
-  final case class AdditionAck(addition: Addition)  extends AdditionResponse
+  final case class AdditionAck(addition: Addition) extends AdditionResponse
   final case class AdditionFail(addition: Addition) extends AdditionResponse
+  final case class PreviouslyAdded(addition: Addition) extends AdditionResponse
 
   final case class Removal(
     hash: SHA256Hash,
@@ -36,10 +39,11 @@ object core {
   )
 
   sealed trait RemovalResponse
-  final case class RemovalAck(removal: Removal)  extends RemovalResponse
+  final case class RemovalAck(removal: Removal) extends RemovalResponse
   final case class RemovalFail(removal: Removal) extends RemovalResponse
+  final case class PreviouslyRemoved(removal: Removal) extends RemovalResponse
 
-  final case class FindFile(h: SHA256Hash) 
+  final case class FindFile(h: SHA256Hash)
   final case class Result(file: Option[Path])
 
   // Core types
