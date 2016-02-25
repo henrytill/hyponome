@@ -23,8 +23,12 @@ class Receptionist(db: DatabaseDef, store: Path) extends Actor {
       fileActor ! FileActor.CreateStore(sender)
     case FileActor.CreateStoreAck(c: ActorRef) =>
       dbActor ! DBActor.CreateDB(c)
+    case FileActor.CreateStoreFail(c: ActorRef) =>
+      c ! CreateFail
     case DBActor.CreateDBAck(c: ActorRef) =>
       c ! CreateAck
+    case DBActor.CreateDBFail(c: ActorRef) =>
+      c ! CreateFail
     // Deleting a store
     case Delete =>
       fileActor ! FileActor.DeleteStore(sender)
