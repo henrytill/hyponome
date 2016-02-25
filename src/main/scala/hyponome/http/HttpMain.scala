@@ -12,8 +12,9 @@ import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
 import hyponome.actor._
 import hyponome.core._
+import hyponome.core.JsonProtocol._
 import java.lang.SuppressWarnings
-import java.net.InetAddress
+import java.net.URI
 import java.nio.file.{FileSystem, FileSystems, Path}
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
@@ -46,8 +47,8 @@ object HttpMain extends App {
 
   implicit val timeout: Timeout = Timeout(5.seconds)
   val init: Future[Any] = ask(askActor, Create)
-  init onSuccess {
-    case _ => println(init.value)
+  init onComplete {
+    case msg => println(msg)
   }
 
   val objectsRoute: Route = {
@@ -64,16 +65,24 @@ object HttpMain extends App {
               file.length,
               ip.toOption
             )
-            val responseFuture: Future[String] =
+            val responseFuture: Future[Addition] =
               ask(askActor, add).mapTo[AdditionResponse].map {
-                case AdditionAck(s) =>
-                  s"http://$hostname:$port/objects/${s.hash}\n"
-                case PreviouslyAdded(a) =>
-                  s"http://$hostname:$port/objects/${a.hash}\n"
-                case AdditionFail(f) =>
-                  "Fail"
+                case AdditionAck(s)     => s
+                case PreviouslyAdded(s) => s
+                case AdditionFail(s)    => s
               }
-            onSuccess(responseFuture) { r => complete(r) }
+            onSuccess(responseFuture) { s =>
+              val uri = new URI(s"http://$hostname:$port/objects/${s.hash}")
+              val res = new Response(
+                uri,
+                s.hash,
+                s.name,
+                s.contentType,
+                s.length,
+                s.remoteAddress
+              )
+              complete(res)
+            }
           }
         }
       }
