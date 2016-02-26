@@ -1,5 +1,6 @@
 package hyponome.core
 
+import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import java.net.{InetAddress, URI}
 import java.nio.file.Path
 import slick.driver.H2Driver.api._
@@ -56,7 +57,18 @@ final case class PreviouslyRemoved(removal: Removal) extends RemovalResponse
 final case class FindFile(h: SHA256Hash)
 final case class Result(file: Option[Path])
 
+sealed trait Status {
+  def toStatusCode: StatusCode
+}
+final case object Created extends Status {
+  def toStatusCode: StatusCode = StatusCodes.Created
+}
+final case object Exists extends Status {
+  def toStatusCode: StatusCode = StatusCodes.OK
+}
+
 final case class Response(
+  status: Status,
   file: URI,
   hash: SHA256Hash,
   name: String,
@@ -66,15 +78,15 @@ final case class Response(
 )
 
 // DB types
-sealed trait Operation
-final case object Add extends Operation
-final case object Remove extends Operation
+sealed abstract class Operation(toString: String)
+final case object Add extends Operation("Add")
+final case object Remove extends Operation("Remove")
 
 object Operation {
   implicit val operationColumnType: BaseColumnType[Operation] =
-    MappedColumnType.base[Operation, Int](
-      { case Add => 1; case Remove => -1 },
-      { case 1 => Add; case -1 => Remove }
+    MappedColumnType.base[Operation, String](
+      { (op: Operation) => op.toString },
+      { case "Add" => Add; case "Remove" => Remove }
     )
 }
 
