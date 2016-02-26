@@ -3,6 +3,7 @@ package hyponome.actor
 import akka.actor.{Actor, ActorRef, Props}
 import hyponome.core._
 import hyponome.db._
+import java.util.concurrent.atomic.AtomicLong
 import org.h2.jdbc.JdbcSQLException
 import scala.concurrent.Future
 import scala.util.{Success, Failure}
@@ -45,10 +46,10 @@ object DBActor {
   final case object DumpEvents
   final case class EventDump(es: Seq[Event])
 
-  def props(dbDef: DatabaseDef): Props = Props(new DBActor(dbDef))
+  def props(dbDef: DatabaseDef, count: AtomicLong): Props = Props(new DBActor(dbDef, count))
 }
 
-class DBActor(dbDef: DatabaseDef) extends Actor with HyponomeDB {
+class DBActor(dbDef: DatabaseDef, count: AtomicLong) extends Actor with HyponomeDB {
 
   import context.dispatcher
   import DBActor._
@@ -58,6 +59,16 @@ class DBActor(dbDef: DatabaseDef) extends Actor with HyponomeDB {
   val events: TableQuery[Events] = TableQuery[Events]
 
   val db: DatabaseDef = dbDef
+
+  val counter: AtomicLong = count
+
+  override def preStart(): Unit = {
+    val syncFut: Future[Unit] = this.syncCounter()
+    syncFut onComplete {
+      case Success(_: Unit) => println(s"Counter synced to value: ${counter.get}")
+      case Failure(ex)      => println(s"Counter not synced: ${ex.getMessage}")
+    }
+  }
 
   override def postStop(): Unit = {
     this.close()

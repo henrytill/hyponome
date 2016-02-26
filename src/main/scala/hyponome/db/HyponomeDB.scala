@@ -3,6 +3,7 @@ package hyponome.db
 import hyponome.core._
 import java.lang.SuppressWarnings
 import java.net.InetAddress
+import java.util.concurrent.atomic.AtomicLong
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Try}
@@ -18,6 +19,8 @@ trait HyponomeDB {
   val db: DatabaseDef
 
   val dummyTimestamp = new java.sql.Timestamp(0)
+
+  val counter: AtomicLong
 
   def createDB: Future[Unit] = {
     val s = DBIO.seq((events.schema ++ files.schema).create)
@@ -51,8 +54,9 @@ trait HyponomeDB {
   @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
   def addFile(a: Addition)(implicit ec: ExecutionContext): Future[Unit] = a match {
     case Addition(_, hash, name, contentType, length, remoteAddress) =>
+      val c = counter.incrementAndGet()
       val f = File(hash, name, contentType, length)
-      val e = Event(0L, dummyTimestamp, Add, hash, remoteAddress)
+      val e = Event(c, dummyTimestamp, Add, hash, remoteAddress)
       added(hash) flatMap {
         case true  => Future.failed(new UnsupportedOperationException)
         case false => removed(hash).flatMap {
@@ -73,7 +77,8 @@ trait HyponomeDB {
       case false => added(hash).flatMap {
         case false => Future.failed(new UnsupportedOperationException)
         case true  =>
-          val e = Event(0L, dummyTimestamp, Remove, hash, remoteAddress)
+          val c = counter.incrementAndGet()
+          val e = Event(c, dummyTimestamp, Remove, hash, remoteAddress)
           val s = DBIO.seq(events += e)
           db.run(s)
       }
@@ -93,6 +98,18 @@ trait HyponomeDB {
     val q = files.length
     db.run(q.result)
   }
+
+  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
+  def maxTx: Future[Option[Long]] = {
+    val q = events.map(_.tx).max
+    db.run(q.result)
+  }
+
+  def syncCounter()(implicit ec: ExecutionContext): Future[Unit] =
+    maxTx.flatMap {
+      case Some(tx) => Future(counter.set(tx))
+      case None     => Future(counter.set(0))
+    }
 
   @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.NonUnitStatements"))
   def close(): Unit = {

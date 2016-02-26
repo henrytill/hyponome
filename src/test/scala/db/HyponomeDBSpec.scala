@@ -3,6 +3,7 @@ package hyponome.db
 import hyponome.core._
 import java.net.InetAddress
 import java.nio.file._
+import java.util.concurrent.atomic.AtomicLong
 import java.util.UUID.randomUUID
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpecLike}
@@ -12,18 +13,21 @@ import scala.util.{Success, Failure}
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
 
-class TestDB(dbDef: DatabaseDef) extends HyponomeDB {
+class TestDB(dbDef: DatabaseDef, count: AtomicLong) extends HyponomeDB {
 
   val files: TableQuery[Files] = TableQuery[Files]
 
   val events: TableQuery[Events] = TableQuery[Events]
 
   val db: DatabaseDef = dbDef
+
+  val counter: AtomicLong = count
 }
 
 class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
 
   def withTestDBInstance(testCode: TestDB => Any): Unit = {
+    val c = new AtomicLong()
     val dbName = randomUUID.toString
     val db = Database.forURL(
       url = s"jdbc:h2:mem:$dbName;CIPHER=AES",
@@ -32,7 +36,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       driver = "org.h2.Driver",
       keepAliveConnection = true
     )
-    val t: TestDB = new TestDB(db)
+    val t: TestDB = new TestDB(db, c)
     try {
       testCode(t)
       ()
@@ -152,6 +156,21 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
         t.addFile(add).futureValue should equal(())
         t.removeFile(remove).futureValue should equal(())
         t.findFile(add.hash).futureValue should equal(None)
+      }
+    }
+
+    "have a maxTx method" which {
+      """returns a Future value of a None when called with an empty
+      Events table""" in withTestDBInstance { t =>
+        t.createDB.futureValue should equal(())
+        t.maxTx.futureValue should equal(None)
+      }
+      """returns a Future value which corresponds to the number of
+      items in the Events table""" in withTestDBInstance { t =>
+        t.createDB.futureValue should equal(())
+        t.addFile(add).futureValue should equal(())
+        t.removeFile(remove).futureValue should equal(())
+        t.maxTx.futureValue should equal(Some(2))
       }
     }
   }

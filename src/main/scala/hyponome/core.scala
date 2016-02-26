@@ -98,7 +98,7 @@ final case class File(
 )
 
 final case class Event(
-  id: Long,
+  tx: Long,
   timestamp: java.sql.Timestamp,
   operation: Operation,
   hash: SHA256Hash,

@@ -5,6 +5,7 @@ import akka.testkit.{TestActors, TestKit, ImplicitSender}
 import hyponome.core._
 import java.net.InetAddress
 import java.nio.file._
+import java.util.concurrent.atomic.AtomicLong
 import java.util.UUID.randomUUID
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import slick.driver.H2Driver.api._
@@ -56,6 +57,7 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
   )
 
   def withDBActor(testCode: ActorRef => Any): Unit = {
+    val c = new AtomicLong()
     val dbName = randomUUID.toString
     val db = Database.forURL(
       url = s"jdbc:h2:mem:$dbName;CIPHER=AES",
@@ -64,7 +66,7 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
       driver = "org.h2.Driver",
       keepAliveConnection = true
     )
-    val dbActor = system.actorOf(DBActor.props(db))
+    val dbActor = system.actorOf(DBActor.props(db, c))
     try {
       testCode(dbActor)
       ()

@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.typesafe.config.{Config, ConfigFactory}
 import hyponome.core._
 import java.nio.file.{FileSystem, FileSystems, Path}
+import java.util.concurrent.atomic.AtomicLong
 import slick.driver.H2Driver.api.Database
 import slick.driver.H2Driver.backend.DatabaseDef
 
@@ -13,7 +14,9 @@ object Receptionist {
 
 class Receptionist(db: DatabaseDef, store: Path) extends Actor {
 
-  val dbActor   = context.actorOf(DBActor.props(db))
+  val counter: AtomicLong = new AtomicLong()
+
+  val dbActor   = context.actorOf(DBActor.props(db, counter))
   val fileActor = context.actorOf(FileActor.props(store))
 
   @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Any"))

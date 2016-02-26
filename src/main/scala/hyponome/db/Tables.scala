@@ -38,7 +38,7 @@ object Events {
 @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
 class Events(tag: Tag) extends Table[Event](tag, "EVENTS") {
   import Events._
-  def tx = column[Long]("TX", O.AutoInc)
+  def tx = column[Long]("TX", O.PrimaryKey)
   def timestamp = column[Timestamp]("TIMESTAMP", O.SqlType("TIMESTAMP AS CURRENT_TIMESTAMP"))
   def operation = column[Operation]("OPERATION")
   def hash = column[SHA256Hash]("HASH", O.SqlType("CHARACTER(64)"))
