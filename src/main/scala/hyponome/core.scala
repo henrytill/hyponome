@@ -41,8 +41,8 @@ final case class Addition(
 
 sealed trait AdditionResponse
 final case class AdditionAck(addition: Addition) extends AdditionResponse
-final case class AdditionFail(addition: Addition) extends AdditionResponse
 final case class PreviouslyAdded(addition: Addition) extends AdditionResponse
+final case class AdditionFail(addition: Addition, exception: Throwable) extends AdditionResponse
 
 final case class Removal(
   hash: SHA256Hash,
@@ -51,8 +51,8 @@ final case class Removal(
 
 sealed trait RemovalResponse
 final case class RemovalAck(removal: Removal) extends RemovalResponse
-final case class RemovalFail(removal: Removal) extends RemovalResponse
 final case class PreviouslyRemoved(removal: Removal) extends RemovalResponse
+final case class RemovalFail(removal: Removal, exception: Throwable) extends RemovalResponse
 
 final case class FindFile(h: SHA256Hash)
 final case class Result(file: Option[Path])

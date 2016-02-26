@@ -42,13 +42,13 @@ class Receptionist(db: DatabaseDef, store: Path) extends Actor {
     case FileActor.PreviouslyAddedFile(c: ActorRef, a: Addition) =>
       dbActor ! DBActor.AddFile(c, a)
     case FileActor.AddFileFail(c: ActorRef, a: Addition, e: Throwable) =>
-      c ! AdditionFail(a)
+      c ! AdditionFail(a, e)
     case DBActor.AddFileAck(c: ActorRef, a: Addition) =>
       c ! AdditionAck(a)
     case DBActor.PreviouslyAddedFile(c: ActorRef, a: Addition) =>
       c ! PreviouslyAdded(a)
     case DBActor.AddFileFail(c: ActorRef, a: Addition, e: Throwable) =>
-      c ! AdditionFail(a)
+      c ! AdditionFail(a, e)
     // Removing files
     case r: Removal =>
       dbActor ! DBActor.RemoveFile(sender, r)
@@ -57,7 +57,7 @@ class Receptionist(db: DatabaseDef, store: Path) extends Actor {
     case DBActor.PreviouslyRemovedFile(c: ActorRef, r: Removal) =>
       c ! PreviouslyRemoved(r)
     case DBActor.RemoveFileFail(c: ActorRef, r: Removal, e: Throwable) =>
-      c ! RemovalFail(r)
+      c ! RemovalFail(r, e)
     // Finding a file
     case FindFile(h: SHA256Hash)  =>
       dbActor ! DBActor.FindFile(sender, h)

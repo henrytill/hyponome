@@ -56,6 +56,9 @@ object HttpMain extends App {
       system.stop(initActor)
   }
 
+  def handleFailure(ex: Throwable): (StatusCodes.ServerError, String) =
+    (StatusCodes.InternalServerError, ex.getMessage)
+
   def handlePostObjects(a: ActorRef, r: RemoteAddress, i: FileInfo, f: java.io.File): Route = {
     def makeAddition(i: FileInfo, f: java.io.File, r: RemoteAddress): Addition = {
       val p: Path = f.toPath
@@ -68,21 +71,24 @@ object HttpMain extends App {
     }
     val responseFuture: Future[AdditionResponse] =
       ask(a, makeAddition(i, f, r)).mapTo[AdditionResponse]
-    onSuccess(responseFuture) {
-      case AdditionAck(a)     => complete { response(a, Created) }
-      case PreviouslyAdded(a) => complete { response(a, Exists)  }
-      case AdditionFail(a)    => complete { HttpResponse(StatusCodes.InternalServerError)}
+    onComplete(responseFuture) {
+      case Success(AdditionAck(a))      => complete { response(a, Created) }
+      case Success(PreviouslyAdded(a))  => complete { response(a, Exists)  }
+      case Success(AdditionFail(a, ex)) => complete { handleFailure(ex)    }
+      case Failure(ex)                  => complete { handleFailure(ex)    }
     }
   }
 
   def handleGetObjects(a: ActorRef, h: String): Route = {
-    val responseFuture: Future[Option[Path]] =
+    val responseFuture: Future[Option[java.io.File]] =
       ask(a, FindFile(SHA256Hash(h)))
         .mapTo[Result]
-        .map(f => f.file)
-    onSuccess(responseFuture) {
-      case Some(f) => getFromFile(f.toFile)
-      case None    => reject
+        .map(_.file)
+        .map(_.map(_.toFile))
+    onComplete(responseFuture) {
+      case Success(Some(f)) => getFromFile(f)
+      case Success(None)    => reject
+      case Failure(ex)      => complete { handleFailure(ex) }
     }
   }
 
