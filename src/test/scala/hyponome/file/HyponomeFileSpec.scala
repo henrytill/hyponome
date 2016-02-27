@@ -43,8 +43,8 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
 
     "have a getFilePath method" which {
       "returns the correct file store Path" in withTestStoreInstance { t =>
-        val hash = getSHA256Hash(testPDF)
-        val (dir, file) = hash.value.splitAt(2)
+        val hash = testPDFHash
+        val (dir: String, file: String) = hash.value.splitAt(2)
         val expected: Path = tempStorePath.resolve(dir).resolve(file).toAbsolutePath
         t.getFilePath(hash) should equal(expected)
       }
@@ -52,16 +52,14 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
 
     "have a copyToStore method" which {
       "copies a file to the correct file store Path" in withTestStoreInstance { t =>
-        val sourceHash = getSHA256Hash(testPDF)
-        t.copyToStore(sourceHash, testPDF).map { p =>
+        t.copyToStore(testPDFHash, testPDF).flatMap { p =>
           getSHA256Hash(p)
-        }.futureValue should equal(sourceHash)
+        }.futureValue should equal(testPDFHash)
       }
       """returns a Future of a Failure(FileAlreadyExistsException)
       when trying to copy a file to a path that already exists""" in withTestStoreInstance { t =>
-        val sourceHash = getSHA256Hash(testPDF)
-        t.copyToStore(sourceHash, testPDF).flatMap { _ =>
-            t.copyToStore(sourceHash, testPDF)
+        t.copyToStore(testPDFHash, testPDF).flatMap { _ =>
+          t.copyToStore(testPDFHash, testPDF)
         }.failed.futureValue shouldBe a [java.nio.file.FileAlreadyExistsException]
       }
     }
@@ -69,8 +67,7 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
     "have a existsInStore method" which {
       """returns a Future with the value of true if the specified path
       exists in the file store""" in withTestStoreInstance { t =>
-        val sourceHash = getSHA256Hash(testPDF)
-        t.copyToStore(sourceHash, testPDF).flatMap { p =>
+        t.copyToStore(testPDFHash, testPDF).flatMap { p =>
           t.existsInStore(p)
         }.futureValue should equal(true)
       }
@@ -85,17 +82,15 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
 
     "have a deleteFromStore method" which {
       "deletes a file with the specified hash from the file store" in withTestStoreInstance { t =>
-        val sourceHash = getSHA256Hash(testPDF)
-        t.copyToStore(sourceHash, testPDF).flatMap { _ =>
-          t.deleteFromStore(sourceHash)
+        t.copyToStore(testPDFHash, testPDF).flatMap { _ =>
+          t.deleteFromStore(testPDFHash)
         }.flatMap { _ =>
-          t.existsInStore(t.getFilePath(sourceHash))
+          t.existsInStore(t.getFilePath(testPDFHash))
         }.futureValue should equal(false)
       }
       """returns a Future of value Failed(NoSuchFileException) when
       attempting to delete a file which doesn't exist""" in withTestStoreInstance { t =>
-        val sourceHash = getSHA256Hash(testPDF)
-        t.deleteFromStore(sourceHash).failed.futureValue shouldBe a [java.nio.file.NoSuchFileException]
+        t.deleteFromStore(testPDFHash).failed.futureValue shouldBe a [java.nio.file.NoSuchFileException]
       }
     }
   }

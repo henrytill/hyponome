@@ -41,17 +41,21 @@ final class HttpService(
     (StatusCodes.InternalServerError, ex.getMessage)
 
   def handlePostObjects(a: ActorRef, r: RemoteAddress, i: FileInfo, f: java.io.File): Route = {
-    def makeAddition(i: FileInfo, f: java.io.File, r: RemoteAddress): Addition = {
+    def makeAddition(i: FileInfo, f: java.io.File, r: RemoteAddress): Future[Addition] = {
       val p: Path = f.toPath
-      val h: SHA256Hash = getSHA256Hash(p)
-      Addition(p, h, i.fileName, i.contentType.toString, f.length, r.toOption)
+      getSHA256Hash(p).map { h =>
+        Addition(p, h, i.fileName, i.contentType.toString, f.length, r.toOption)
+      }
     }
     def response(f: Addition, s: Status): Response = {
       val uri = new URI(s"http://$hostname:$port/objects/${f.hash}")
       Response(s, uri, f.hash, f.name, f.contentType, f.length, f.remoteAddress)
     }
+    @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Any"))
     val responseFuture: Future[AdditionResponse] =
-      ask(a, makeAddition(i, f, r)).mapTo[AdditionResponse]
+      makeAddition(i, f, r)
+        .flatMap(ask(a, _))
+        .mapTo[AdditionResponse]
     onComplete(responseFuture) {
       case Success(AdditionAck(a))      => complete { response(a, Created) }
       case Success(PreviouslyAdded(a))  => complete { response(a, Exists)  }

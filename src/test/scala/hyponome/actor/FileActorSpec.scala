@@ -37,7 +37,7 @@ class FileActorSpec(_system: ActorSystem) extends TestKit(_system)
 
   val add = Addition(
     testPDF,
-    getSHA256Hash(testPDF),
+    testPDFHash,
     testPDF.toFile.getName,
     "application/octet-stream",
     testPDF.toFile.length,

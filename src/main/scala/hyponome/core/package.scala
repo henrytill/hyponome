@@ -2,6 +2,7 @@ package hyponome
 
 import java.nio.file.{Files, Path}
 import org.apache.commons.codec.digest.DigestUtils.sha256Hex
+import scala.concurrent.{blocking, ExecutionContext, Future}
 
 package object core {
   // Core functions
@@ -13,8 +14,11 @@ package object core {
     finally fist.close()
   }
 
-  def getSHA256Hash(p: Path): SHA256Hash = {
-    val s: String = withInputStream(p)(sha256Hex)
-    SHA256Hash(s)
-  }
+  def getSHA256Hash(p: Path)(implicit ec: ExecutionContext): Future[SHA256Hash] =
+    Future {
+      blocking {
+        val s: String = withInputStream(p)(sha256Hex)
+        SHA256Hash(s)
+      }
+    }
 }
