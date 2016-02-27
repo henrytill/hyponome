@@ -92,85 +92,104 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       }
       """returns a Future value of Failure(JdbcSQLException) when
       attempting to create a db if one already exists""" in withTestDBInstance { t =>
-        t.createDB().futureValue should equal(())
-        t.createDB().failed.futureValue shouldBe a [org.h2.jdbc.JdbcSQLException]
+        t.createDB().flatMap { _ =>
+          t.createDB()
+        }.failed.futureValue shouldBe a [org.h2.jdbc.JdbcSQLException]
       }
     }
 
     "have an addFile method" which {
       "returns a Future value of Success(()) when adding a file" in withTestDBInstance { t =>
-        t.createDB().futureValue should equal(())
-        t.addFile(add).futureValue should equal(())
+        t.createDB().flatMap { _ => t.addFile(add) }.futureValue should equal(())
       }
       """returns a Future value of Success(()) when adding a file that
       has already been removed""" in withTestDBInstance { t =>
-        t.createDB().futureValue should equal(())
-        t.addFile(add).futureValue should equal(())
-        t.removeFile(remove).futureValue should equal(())
-        t.addFile(add).futureValue should equal(())
+        t.createDB().flatMap { _ =>
+          t.addFile(add)
+        }.flatMap { _ =>
+          t.removeFile(remove)
+        }.flatMap { _ =>
+          t.addFile(add)
+        }.futureValue should equal(())
       }
       """returns a Future value of Failure(UnsupportedOperationException) when
       adding a file that has already been added""" in withTestDBInstance { t =>
-        t.createDB().futureValue should equal(())
-        t.addFile(add).futureValue should equal(())
-        t.addFile(add).failed.futureValue shouldBe a [UnsupportedOperationException]
+        t.createDB().flatMap { _ =>
+          t.addFile(add)
+        }.flatMap { _ =>
+          t.addFile(add)
+        }.failed.futureValue shouldBe a [UnsupportedOperationException]
       }
     }
 
     "have a removeFile method" which {
       "returns a Future value of Success(()) when removing a file" in withTestDBInstance { t =>
-        t.createDB().futureValue should equal(())
-        t.addFile(add).futureValue should equal(())
-        t.removeFile(remove).futureValue should equal(())
+        t.createDB().flatMap { _ =>
+          t.addFile(add)
+        }.flatMap { _ =>
+          t.removeFile(remove)
+        }.futureValue should equal(())
       }
       """returns a Future value of Failure(UnsupportedOperationException)
       when removing a file that has never beend added""" in withTestDBInstance { t =>
-        t.createDB().futureValue should equal(())
-        t.removeFile(remove).failed.futureValue shouldBe a [UnsupportedOperationException]
+        t.createDB().flatMap { _ =>
+          t.removeFile(remove)
+        }.failed.futureValue shouldBe a [UnsupportedOperationException]
       }
       """returns a Future value of Failure(UnsupportedOperationException)
       when removing a file that has already been removed""" in withTestDBInstance { t =>
-        t.createDB().futureValue should equal(())
-        t.addFile(add).futureValue should equal(())
-        t.removeFile(remove).futureValue should equal(())
-        t.removeFile(remove).failed.futureValue shouldBe a [UnsupportedOperationException]
+        t.createDB().flatMap { _ =>
+          t.addFile(add)
+        }.flatMap { _ =>
+          t.removeFile(remove)
+        }.flatMap { _ =>
+          t.removeFile(remove)
+        }.failed.futureValue shouldBe a [UnsupportedOperationException]
       }
     }
 
     "have a findFile method" which {
       """returns a Future value of a given File when called with an
       argument of a file's hash that has never been added""" in withTestDBInstance { t =>
-        t.createDB().futureValue should equal(())
-        t.findFile(add.hash).futureValue should equal(None)
+        t.createDB().flatMap { _ =>
+          t.findFile(add.hash)
+        }.futureValue should equal(None)
       }
       """returns a Future value of a given File when called with an
       argument of that file's hash""" in withTestDBInstance { t =>
-        t.createDB().futureValue should equal(())
-        t.addFile(add).futureValue should equal(())
-        t.findFile(add.hash).futureValue should equal(Some(expected))
+        t.createDB().flatMap { _ =>
+          t.addFile(add)
+        }.flatMap { _ =>
+          t.findFile(add.hash)
+        }.futureValue should equal(Some(expected))
       }
       """returns a Future value of Failure(IllegalArgumentException)
       when called with an argument of the hash of a file that has been
       removed""" in withTestDBInstance { t =>
-        t.createDB().futureValue should equal(())
-        t.addFile(add).futureValue should equal(())
-        t.removeFile(remove).futureValue should equal(())
-        t.findFile(add.hash).futureValue should equal(None)
+        t.createDB().flatMap { _ =>
+          t.addFile(add)
+        }.flatMap { _ =>
+          t.removeFile(remove)
+        }.flatMap { _ =>
+          t.findFile(add.hash)
+        }.futureValue should equal(None)
       }
     }
 
     "have a maxTx method" which {
       """returns a Future value of a None when called with an empty
       Events table""" in withTestDBInstance { t =>
-        t.createDB().futureValue should equal(())
-        t.maxTx.futureValue should equal(None)
+        t.createDB().flatMap { _ => t.maxTx }.futureValue should equal(None)
       }
       """returns a Future value which corresponds to the number of
       items in the Events table""" in withTestDBInstance { t =>
-        t.createDB().futureValue should equal(())
-        t.addFile(add).futureValue should equal(())
-        t.removeFile(remove).futureValue should equal(())
-        t.maxTx.futureValue should equal(Some(2))
+        t.createDB().flatMap { _ =>
+          t.addFile(add)
+        }.flatMap { _ =>
+          t.removeFile(remove)
+        }.flatMap { _ =>
+          t.maxTx
+        }.futureValue should equal(Some(2))
       }
     }
   }
