@@ -53,24 +53,16 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
     "have a copyToStore method" which {
       "copies a file to the correct file store Path" in withTestStoreInstance { t =>
         val sourceHash = getSHA256Hash(testPDF)
-        val destinationHash: Future[SHA256Hash] =
-          t.copyToStore(sourceHash, testPDF).map { p =>
-            getSHA256Hash(p)
-          }
-        whenReady(destinationHash) { result =>
-          result should equal(sourceHash)
-        }
+        t.copyToStore(sourceHash, testPDF).map { p =>
+          getSHA256Hash(p)
+        }.futureValue should equal(sourceHash)
       }
       """returns a Future of a Failure(FileAlreadyExistsException)
       when trying to copy a file to a path that already exists""" in withTestStoreInstance { t =>
         val sourceHash = getSHA256Hash(testPDF)
-        val duplicatePath: Future[Path] =
-          t.copyToStore(sourceHash, testPDF).flatMap { _ =>
+        t.copyToStore(sourceHash, testPDF).flatMap { _ =>
             t.copyToStore(sourceHash, testPDF)
-          }
-        whenReady(duplicatePath.failed) { result =>
-          result shouldBe a [java.nio.file.FileAlreadyExistsException]
-        }
+        }.failed.futureValue shouldBe a [java.nio.file.FileAlreadyExistsException]
       }
     }
 
@@ -78,46 +70,32 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
       """returns a Future with the value of true if the specified path
       exists in the file store""" in withTestStoreInstance { t =>
         val sourceHash = getSHA256Hash(testPDF)
-        val existsFuture: Future[Boolean] =
-          t.copyToStore(sourceHash, testPDF).flatMap { p =>
-            t.existsInStore(p)
-          }
-        whenReady(existsFuture) { result =>
-          result should equal(true)
-        }
+        t.copyToStore(sourceHash, testPDF).flatMap { p =>
+          t.existsInStore(p)
+        }.futureValue should equal(true)
       }
       """returns a Future with the value of false if the specified path
       doesn't exist in the file store""" in withTestStoreInstance { t =>
         val testHash: SHA256Hash = SHA256Hash(
           "482bfece08d11246f41ce3dc43480e1b61659fbe0083b754bee09b44b940ae6c"
         )
-        val existsFuture: Future[Boolean] = t.existsInStore(t.getFilePath(testHash))
-        whenReady(existsFuture) { result =>
-          result should equal(false)
-        }
+        t.existsInStore(t.getFilePath(testHash)).futureValue should equal(false)
       }
     }
 
     "have a deleteFromStore method" which {
       "deletes a file with the specified hash from the file store" in withTestStoreInstance { t =>
         val sourceHash = getSHA256Hash(testPDF)
-        val existsFuture: Future[Boolean] =
-          t.copyToStore(sourceHash, testPDF).flatMap { _ =>
-            t.deleteFromStore(sourceHash)
-          }.flatMap { _ =>
-            t.existsInStore(t.getFilePath(sourceHash))
-          }
-        whenReady(existsFuture) { result =>
-          result should equal(false)
-        }
+        t.copyToStore(sourceHash, testPDF).flatMap { _ =>
+          t.deleteFromStore(sourceHash)
+        }.flatMap { _ =>
+          t.existsInStore(t.getFilePath(sourceHash))
+        }.futureValue should equal(false)
       }
       """returns a Future of value Failed(NoSuchFileException) when
-      attemtping to delete a file which doesn't exist""" in withTestStoreInstance { t =>
+      attempting to delete a file which doesn't exist""" in withTestStoreInstance { t =>
         val sourceHash = getSHA256Hash(testPDF)
-        val deleteFuture: Future[Unit] = t.deleteFromStore(sourceHash)
-        whenReady(deleteFuture.failed) { result =>
-          result shouldBe a [java.nio.file.NoSuchFileException]
-        }
+        t.deleteFromStore(sourceHash).failed.futureValue shouldBe a [java.nio.file.NoSuchFileException]
       }
     }
   }
