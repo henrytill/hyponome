@@ -139,6 +139,10 @@ object HttpService {
     "file"
   )
 
+  def apply(): HttpService = {
+    apply(defaultConfig)
+  }
+
   def apply(conf: HyponomeConfig): HttpService = {
     new HttpService(conf, None, None, None, None)(ExecutionContext.global)
   }
