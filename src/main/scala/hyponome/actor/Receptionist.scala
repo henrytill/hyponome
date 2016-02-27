@@ -1,12 +1,11 @@
 package hyponome.actor
 
 import akka.actor.{Actor, ActorRef, Props}
-import com.typesafe.config.{Config, ConfigFactory}
-import hyponome.core._
 import java.nio.file.{FileSystem, FileSystems, Path}
 import java.util.concurrent.atomic.AtomicLong
-import slick.driver.H2Driver.api.Database
 import slick.driver.H2Driver.backend.DatabaseDef
+
+import hyponome.core._
 
 object Receptionist {
   def props(db: DatabaseDef, store: Path): Props = Props(new Receptionist(db, store))
@@ -54,8 +53,6 @@ class Receptionist(db: DatabaseDef, store: Path) extends Actor {
       c ! Result(None)
     case FileActor.StoreFile(c: ActorRef, h: SHA256Hash, f: Option[Path]) =>
       c ! Result(f)
-    // And more ...
-    case _ =>
   }
 
   def receive: Receive = prime

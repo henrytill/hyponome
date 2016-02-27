@@ -1,34 +1,30 @@
 package hyponome.actor
 
 import akka.actor.{Actor, ActorRef, Props, Stash}
-import hyponome.core._
-import hyponome.db._
 import java.util.concurrent.atomic.AtomicLong
-import org.h2.jdbc.JdbcSQLException
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.Future
 import scala.util.{Success, Failure}
-import slick.driver.H2Driver.api.{Database, TableQuery}
+import slick.driver.H2Driver.api.TableQuery
 import slick.driver.H2Driver.backend.DatabaseDef
+
+import hyponome.core._
+import hyponome.db._
 
 object DBActor {
 
   final case object Ready
 
-  // Adding files
   final case class AddFile(client: ActorRef, addition: Addition)
   final case class AddFileAck(client: ActorRef, addition: Addition)
   final case class AddFileFail(client: ActorRef, addition: Addition, e: Throwable)
   final case class PreviouslyAddedFile(client: ActorRef, addition: Addition)
 
-  // Removing files
   final case class RemoveFile(client: ActorRef, removal: Removal)
   final case class RemoveFileAck(client: ActorRef, removal: Removal)
   final case class RemoveFileFail(client: ActorRef, removal: Removal, e: Throwable)
   final case class PreviouslyRemovedFile(client: ActorRef, removal: Removal)
 
-  // Finding a file
   final case class FindFile(client: ActorRef, hash: SHA256Hash)
   final case class DBFile(
     client: ActorRef,
@@ -36,7 +32,6 @@ object DBActor {
     file: Option[hyponome.core.File]
   )
 
-  // Counting files
   final case object CountFiles
   final case class Count(c: Int)
 
@@ -85,12 +80,7 @@ class DBActor(dbDef: DatabaseDef, count: AtomicLong) extends Actor with Stash wi
 
   @SuppressWarnings(Array(
     "org.brianmckenna.wartremover.warts.Any",
-    "org.brianmckenna.wartremover.warts.AsInstanceOf",
-    "org.brianmckenna.wartremover.warts.IsInstanceOf",
-    "org.brianmckenna.wartremover.warts.NonUnitStatements",
-    "org.brianmckenna.wartremover.warts.Nothing",
-    "org.brianmckenna.wartremover.warts.Product",
-    "org.brianmckenna.wartremover.warts.Serializable"
+    "org.brianmckenna.wartremover.warts.IsInstanceOf"
   ))
   def prime: Receive = {
     case AddFile(c: ActorRef, f: Addition) =>
@@ -145,9 +135,7 @@ class DBActor(dbDef: DatabaseDef, count: AtomicLong) extends Actor with Stash wi
       }
   }
 
-  @SuppressWarnings(Array(
-    "org.brianmckenna.wartremover.warts.Any"
-  ))
+  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Any"))
   def pre: Receive = {
     case Ready =>
       unstashAll()

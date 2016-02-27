@@ -1,31 +1,28 @@
 package hyponome.actor
 
 import akka.actor.{Actor, ActorRef, Props, Stash}
-import hyponome.core._
-import hyponome.file._
 import java.nio.file.Path
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
+
+import hyponome.core._
+import hyponome.file._
 
 object FileActor {
 
   final case object Ready
 
-  // Adding files
   final case class AddFile(client: ActorRef, addition: Addition)
   final case class AddFileAck(client: ActorRef, addition: Addition)
   final case class AddFileFail(client: ActorRef, addition: Addition, e: Throwable)
   final case class PreviouslyAddedFile(client: ActorRef, addition: Addition)
 
-  // Removing files
   final case class RemoveFile(client: ActorRef, removal: Removal)
   final case class RemoveFileAck(client: ActorRef, removal: Removal)
   final case class RemoveFileFail(client: ActorRef, removal: Removal, e: Throwable)
   final case class PreviouslyRemovedFile(client: ActorRef, removal: Removal)
 
-  // Finding a file
   final case class FindFile(client: ActorRef, hash: SHA256Hash)
   final case class StoreFile(
     client: ActorRef,
@@ -58,22 +55,16 @@ class FileActor(p: Path) extends Actor with Stash with HyponomeFile {
 
   @SuppressWarnings(Array(
     "org.brianmckenna.wartremover.warts.Any",
-    "org.brianmckenna.wartremover.warts.AsInstanceOf",
-    "org.brianmckenna.wartremover.warts.IsInstanceOf",
-    "org.brianmckenna.wartremover.warts.Nothing"
+    "org.brianmckenna.wartremover.warts.IsInstanceOf"
   ))
   def prime: Receive = {
     case AddFile(c: ActorRef, a: Addition) =>
       val replyToRef: ActorRef = sender
-      val hashPath = this.getFilePath(a.hash)
-      val copyFut: Future[Path] = this.existsInStore(hashPath).flatMap {
-        case false => this.copyToStore(a.hash, a.file)
-        case true  => Future.failed(new UnsupportedOperationException)
-      }
+      val copyFut: Future[Path] = this.copyToStore(a.hash, a.file)
       copyFut onComplete {
         case Success(_: Path) =>
           replyToRef ! AddFileAck(c, a)
-        case Failure(_: UnsupportedOperationException) =>
+        case Failure(_: java.nio.file.FileAlreadyExistsException) =>
           replyToRef ! PreviouslyAddedFile(c, a)
         case Failure(e: Throwable) =>
           replyToRef ! AddFileFail(c, a, e)
@@ -98,12 +89,9 @@ class FileActor(p: Path) extends Actor with Stash with HyponomeFile {
         case Success(false) => replyToRef ! StoreFile(c, h, None)
         case Failure(_)     => replyToRef ! StoreFile(c, h, None)
       }
-    case _ =>
   }
 
-  @SuppressWarnings(Array(
-    "org.brianmckenna.wartremover.warts.Any"
-  ))
+  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Any"))
   def pre: Receive = {
     case Ready =>
       unstashAll()
