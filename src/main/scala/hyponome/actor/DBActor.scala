@@ -1,6 +1,6 @@
 package hyponome.actor
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, Props, Stash}
 import hyponome.core._
 import hyponome.db._
 import java.util.concurrent.atomic.AtomicLong
@@ -11,10 +11,8 @@ import slick.driver.H2Driver.api.{Database, TableQuery}
 import slick.driver.H2Driver.backend.DatabaseDef
 
 object DBActor {
-  // Creating a db
-  final case class CreateDB(client: ActorRef)
-  final case class CreateDBAck(client: ActorRef)
-  final case class CreateDBFail(client: ActorRef)
+
+  final case object Ready
 
   // Adding files
   final case class AddFile(client: ActorRef, addition: Addition)
@@ -49,7 +47,7 @@ object DBActor {
   def props(dbDef: DatabaseDef, count: AtomicLong): Props = Props(new DBActor(dbDef, count))
 }
 
-class DBActor(dbDef: DatabaseDef, count: AtomicLong) extends Actor with HyponomeDB {
+class DBActor(dbDef: DatabaseDef, count: AtomicLong) extends Actor with Stash with HyponomeDB {
 
   import context.dispatcher
   import DBActor._
@@ -63,10 +61,14 @@ class DBActor(dbDef: DatabaseDef, count: AtomicLong) extends Actor with Hyponome
   val counter: AtomicLong = count
 
   override def preStart(): Unit = {
-    val syncFut: Future[Unit] = this.syncCounter()
-    syncFut onComplete {
-      case Success(_: Unit) => println(s"Counter synced to value: ${counter.get}")
-      case Failure(ex)      => println(s"Counter not synced: ${ex.getMessage}")
+    val selfRef: ActorRef = self
+    val initFut: Future[Unit] = this.exists.flatMap {
+      case true  => this.syncCounter()
+      case false => this.createDB
+    }
+    initFut onComplete {
+      case Success(_: Unit) => self ! Ready
+      case Failure(ex)      =>
     }
   }
 
@@ -84,13 +86,6 @@ class DBActor(dbDef: DatabaseDef, count: AtomicLong) extends Actor with Hyponome
     "org.brianmckenna.wartremover.warts.Serializable"
   ))
   def prime: Receive = {
-    case CreateDB(c: ActorRef) =>
-      val replyToRef: ActorRef = sender
-      val createFut: Future[Unit] = this.createDB
-      createFut onComplete {
-        case Success(_: Unit) => replyToRef ! CreateDBAck(c)
-        case Failure(_)       => replyToRef ! CreateDBFail(c)
-      }
     case AddFile(c: ActorRef, f: Addition) =>
       val replyToRef: ActorRef = sender
       val addFut: Future[Unit] = this.addFile(f)
@@ -143,5 +138,15 @@ class DBActor(dbDef: DatabaseDef, count: AtomicLong) extends Actor with Hyponome
       }
   }
 
-  def receive: Receive = prime
+  @SuppressWarnings(Array(
+    "org.brianmckenna.wartremover.warts.Any"
+  ))
+  def pre: Receive = {
+    case Ready =>
+      unstashAll()
+      context.become(prime)
+    case msg => stash()
+  }
+
+  def receive: Receive = pre
 }

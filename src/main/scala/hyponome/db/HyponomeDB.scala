@@ -9,6 +9,7 @@ import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Try}
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
+import slick.jdbc.meta.MTable
 
 trait HyponomeDB {
 
@@ -25,6 +26,11 @@ trait HyponomeDB {
   def createDB: Future[Unit] = {
     val s = DBIO.seq((events.schema ++ files.schema).create)
     db.run(s)
+  }
+
+  def exists(implicit ec: ExecutionContext): Future[Boolean] = {
+    val q = MTable.getTables
+    db.run(q).flatMap { ts => Future(!ts.isEmpty) }
   }
 
   def dumpFiles: Future[Seq[File]] = {

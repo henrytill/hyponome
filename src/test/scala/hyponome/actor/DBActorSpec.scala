@@ -76,30 +76,12 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
 
   "A DBActor" must {
 
-    """respond with CreateDBAck(self) when attempting to create a new DB if
-    one doesn't already exist""" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB(self)
-      expectMsg(DBActor.CreateDBAck(self))
-    }
-
-    """respond with CreateDBFail when attempting to create a new DB if
-    one already exists""" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB(self)
-      expectMsg(DBActor.CreateDBAck(self))
-      dbActor ! DBActor.CreateDB(self)
-      expectMsg(DBActor.CreateDBFail(self))
-    }
-
     "respond with AddFileAck when adding a file" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB(self)
-      expectMsg(DBActor.CreateDBAck(self))
       dbActor ! DBActor.AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
     }
 
     "respond with PreviouslyAddedFile when adding a file that has already been added" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB(self)
-      expectMsg(DBActor.CreateDBAck(self))
       dbActor ! DBActor.AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
       dbActor ! DBActor.AddFile(self, add)
@@ -107,8 +89,6 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
     }
 
     "respond with RemoveFileAck(self, remove) when removing a file" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB(self)
-      expectMsg(DBActor.CreateDBAck(self))
       dbActor ! DBActor.AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
       dbActor ! DBActor.RemoveFile(self, remove)
@@ -117,8 +97,6 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
 
     """respond with PreviouslyRemovedFile when removing a file that
     has already been removed""" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB(self)
-      expectMsg(DBActor.CreateDBAck(self))
       dbActor ! DBActor.AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
       dbActor ! DBActor.RemoveFile(self, remove)
@@ -129,8 +107,6 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
 
     """respond with the correct DBFile message when sent a FindFile
     message containing an added file's hash""" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB(self)
-      expectMsg(DBActor.CreateDBAck(self))
       dbActor ! DBActor.AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
       dbActor ! DBActor.FindFile(self, add.hash)
@@ -139,8 +115,6 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
 
     """respond with the correct DBFile message when sent a FindFile
     message containing the hash of a file that has been removed""" in withDBActor { dbActor =>
-      dbActor ! DBActor.CreateDB(self)
-      expectMsg(DBActor.CreateDBAck(self))
       dbActor ! DBActor.AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
       dbActor ! DBActor.RemoveFile(self, remove)
