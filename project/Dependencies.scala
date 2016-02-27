@@ -13,6 +13,7 @@ object Dependencies {
     "com.typesafe.akka"      %% "akka-http-experimental"            % akkaVersion,
     "com.typesafe.akka"      %% "akka-http-spray-json-experimental" % akkaVersion,
     "com.typesafe.akka"      %% "akka-http-xml-experimental"        % akkaVersion,
+    "com.typesafe.akka"      %% "akka-stream"                       % akkaVersion,
     "com.typesafe.akka"      %% "akka-testkit"                      % akkaVersion % "test",
     "com.typesafe.slick"     %% "slick"                             % "3.1.1",
     "commons-codec"          %  "commons-codec"                     % "1.10",

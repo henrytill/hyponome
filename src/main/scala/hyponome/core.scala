@@ -5,6 +5,15 @@ import java.net.{InetAddress, URI}
 import java.nio.file.Path
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
+import slick.driver.H2Driver.backend.DatabaseDef
+
+final case class HyponomeConfig(
+  db: DatabaseDef,
+  store: Path,
+  hostname: String,
+  port: Int,
+  uploadKey: String
+)
 
 final case class SHA256Hash(value: String) {
   override def toString: String = value
