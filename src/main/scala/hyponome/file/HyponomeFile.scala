@@ -9,7 +9,12 @@ trait HyponomeFile {
 
   val storePath: Path
 
-  def createStore(): Try[Path] = Try(Files.createDirectories(storePath))
+  def createStore()(implicit ec: ExecutionContext): Future[Path] =
+    Future {
+      blocking {
+        Files.createDirectories(storePath)
+      }
+    }
 
   def getFilePath(h: SHA256Hash): Path = {
     val (dir, file) = h.value.splitAt(2)

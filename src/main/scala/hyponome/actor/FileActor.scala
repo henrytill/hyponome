@@ -44,7 +44,7 @@ class FileActor(p: Path) extends Actor with Stash with HyponomeFile {
 
   override def preStart(): Unit = {
     val selfRef: ActorRef = self
-    this.createStore() match {
+    this.createStore() onComplete {
       case Success(p: Path) =>
         logger.info(s"Using store at ${p.toAbsolutePath}")
         selfRef ! Ready

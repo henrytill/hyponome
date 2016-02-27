@@ -7,7 +7,8 @@ import java.nio.file._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpecLike}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 class TestStore(p: Path) extends HyponomeFile {
@@ -30,17 +31,12 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
     "eba205fb9114750b2ce83db62f9c2a15dd068bcba31a2de32d8df7f7c8d85441"
   )
 
-
   def withTestStoreInstance(testCode: TestStore => Any): Unit = {
     val t: TestStore = new TestStore(tempStorePath)
-    val store: Try[Path] = t.createStore()
-    store match {
-      case Success(p: Path) =>
-        try     { testCode(t);                 () }
-        finally { deleteFolder(tempStorePath); () }
-      case Failure(e) =>
-        fail()
-    }
+    val storeFuture: Future[Path] = t.createStore()
+    val store: Path = Await.result(storeFuture, 5.seconds)
+    try     { testCode(t);                 () }
+    finally { deleteFolder(tempStorePath); () }
   }
 
   "An instance of a class that extends HyponomeFile" must {
