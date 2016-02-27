@@ -23,7 +23,7 @@ trait HyponomeDB {
 
   val counter: AtomicLong
 
-  def createDB: Future[Unit] = {
+  def createDB(): Future[Unit] = {
     val s = DBIO.seq((events.schema ++ files.schema).create)
     db.run(s)
   }

@@ -63,7 +63,7 @@ class DBActor(dbDef: DatabaseDef, count: AtomicLong) extends Actor with Stash wi
     val selfRef: ActorRef = self
     val initFut: Future[Unit] = this.exists.flatMap {
       case true  => this.syncCounter()
-      case false => this.createDB
+      case false => this.createDB()
     }
     initFut onComplete {
       case Success(_: Unit) =>
