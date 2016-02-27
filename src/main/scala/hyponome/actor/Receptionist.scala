@@ -21,18 +21,6 @@ class Receptionist(db: DatabaseDef, store: Path) extends Actor {
 
   @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Any"))
   def prime: Receive = {
-    // Creating a store
-    case Create =>
-      fileActor ! FileActor.CreateStore(sender)
-    case FileActor.CreateStoreAck(c: ActorRef) =>
-      c ! CreateAck
-    case FileActor.CreateStoreFail(c: ActorRef) =>
-      c ! CreateFail
-    // Deleting a store
-    case Delete =>
-      fileActor ! FileActor.DeleteStore(sender)
-    case FileActor.DeleteStoreAck(c: ActorRef) =>
-      c ! DeleteAck
     // Adding files
     case a: Addition =>
       fileActor ! FileActor.AddFile(sender, a)

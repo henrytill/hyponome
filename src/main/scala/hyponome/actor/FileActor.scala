@@ -1,6 +1,6 @@
 package hyponome.actor
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, Props, Stash}
 import hyponome.core._
 import hyponome.file._
 import java.nio.file.Path
@@ -8,15 +8,8 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 object FileActor {
-  // Creating a file store
-  final case class CreateStore(client: ActorRef)
-  final case class CreateStoreAck(client: ActorRef)
-  final case class CreateStoreFail(client: ActorRef)
 
-  // Deleting a file store
-  final case class DeleteStore(client: ActorRef)
-  final case class DeleteStoreAck(client: ActorRef)
-  final case class DeleteStoreFail(client: ActorRef)
+  final case object Ready
 
   // Adding files
   final case class AddFile(client: ActorRef, addition: Addition)
@@ -41,12 +34,20 @@ object FileActor {
   def props(p: Path): Props = Props(new FileActor(p))
 }
 
-class FileActor(p: Path) extends Actor with HyponomeFile {
+class FileActor(p: Path) extends Actor with Stash with HyponomeFile {
 
   import context.dispatcher
   import FileActor._
 
   val storePath: Path = p
+
+  override def preStart(): Unit = {
+    val selfRef: ActorRef = self
+    this.createStore() match {
+      case Success(p: Path) => selfRef ! Ready
+      case Failure(ex)      =>
+    }
+  }
 
   @SuppressWarnings(Array(
     "org.brianmckenna.wartremover.warts.Any",
@@ -55,18 +56,6 @@ class FileActor(p: Path) extends Actor with HyponomeFile {
     "org.brianmckenna.wartremover.warts.Nothing"
   ))
   def prime: Receive = {
-    case CreateStore(c: ActorRef) =>
-      val replyToRef: ActorRef = sender
-      this.createStore() match {
-        case Success(_: Path) => replyToRef ! CreateStoreAck(c)
-        case Failure(_)       => replyToRef ! CreateStoreFail(c)
-      }
-    case DeleteStore(c: ActorRef) =>
-      val replyToRef: ActorRef = sender
-      this.deleteStore() match {
-        case Success(_: Path) => replyToRef ! DeleteStoreAck(c)
-        case Failure(_)       => replyToRef ! DeleteStoreFail(c)
-      }
     case AddFile(c: ActorRef, a: Addition) =>
       val replyToRef: ActorRef = sender
       val hashPath = this.getFilePath(a.hash)
@@ -105,5 +94,15 @@ class FileActor(p: Path) extends Actor with HyponomeFile {
     case _ =>
   }
 
-  def receive: Receive = prime
+  @SuppressWarnings(Array(
+    "org.brianmckenna.wartremover.warts.Any"
+  ))
+  def pre: Receive = {
+    case Ready =>
+      unstashAll()
+      context.become(prime)
+    case msg => stash()
+  }
+
+  def receive: Receive = pre
 }

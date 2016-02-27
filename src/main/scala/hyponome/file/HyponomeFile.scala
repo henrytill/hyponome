@@ -39,23 +39,4 @@ trait HyponomeFile {
         Files.delete(p)
       }
     }
-
-  private def makeDeleteFileVisitor: SimpleFileVisitor[Path] =
-    new SimpleFileVisitor[Path] {
-      override def visitFile(p: Path, attrs: attribute.BasicFileAttributes): FileVisitResult = {
-        Files.delete(p)
-        FileVisitResult.CONTINUE
-      }
-      override def postVisitDirectory(p: Path, e: java.io.IOException): FileVisitResult = {
-        Files.delete(p)
-        FileVisitResult.CONTINUE
-      }
-    }
-
-  private def recursiveDeletePath(p: Path): Path =
-    Files.walkFileTree(p, makeDeleteFileVisitor)
-
-  def deleteStore(): Try[Path] =
-    if (Files.exists(storePath)) Try(recursiveDeletePath(storePath))
-    else Success(storePath)
 }

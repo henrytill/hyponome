@@ -33,17 +33,12 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
 
   def withTestStoreInstance(testCode: TestStore => Any): Unit = {
     val t: TestStore = new TestStore(tempStorePath)
-    val delete: Try[Path] = t.deleteStore()
-    val store: Try[Path] = delete.flatMap { _ =>
-      t.createStore()
-    }
+    val store: Try[Path] = t.createStore()
     store match {
       case Success(p: Path) =>
-        // println(s"New test store created at $p")
-        testCode(t)
-        ()
+        try     { testCode(t);                 () }
+        finally { deleteFolder(tempStorePath); () }
       case Failure(e) =>
-        // println(s"New test store couldn't be created: $e")
         fail()
     }
   }

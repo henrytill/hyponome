@@ -75,81 +75,50 @@ class AskActorSpec(_system: ActorSystem) extends TestKit(_system)
     finally {
       system.stop(askActor)
       system.stop(recActor)
+      hyponome.file.deleteFolder(tempStorePath)
+      ()
     }
   }
 
   "An AskActor" must {
 
-    """respond with DeleteAck when attempting to delete a store""" in withAskActor { askActor =>
-      askActor ! Delete
-      expectMsg(DeleteAck)
-    }
-
-    """respond with CreateAck when attempting to create a new store if
-    one doesn't already exist""" in withAskActor { askActor =>
-      askActor ! Create
-      expectMsg(CreateAck)
-      askActor ! Delete
-      expectMsg(DeleteAck)
-    }
-
     """respond with AdditionAck when attempting to add a file to the
     store""" in withAskActor { askActor =>
-      askActor ! Create
-      expectMsg(CreateAck)
       askActor ! add
       expectMsg(AdditionAck(add))
-      askActor ! Delete
-      expectMsg(DeleteAck)
     }
 
     """respond with PreviouslyAdded when attempting to add a file to the
     store which has already been added""" in withAskActor { askActor =>
-      askActor ! Create
-      expectMsg(CreateAck)
       askActor ! add
       expectMsg(AdditionAck(add))
       askActor ! add
       expectMsg(PreviouslyAdded(add))
-      askActor ! Delete
-      expectMsg(DeleteAck)
     }
 
     """respond with RemovalAck when attempting to remove a file from the
     store""" in withAskActor { askActor =>
-      askActor ! Create
-      expectMsg(CreateAck)
       askActor ! add
       expectMsg(AdditionAck(add))
       askActor ! remove
       expectMsg(RemovalAck(remove))
-      askActor ! Delete
-      expectMsg(DeleteAck)
     }
 
     """respond with PreviouslyRemoved when attempting to remove a file from the
     store that has already been removed""" in withAskActor { askActor =>
-      askActor ! Create
-      expectMsg(CreateAck)
       askActor ! add
       expectMsg(AdditionAck(add))
       askActor ! remove
       expectMsg(RemovalAck(remove))
       askActor ! remove
       expectMsg(PreviouslyRemoved(remove))
-      askActor ! Delete
-      expectMsg(DeleteAck)
     }
 
     """respond with Result when sent a FindFile msg""" in withAskActor { askActor =>
-      askActor ! Create
-      expectMsg(CreateAck)
       askActor ! add
       expectMsg(AdditionAck(add))
       askActor ! FindFile(add.hash)
       expectMsgType[Result]
-      askActor ! Delete
-      expectMsg(DeleteAck)
     }
   }
 }

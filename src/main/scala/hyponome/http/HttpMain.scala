@@ -48,14 +48,6 @@ object HttpMain extends App {
   val recActor = system.actorOf(Props(new Receptionist(db, store)))
   val askActor = system.actorOf(AskActor.props(recActor))
 
-  val initActor = system.actorOf(AskActor.props(recActor))
-  val init: Future[Any] = ask(initActor, Create)
-  init onComplete {
-    case msg =>
-      println(msg)
-      system.stop(initActor)
-  }
-
   def handleFailure(ex: Throwable): (StatusCodes.ServerError, String) =
     (StatusCodes.InternalServerError, ex.getMessage)
 

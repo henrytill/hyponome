@@ -62,80 +62,52 @@ class FileActorSpec(_system: ActorSystem) extends TestKit(_system)
       testCode(fileActor)
       ()
     }
-    finally system.stop(fileActor)
+    finally {
+      system.stop(fileActor)
+      hyponome.file.deleteFolder(tempStorePath)
+      ()
+    }
   }
 
   "A FileActor" must {
 
-    """respond with DeleteStoreAck when attempting to delete a file store""" in withFileActor { fileActor =>
-      fileActor ! FileActor.DeleteStore(self)
-      expectMsg(FileActor.DeleteStoreAck(self))
-    }
-
-    """respond with CreateStoreAck when attempting to create a file store""" in withFileActor { fileActor =>
-      fileActor ! FileActor.CreateStore(self)
-      expectMsg(FileActor.CreateStoreAck(self))
-      fileActor ! FileActor.DeleteStore(self)
-      expectMsg(FileActor.DeleteStoreAck(self))
-    }
-
     """respond with AddFileAck when attempting to add a file to the
     file store""" in withFileActor { fileActor =>
-      fileActor ! FileActor.CreateStore(self)
-      expectMsg(FileActor.CreateStoreAck(self))
       fileActor ! FileActor.AddFile(self, add)
       expectMsg(FileActor.AddFileAck(self, add))
-      fileActor ! FileActor.DeleteStore(self)
-      expectMsg(FileActor.DeleteStoreAck(self))
     }
 
     """respond with PreviouslyAddedFile when attempting to add a file
    to the file store which has already been added""" in withFileActor { fileActor =>
-      fileActor ! FileActor.CreateStore(self)
-      expectMsg(FileActor.CreateStoreAck(self))
       fileActor ! FileActor.AddFile(self, add)
       expectMsg(FileActor.AddFileAck(self, add))
       fileActor ! FileActor.AddFile(self, add)
       expectMsg(FileActor.PreviouslyAddedFile(self, add))
-      fileActor ! FileActor.DeleteStore(self)
-      expectMsg(FileActor.DeleteStoreAck(self))
     }
 
     """respond with RemoveFileAck when attempting to remove a file
     from the file store""" in withFileActor { fileActor =>
-      fileActor ! FileActor.CreateStore(self)
-      expectMsg(FileActor.CreateStoreAck(self))
       fileActor ! FileActor.AddFile(self, add)
       expectMsg(FileActor.AddFileAck(self, add))
       fileActor ! FileActor.RemoveFile(self, remove)
       expectMsg(FileActor.RemoveFileAck(self, remove))
-      fileActor ! FileActor.DeleteStore(self)
-      expectMsg(FileActor.DeleteStoreAck(self))
     }
 
     """respond with PreviouslyRemovedFile when attempting to remove a
     file from the file store which has already been removed""" in withFileActor { fileActor =>
-      fileActor ! FileActor.CreateStore(self)
-      expectMsg(FileActor.CreateStoreAck(self))
       fileActor ! FileActor.AddFile(self, add)
       expectMsg(FileActor.AddFileAck(self, add))
       fileActor ! FileActor.RemoveFile(self, remove)
       expectMsg(FileActor.RemoveFileAck(self, remove))
       fileActor ! FileActor.RemoveFile(self, remove)
       expectMsg(FileActor.PreviouslyRemovedFile(self, remove))
-      fileActor ! FileActor.DeleteStore(self)
-      expectMsg(FileActor.DeleteStoreAck(self))
     }
 
     """respond with StoreFile when sent a FindFile msg""" in withFileActor { fileActor =>
-      fileActor ! FileActor.CreateStore(self)
-      expectMsg(FileActor.CreateStoreAck(self))
       fileActor ! FileActor.AddFile(self, add)
       expectMsg(FileActor.AddFileAck(self, add))
       fileActor ! FileActor.FindFile(self, testPDFHash)
       expectMsgType[FileActor.StoreFile]
-      fileActor ! FileActor.DeleteStore(self)
-      expectMsg(FileActor.DeleteStoreAck(self))
     }
   }
 }

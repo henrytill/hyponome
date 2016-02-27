@@ -19,17 +19,6 @@ object SHA256Hash {
 }
 
 // Message API
-final case object Create
-final case object Delete
-
-sealed trait CreateResponse
-final case object CreateAck extends CreateResponse
-final case object CreateFail extends CreateResponse
-
-sealed trait DeleteResponse
-final case object DeleteAck extends DeleteResponse
-final case object DeleteFail extends DeleteResponse
-
 final case class Addition(
   file: Path,
   hash: SHA256Hash,
