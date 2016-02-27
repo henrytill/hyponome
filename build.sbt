@@ -28,7 +28,11 @@ lazy val commonSettings = Seq(
   scalacOptions in (Compile, console) := consoleOptions,
   scalacOptions in (Test, console) := consoleOptions,
   fork in Test := true,
-  initialCommands in console := """import hyponome._, db._, actor._""",
+  initialCommands in console := """
+    import hyponome._, actor._, core._, db._, file._, http._
+    import java.nio.file._
+    val fs: FileSystem  = FileSystems.getDefault()
+  """,
   wartremoverErrors in (Compile, compile) ++= Warts.allBut(Wart.Throw)
 )
 
