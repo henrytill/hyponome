@@ -13,6 +13,8 @@ import com.typesafe.config.{Config, ConfigFactory}
 import java.lang.SuppressWarnings
 import java.net.{InetAddress, URI}
 import java.nio.file.{FileSystem, FileSystems, Path}
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -37,6 +39,7 @@ object HttpMain extends App {
   implicit val ec: ExecutionContextExecutor = system.dispatcher
   implicit val timeout: Timeout = Timeout(5.seconds)
 
+  val logger: Logger  = LoggerFactory.getLogger(classOf[App])
   val fs: FileSystem  = FileSystems.getDefault()
   val config: Config  = ConfigFactory.parseFile(new java.io.File("hyponome.conf"))
   val store: Path     = fs.getPath(config.getString("file-store.path"))
@@ -106,7 +109,7 @@ object HttpMain extends App {
   val route = objectsRoute(askActor, uploadKey)
   val bindingFuture = Http().bindAndHandle(route, hostname, port)
 
-  println(s"Server online at http://$hostname:$port/\nPress RETURN to stop...")
+  logger.info(s"Server online at http://$hostname:$port/")
 
   val _ = StdIn.readLine()
 

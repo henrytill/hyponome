@@ -4,6 +4,8 @@ import akka.actor.{Actor, ActorRef, Props, Stash}
 import hyponome.core._
 import hyponome.file._
 import java.nio.file.Path
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
@@ -39,13 +41,18 @@ class FileActor(p: Path) extends Actor with Stash with HyponomeFile {
   import context.dispatcher
   import FileActor._
 
+  val logger: Logger = LoggerFactory.getLogger(classOf[FileActor])
+
   val storePath: Path = p
 
   override def preStart(): Unit = {
     val selfRef: ActorRef = self
     this.createStore() match {
-      case Success(p: Path) => selfRef ! Ready
+      case Success(p: Path) =>
+        logger.info(s"Using store at ${p.toAbsolutePath}")
+        selfRef ! Ready
       case Failure(ex)      =>
+        logger.error(ex.getMessage)
     }
   }
 

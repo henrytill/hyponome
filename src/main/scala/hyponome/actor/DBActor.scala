@@ -5,6 +5,8 @@ import hyponome.core._
 import hyponome.db._
 import java.util.concurrent.atomic.AtomicLong
 import org.h2.jdbc.JdbcSQLException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import scala.concurrent.Future
 import scala.util.{Success, Failure}
 import slick.driver.H2Driver.api.{Database, TableQuery}
@@ -52,6 +54,8 @@ class DBActor(dbDef: DatabaseDef, count: AtomicLong) extends Actor with Stash wi
   import context.dispatcher
   import DBActor._
 
+  val logger: Logger = LoggerFactory.getLogger(classOf[DBActor])
+
   val files: TableQuery[Files] = TableQuery[Files]
 
   val events: TableQuery[Events] = TableQuery[Events]
@@ -67,8 +71,11 @@ class DBActor(dbDef: DatabaseDef, count: AtomicLong) extends Actor with Stash wi
       case false => this.createDB
     }
     initFut onComplete {
-      case Success(_: Unit) => self ! Ready
-      case Failure(ex)      =>
+      case Success(_: Unit) =>
+        logger.info("DB Initialized")
+        self ! Ready
+      case Failure(ex) =>
+        logger.error(ex.getMessage)
     }
   }
 
