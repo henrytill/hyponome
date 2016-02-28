@@ -6,13 +6,16 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
+import akka.stream.scaladsl.StreamConverters
 import com.typesafe.config.{Config, ConfigFactory}
 import hyponome.core._
 import hyponome.file._
 import java.net.InetAddress
 import java.nio.file._
 import java.util.UUID.randomUUID
+import org.apache.commons.codec.digest.DigestUtils.sha256Hex
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
+import org.scalatest.prop.PropertyChecks
 import org.scalatest.time.{Millis, Span}
 import org.scalatest.{Matchers, WordSpecLike}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -23,6 +26,7 @@ import slick.driver.H2Driver.backend.DatabaseDef
 class HttpServiceSpec extends WordSpecLike
     with Matchers
     with PatienceConfiguration
+    with PropertyChecks
     with ScalaFutures {
 
   implicit val system = ActorSystem()
@@ -53,9 +57,30 @@ class HttpServiceSpec extends WordSpecLike
       http.singleRequest(HttpRequest(method = HttpMethods.POST, uri = u, entity = e))
     }
 
+  def roundTripper(p: Path, u: String): Future[SHA256Hash] = {
+    def convertToRequest(location: Option[String]): Future[HttpResponse] =
+      location match {
+        case Some(loc) =>
+          val req = HttpRequest(method = HttpMethods.GET, uri = loc)
+          http.singleRequest(req)
+        case None =>
+          Future.failed(new Exception("Header did not contain a Location"))
+      }
+    postFile(p, u)
+      .map(_.headers)
+      .map(_.find(_.name == "Location"))
+      .map(_.map(_.value))
+      .flatMap(convertToRequest)
+      .map(_.entity)
+      .map(_.dataBytes)
+      .map(_.runWith(StreamConverters.asInputStream()))
+      .map(sha256Hex)
+      .map(SHA256Hash(_))
+  }
+
   override implicit def patienceConfig = PatienceConfig(
     timeout = Span(2000, Millis),
-    interval = Span(500, Millis)
+    interval = Span(15, Millis)
   )
 
   def withHttpService(testCode: HyponomeConfig => Any): Unit = {
@@ -84,15 +109,22 @@ class HttpServiceSpec extends WordSpecLike
 
     "do this" in withHttpService { cfg =>
       val u = s"http://${cfg.hostname}:${cfg.port}/objects"
-      val f = postFile(testPDF, u)
-      f onComplete {
-        case x => println(x)
-      }
-      f.futureValue shouldBe a [HttpResponse]
+      roundTripper(testPDF, u).futureValue shouldEqual testPDFHash
     }
 
     "do that" in withHttpService { cfg =>
-      1 should equal(1)
+      val testFiles: Path = fs.getPath("/tmp/hyponome/test")
+      val pathCreated = Files.createDirectories(testFiles)
+      forAll { (ba: Array[Byte]) =>
+        val u = s"http://${cfg.hostname}:${cfg.port}/objects"
+        lazy val testFileHash: String = sha256Hex(ba)
+        lazy val testFilePath: Path   = testFiles.resolve(testFileHash)
+        Files.write(testFilePath, ba)
+        val printPath: String = "%.40s".format(testFilePath)
+        println(s"Round-tripping $printPath...")
+        roundTripper(testFilePath, u).futureValue.value shouldEqual testFileHash
+      }
+      deleteFolder(testFiles)
     }
   }
 }

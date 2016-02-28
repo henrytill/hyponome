@@ -18,6 +18,7 @@ object Dependencies {
     "com.typesafe.slick"     %% "slick"                             % "3.1.1",
     "commons-codec"          %  "commons-codec"                     % "1.10",
     "org.scala-lang.modules" %% "scala-xml"                         % "1.0.5",
+    "org.scalacheck"         %% "scalacheck"                        % "1.12.5"    % "test",
     "org.scalatest"          %% "scalatest"                         % "2.2.6"     % "test",
     "org.slf4j"              %  "slf4j-api"                         % "1.7.5"
   )
