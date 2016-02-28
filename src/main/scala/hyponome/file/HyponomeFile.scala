@@ -32,7 +32,7 @@ trait HyponomeFile {
     Future {
       blocking {
         val destination: Path = getFilePath(hash)
-        val parent: Path = Files.createDirectory(destination.getParent)
+        val parent: Path = Files.createDirectories(destination.getParent)
         Files.copy(source, destination)
       }
     }
