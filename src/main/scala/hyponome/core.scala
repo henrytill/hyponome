@@ -8,7 +8,7 @@ import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
 import slick.driver.H2Driver.backend.DatabaseDef
 
 final case class HyponomeConfig(
-  db: DatabaseDef,
+  db: Function0[DatabaseDef],
   store: Path,
   hostname: String,
   port: Int,

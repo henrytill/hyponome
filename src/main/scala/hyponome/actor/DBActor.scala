@@ -41,10 +41,10 @@ object DBActor {
   final case object DumpEvents
   final case class EventDump(es: Seq[Event])
 
-  def props(dbDef: DatabaseDef, count: AtomicLong): Props = Props(new DBActor(dbDef, count))
+  def props(dbDef: Function0[DatabaseDef], count: AtomicLong): Props = Props(new DBActor(dbDef, count))
 }
 
-class DBActor(dbDef: DatabaseDef, count: AtomicLong) extends Actor with Stash with HyponomeDB {
+class DBActor(dbDef: Function0[DatabaseDef], count: AtomicLong) extends Actor with Stash with HyponomeDB {
 
   import context.dispatcher
   import DBActor._
@@ -55,7 +55,7 @@ class DBActor(dbDef: DatabaseDef, count: AtomicLong) extends Actor with Stash wi
 
   val events: TableQuery[Events] = TableQuery[Events]
 
-  val db: DatabaseDef = dbDef
+  val db: DatabaseDef = dbDef()
 
   val counter: AtomicLong = count
 

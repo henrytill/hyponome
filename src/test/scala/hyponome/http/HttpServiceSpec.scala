@@ -61,7 +61,7 @@ class HttpServiceSpec extends WordSpecLike
   def withHttpService(testCode: HyponomeConfig => Any): Unit = {
     val testStorePath: Path = fs.getPath("/tmp/hyponome/store")
     val dbName = randomUUID.toString
-    val testDb: DatabaseDef = Database.forURL(
+    def testDb(): DatabaseDef = Database.forURL(
       url = s"jdbc:h2:mem:$dbName;CIPHER=AES",
       user = "hyponome",
       password = "hyponome hyponome", // password = "filepwd userpwd"

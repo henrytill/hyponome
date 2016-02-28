@@ -19,6 +19,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import slick.driver.H2Driver.api.Database
+import slick.driver.H2Driver.backend.DatabaseDef
 
 import hyponome.actor._
 import hyponome.core._
@@ -135,8 +136,10 @@ object HttpService {
 
   private val config: Config = ConfigFactory.parseFile(configFile.toFile)
 
+  private def dbConfig(): DatabaseDef = Database.forConfig("h2")
+
   val defaultConfig = HyponomeConfig(
-    Database.forConfig("h2"),
+    dbConfig,
     fs.getPath(config.getString("file-store.path")),
     InetAddress.getLocalHost().getHostName(),
     3000,

@@ -8,10 +8,10 @@ import slick.driver.H2Driver.backend.DatabaseDef
 import hyponome.core._
 
 object Receptionist {
-  def props(db: DatabaseDef, store: Path): Props = Props(new Receptionist(db, store))
+  def props(db: Function0[DatabaseDef], store: Path): Props = Props(new Receptionist(db, store))
 }
 
-class Receptionist(db: DatabaseDef, store: Path) extends Actor {
+class Receptionist(db: Function0[DatabaseDef], store: Path) extends Actor {
 
   val counter: AtomicLong = new AtomicLong()
 
