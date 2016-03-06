@@ -1,6 +1,5 @@
 package hyponome.db
 
-import hyponome.core._
 import java.lang.SuppressWarnings
 import java.net.InetAddress
 import java.util.concurrent.atomic.AtomicLong
@@ -9,7 +8,11 @@ import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Try}
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
+import slick.lifted.{Rep, Query}
 import slick.jdbc.meta.MTable
+
+import hyponome.core._
+import hyponome.db.Events._
 
 trait HyponomeDB {
 
@@ -30,7 +33,7 @@ trait HyponomeDB {
 
   def exists(implicit ec: ExecutionContext): Future[Boolean] = {
     val q = MTable.getTables
-    db.run(q).flatMap { ts => Future(!ts.isEmpty) }
+    db.run(q).map { ts => !ts.isEmpty }
   }
 
   def dumpFiles: Future[Seq[File]] = {
@@ -92,6 +95,88 @@ trait HyponomeDB {
   }
 
   @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
+  def notRemovedQuery: Query[(Files, Events), (File, Event), Seq] = {
+    val removes = events.filter(_.operation === (Remove: Operation))
+    val adds = for {
+      r <- removes
+      e <- events if r.hash === e.hash && e.operation === (Add: Operation) && r.timestamp > e.timestamp
+    } yield e
+    val removedTxs = removes.map(_.tx) union adds.map(_.tx)
+    for {
+      (f, e) <- files join events on (_.hash === _.hash) if !removedTxs.filter(_ === e.tx).exists
+    } yield (f, e)
+  }
+
+  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
+  def runQuery(q: DBQuery)(implicit ec: ExecutionContext): Future[Seq[DBQueryResponse]] = q match {
+    case DBQuery(None, None, None, None, None, None, _, _) =>
+      Future(Seq())
+    case DBQuery(hash, address, txLo, txHi, timeLo, timeHi, sortBy, sortOrder) =>
+      type Q = Query[(Files, Events), (File, Event), Seq]
+      def filterByHash: Q => Q = { (in: Q) =>
+        hash match {
+          case Some(hash) => in.filter(_._1.hash === hash)
+          case None       => in
+        }
+      }
+      def filterByAddress: Q => Q = { (in: Q) =>
+        address match {
+          case Some(address: InetAddress) =>
+            val criteriaAddress: Option[InetAddress] = Option(address)
+            in.filter(r => r._2.remoteAddress === criteriaAddress)
+          case None              => in
+        }
+      }
+      def filterByTx: Q => Q = { (in: Q) =>
+        (txLo, txHi) match {
+          case (Some(lo), Some(hi)) =>
+            in.filter(_._2.tx >= txLo).filter(_._2.tx <= txHi)
+          case (Some(lo), None) =>
+            in.filter(_._2.tx >= txLo)
+          case (None, Some(hi)) =>
+            in.filter(_._2.tx <= txHi)
+          case (None, None) =>
+            in
+        }
+      }
+      def filterByTimestamp: Q => Q = { (in: Q) =>
+        (timeLo, timeHi) match {
+          case (Some(lo), Some(hi)) =>
+            in.filter(_._2.timestamp >= timeLo).filter(_._2.timestamp <= timeHi)
+          case (Some(lo), None) =>
+            in.filter(_._2.timestamp >= timeLo)
+          case (None, Some(hi)) =>
+            in.filter(_._2.timestamp <= timeHi)
+          case (None, None) =>
+            in
+        }
+      }
+      def sort: Q => Q = { (in: Q) =>
+        (sortBy, sortOrder) match {
+          case (Tx, Ascending) =>
+            in.sortBy(_._2.tx.asc)
+          case (Tx, Descending) =>
+            in.sortBy(_._2.tx.desc)
+          case (Time, Ascending) =>
+            in.sortBy(_._2.timestamp.asc)
+          case (Time, Descending) =>
+            in.sortBy(_._2.timestamp.desc)
+          case (Address, Ascending) =>
+            in.sortBy(_._2.remoteAddress.asc)
+          case (Address, Descending) =>
+            in.sortBy(_._2.remoteAddress.desc)
+        }
+      }
+      val filterAndSort = filterByHash andThen filterByAddress andThen filterByTx andThen filterByTimestamp andThen sort
+      val composedQuery = filterAndSort(notRemovedQuery)
+      db.run(composedQuery.result).map { r =>
+        r.map { case (f: File, e: Event) =>
+          DBQueryResponse(e.tx, e.timestamp, e.operation, e.remoteAddress, f.hash, f.name, f.contentType, f.length)
+        }
+      }
+  }
+
+  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
   def findFile(hash: SHA256Hash)(implicit ec: ExecutionContext): Future[Option[File]] =
     removed(hash).flatMap {
       case true  => Future(None)
@@ -100,9 +185,9 @@ trait HyponomeDB {
         db.run(q.result.headOption)
     }
 
-  def countFiles: Future[Int] = {
+  def countFiles(implicit ec: ExecutionContext): Future[Long] = {
     val q = files.length
-    db.run(q.result)
+    db.run(q.result).map(_.longValue)
   }
 
   @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))

@@ -10,36 +10,32 @@ import slick.driver.H2Driver.backend.DatabaseDef
 
 import hyponome.core._
 import hyponome.db._
+import Receptionist.{AddFile, RemoveFile, FindFile, GetInfo}
 
 object DBActor {
 
   final case object Ready
 
-  final case class AddFile(client: ActorRef, addition: Addition)
   final case class AddFileAck(client: ActorRef, addition: Addition)
   final case class AddFileFail(client: ActorRef, addition: Addition, e: Throwable)
   final case class PreviouslyAddedFile(client: ActorRef, addition: Addition)
 
-  final case class RemoveFile(client: ActorRef, removal: Removal)
   final case class RemoveFileAck(client: ActorRef, removal: Removal)
   final case class RemoveFileFail(client: ActorRef, removal: Removal, e: Throwable)
   final case class PreviouslyRemovedFile(client: ActorRef, removal: Removal)
 
-  final case class FindFile(client: ActorRef, hash: SHA256Hash)
-  final case class DBFile(
-    client: ActorRef,
-    hash: SHA256Hash,
-    file: Option[hyponome.core.File]
-  )
+  final case class DBFile(client: ActorRef, hash: SHA256Hash, file: Option[File])
 
-  final case object CountFiles
-  final case class Count(c: Int)
+  final case class CountFiles(client: ActorRef)
+  final case class Count(client: ActorRef, count: Long)
 
-  final case object DumpFiles
-  final case class FileDump(fs: Seq[File])
+  final case class DumpFiles(client: ActorRef)
+  final case class FileDump(client: ActorRef, fs: Seq[File])
 
-  final case object DumpEvents
-  final case class EventDump(es: Seq[Event])
+  final case class DumpEvents(client: ActorRef)
+  final case class EventDump(client: ActorRef, es: Seq[Event])
+
+  final case class DBInfo(client: ActorRef, count: Long, max: Long)
 
   def props(dbDef: Function0[DatabaseDef], count: AtomicLong): Props = Props(new DBActor(dbDef, count))
 }
@@ -112,26 +108,45 @@ class DBActor(dbDef: Function0[DatabaseDef], count: AtomicLong) extends Actor wi
         case Success(f)    => replyToRef ! DBFile(c, h, f)
         case Failure(_)    => replyToRef ! DBFile(c, h, None)
       }
-    case CountFiles =>
+    case CountFiles(c: ActorRef) =>
       val replyToRef: ActorRef = sender
-      val countFut: Future[Int] = this.countFiles
+      val countFut: Future[Long] = this.countFiles
       countFut onComplete {
-        case Success(i: Int) => replyToRef ! Count(i)
-        case _               =>
+        case Success(l: Long) => replyToRef ! Count(c, l)
+        case _                =>
       }
-    case DumpFiles =>
+    case DumpFiles(c: ActorRef) =>
       val replyToRef: ActorRef = sender
       val dumpFilesFut: Future[Seq[File]] = this.dumpFiles
       dumpFilesFut onComplete {
-        case Success(fs: Seq[File]) => replyToRef ! FileDump(fs)
+        case Success(fs: Seq[File]) => replyToRef ! FileDump(c, fs)
         case _                      =>
       }
-    case DumpEvents =>
+    case DumpEvents(c: ActorRef) =>
       val replyToRef: ActorRef = sender
       val dumpEventsFut: Future[Seq[Event]] = this.dumpEvents
       dumpEventsFut onComplete {
-        case Success(es: Seq[Event]) => replyToRef ! EventDump(es)
+        case Success(es: Seq[Event]) => replyToRef ! EventDump(c, es)
         case _                       =>
+      }
+    case GetInfo(c: ActorRef) =>
+      val replyToRef: ActorRef = sender
+      val maxFuture: Future[Long] = maxTx.map {
+        case Some(x) => x
+        case None    => 0
+      }
+      val replyFuture: Future[List[Long]] =
+        Future.sequence(List(countFiles, maxFuture))
+      replyFuture onComplete {
+        case Success(count :: max :: Nil) => replyToRef ! DBInfo(c, count, max)
+        case _                            =>
+      }
+    case q: DBQuery =>
+      val replyToRef: ActorRef = sender
+      val queryFuture: Future[Seq[DBQueryResponse]] = this.runQuery(q)
+      queryFuture onComplete {
+        case Success(rs: Seq[DBQueryResponse]) => replyToRef ! rs
+        case _                                 =>
       }
   }
 

@@ -2,12 +2,13 @@ package hyponome.actor
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{TestActors, TestKit, ImplicitSender}
-import hyponome.core._
 import java.net.InetAddress
 import java.nio.file.{FileSystem, FileSystems, Path}
 import java.util.UUID.randomUUID
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import slick.driver.H2Driver.api.Database
+
+import hyponome.core._
 
 class AskActorSpec(_system: ActorSystem) extends TestKit(_system)
     with ImplicitSender
@@ -114,10 +115,14 @@ class AskActorSpec(_system: ActorSystem) extends TestKit(_system)
       expectMsg(PreviouslyRemoved(remove))
     }
 
-    """respond with Result when sent a FindFile msg""" in withAskActor { askActor =>
+    """respond with Result when sent a SHA256Hash""" in withAskActor { askActor =>
       askActor ! add
       expectMsg(AdditionAck(add))
-      askActor ! FindFile(add.hash)
+      askActor ! add.hash
+      expectMsgType[Result]
+      askActor ! remove
+      expectMsg(RemovalAck(remove))
+      askActor ! add.hash
       expectMsgType[Result]
     }
   }

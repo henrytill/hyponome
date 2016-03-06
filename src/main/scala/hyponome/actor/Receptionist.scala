@@ -8,10 +8,21 @@ import slick.driver.H2Driver.backend.DatabaseDef
 import hyponome.core._
 
 object Receptionist {
+
+  final case class AddFile(client: ActorRef, addition: Addition)
+
+  final case class RemoveFile(client: ActorRef, removal: Removal)
+
+  final case class FindFile(client: ActorRef, hash: SHA256Hash)
+
+  final case class GetInfo(client: ActorRef)
+
   def props(db: Function0[DatabaseDef], store: Path): Props = Props(new Receptionist(db, store))
 }
 
 class Receptionist(db: Function0[DatabaseDef], store: Path) extends Actor {
+
+  import Receptionist._
 
   val counter: AtomicLong = new AtomicLong()
 
@@ -22,11 +33,11 @@ class Receptionist(db: Function0[DatabaseDef], store: Path) extends Actor {
   def prime: Receive = {
     // Adding files
     case a: Addition =>
-      fileActor ! FileActor.AddFile(sender, a)
+      fileActor ! AddFile(sender, a)
     case FileActor.AddFileAck(c: ActorRef, a: Addition) =>
-      dbActor ! DBActor.AddFile(c, a)
+      dbActor ! AddFile(c, a)
     case FileActor.PreviouslyAddedFile(c: ActorRef, a: Addition) =>
-      dbActor ! DBActor.AddFile(c, a)
+      dbActor ! AddFile(c, a)
     case FileActor.AddFileFail(c: ActorRef, a: Addition, e: Throwable) =>
       c ! AdditionFail(a, e)
     case DBActor.AddFileAck(c: ActorRef, a: Addition) =>
@@ -37,7 +48,7 @@ class Receptionist(db: Function0[DatabaseDef], store: Path) extends Actor {
       c ! AdditionFail(a, e)
     // Removing files
     case r: Removal =>
-      dbActor ! DBActor.RemoveFile(sender, r)
+      dbActor ! RemoveFile(sender, r)
     case DBActor.RemoveFileAck(c: ActorRef, r: Removal) =>
       c ! RemovalAck(r)
     case DBActor.PreviouslyRemovedFile(c: ActorRef, r: Removal) =>
@@ -45,14 +56,23 @@ class Receptionist(db: Function0[DatabaseDef], store: Path) extends Actor {
     case DBActor.RemoveFileFail(c: ActorRef, r: Removal, e: Throwable) =>
       c ! RemovalFail(r, e)
     // Finding a file
-    case FindFile(h: SHA256Hash)  =>
-      dbActor ! DBActor.FindFile(sender, h)
+    case h: SHA256Hash  =>
+      dbActor ! FindFile(sender, h)
     case DBActor.DBFile(c: ActorRef, h: SHA256Hash, Some(_: File)) =>
-      fileActor ! FileActor.FindFile(c, h)
+      fileActor ! FindFile(c, h)
     case DBActor.DBFile(c: ActorRef, h: SHA256Hash, None) =>
       c ! Result(None)
     case FileActor.StoreFile(c: ActorRef, h: SHA256Hash, f: Option[Path]) =>
       c ! Result(f)
+    // GetInfo
+    case Objects =>
+      dbActor ! GetInfo(sender)
+    case DBActor.DBInfo(c: ActorRef, count: Long, max: Long) =>
+      val storeName = store.toFile.toString
+      c ! Info(storeName, count, max)
+    // Query
+    case q: DBQuery =>
+      dbActor forward q
   }
 
   def receive: Receive = prime

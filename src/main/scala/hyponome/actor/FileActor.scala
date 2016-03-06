@@ -8,27 +8,21 @@ import scala.util.{Failure, Success, Try}
 
 import hyponome.core._
 import hyponome.file._
+import Receptionist.{AddFile, RemoveFile, FindFile}
 
 object FileActor {
 
   final case object Ready
 
-  final case class AddFile(client: ActorRef, addition: Addition)
   final case class AddFileAck(client: ActorRef, addition: Addition)
   final case class AddFileFail(client: ActorRef, addition: Addition, e: Throwable)
   final case class PreviouslyAddedFile(client: ActorRef, addition: Addition)
 
-  final case class RemoveFile(client: ActorRef, removal: Removal)
   final case class RemoveFileAck(client: ActorRef, removal: Removal)
   final case class RemoveFileFail(client: ActorRef, removal: Removal, e: Throwable)
   final case class PreviouslyRemovedFile(client: ActorRef, removal: Removal)
 
-  final case class FindFile(client: ActorRef, hash: SHA256Hash)
-  final case class StoreFile(
-    client: ActorRef,
-    hash: SHA256Hash,
-    file: Option[Path]
-  )
+  final case class StoreFile(client: ActorRef, hash: SHA256Hash, file: Option[Path])
 
   def props(p: Path): Props = Props(new FileActor(p))
 }

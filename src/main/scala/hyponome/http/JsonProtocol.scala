@@ -46,7 +46,10 @@ object JsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   implicit object OperationFormat extends RootJsonFormat[Operation] {
-    def write(op: Operation) = JsString(op.toString)
+    def write(op: Operation) = op match {
+      case Add    => JsString("Add")
+      case Remove => JsString("Remove")
+    }
     def read(value: JsValue) = (value: @unchecked) match {
       case JsString("Add")    => Add
       case JsString("Remove") => Remove
@@ -64,9 +67,12 @@ object JsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
-  implicit val additionFormat: RootJsonFormat[Addition] = jsonFormat6(Addition)
-  implicit val removalFormat:  RootJsonFormat[Removal]  = jsonFormat2(Removal)
-  implicit val fileFormat:     RootJsonFormat[File]     = jsonFormat4(File)
-  implicit val eventFormat:    RootJsonFormat[Event]    = jsonFormat5(Event)
-  implicit val responseFormat: RootJsonFormat[Response] = jsonFormat7(Response)
+  implicit val additionFormat:        RootJsonFormat[Addition]        = jsonFormat6(Addition)
+  implicit val removalFormat:         RootJsonFormat[Removal]         = jsonFormat2(Removal)
+  implicit val fileFormat:            RootJsonFormat[File]            = jsonFormat4(File)
+  implicit val eventFormat:           RootJsonFormat[Event]           = jsonFormat5(Event)
+  implicit val responseFormat:        RootJsonFormat[Response]        = jsonFormat7(Response)
+  implicit val infoFormat:            RootJsonFormat[Info]            = jsonFormat3(Info)
+  implicit val okFormat:              RootJsonFormat[OK]              = jsonFormat1(OK)
+  implicit val dbQueryResponseFormat: RootJsonFormat[DBQueryResponse] = jsonFormat8(DBQueryResponse)
 }

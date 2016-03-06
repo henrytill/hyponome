@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.model.{HttpResponse, RemoteAddress, StatusCodes}
+import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
@@ -14,6 +15,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import java.lang.SuppressWarnings
 import java.net.{InetAddress, URI}
 import java.nio.file.{FileSystem, FileSystems, Path}
+import java.sql.Timestamp
 import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -65,9 +67,38 @@ final class HttpService(
     }
   }
 
-  def handleGetObjects(a: ActorRef, h: String): Route = {
+  def handleQueryObjects(a: ActorRef): Route =
+    parameters('hash.?, 'remoteAddress.?, 'txLo.?, 'txHi.?, 'timeLo.?, 'timeHi.?, 'sortBy.?, 'sortOrder.?) {
+      (hash, remoteAddress, txLo, txHi, timeLo, timeHi, sortBy, sortOrder) => {
+        val q = DBQuery(
+          hash.map(SHA256Hash(_)),
+          remoteAddress.map(InetAddress.getByName(_)),
+          txLo.map(_.toLong),
+          txHi.map(_.toLong),
+          timeLo.map(Timestamp.valueOf(_)),
+          timeHi.map(Timestamp.valueOf(_)),
+          sortBy match {
+            case Some("time")    => Time
+            case Some("address") => Address
+            case _               => Tx
+          },
+          sortOrder match {
+            case Some("desc") => Descending
+            case _            => Ascending
+          }
+        )
+        val responseFuture: Future[Seq[DBQueryResponse]] =
+          ask(a, q).mapTo[Seq[DBQueryResponse]]
+        onComplete(responseFuture) {
+          case Success(rs: Seq[DBQueryResponse]) => complete { rs }
+          case Failure(ex)                       => complete { handleFailure(ex) }
+        }
+      }
+    }
+
+  def handleGetObject(a: ActorRef, h: String): Route = {
     val responseFuture: Future[Option[java.io.File]] =
-      ask(a, FindFile(SHA256Hash(h)))
+      ask(a, SHA256Hash(h))
         .mapTo[Result]
         .map(_.file)
         .map(_.map(_.toFile))
@@ -78,20 +109,42 @@ final class HttpService(
     }
   }
 
+  def handleDeleteObject(a: ActorRef, h: String, r: RemoteAddress): Route = {
+    val responseFuture: Future[RemovalResponse] =
+      ask(a, Removal(SHA256Hash(h), r.toOption))
+        .mapTo[RemovalResponse]
+    onComplete(responseFuture) {
+      case Success(RemovalAck(a))        => complete { OK(true) }
+      case Success(PreviouslyRemoved(a)) => complete { OK(true) }
+      case Success(RemovalFail(a, ex))   => complete { handleFailure(ex)    }
+      case Failure(ex)                   => complete { handleFailure(ex)    }
+    }
+  }
+
   def objectsRoute(a: ActorRef, u: String): Route = {
-    pathPrefix("objects") {
-      pathEnd {
-        post {
-          extractClientIP { ip =>
-            uploadedFile(u) { case (metadata, file) =>
-              handlePostObjects(a, ip, metadata, file)
+    respondWithHeader(`Access-Control-Allow-Origin`.*) {
+      pathPrefix("objects") {
+        pathEnd {
+          post {
+            extractClientIP { ip =>
+              uploadedFile(u) { case (metadata, file) =>
+                handlePostObjects(a, ip, metadata, file)
+              }
+            }
+          } ~
+          get {
+            handleQueryObjects(a)
+          }
+        } ~
+        path(Rest) { hash =>
+          get {
+            handleGetObject(a, hash)
+          } ~
+          delete {
+            extractClientIP { ip =>
+              handleDeleteObject(a, hash, ip)
             }
           }
-        }
-      } ~
-      path(Rest) { hash =>
-        get {
-          handleGetObjects(a, hash)
         }
       }
     }

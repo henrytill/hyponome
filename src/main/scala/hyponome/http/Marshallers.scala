@@ -17,7 +17,7 @@ object Marshallers {
       HttpResponse(
         r.status.toStatusCode,
         headers = List(locationHeader),
-        entity = HttpEntity(`text/plain(UTF-8)`, r.file.toString)
+        entity = HttpEntity(`text/plain(UTF-8)`, r.toJson.prettyPrint)
       )
     },
     Marshaller.withFixedContentType(`application/json`) { (r: Response) =>
@@ -30,12 +30,57 @@ object Marshallers {
     }
   )
 
+  implicit val infoM: ToResponseMarshaller[Info] = Marshaller.oneOf(
+    Marshaller.withFixedContentType(`text/plain(UTF-8)`) { (i: Info) =>
+      HttpResponse(
+        StatusCodes.OK,
+        entity = HttpEntity(`text/plain(UTF-8)`, i.toJson.prettyPrint)
+      )
+    },
+    Marshaller.withFixedContentType(`application/json`) { (i: Info) =>
+      HttpResponse(
+        StatusCodes.OK,
+        entity = HttpEntity(`application/json`, i.toJson.prettyPrint)
+      )
+    }
+  )
+
+  implicit val okM: ToResponseMarshaller[OK] = Marshaller.oneOf(
+    Marshaller.withFixedContentType(`text/plain(UTF-8)`) { (ok: OK) =>
+      HttpResponse(
+        StatusCodes.OK,
+        entity = HttpEntity(`text/plain(UTF-8)`, ok.toJson.prettyPrint)
+      )
+    },
+    Marshaller.withFixedContentType(`application/json`) { (ok: OK) =>
+      HttpResponse(
+        StatusCodes.OK,
+        entity = HttpEntity(`application/json`, ok.toJson.prettyPrint)
+      )
+    }
+  )
+
+  implicit val seqDBQueryResponseM: ToResponseMarshaller[Seq[DBQueryResponse]] = Marshaller.oneOf(
+    Marshaller.withFixedContentType(`text/plain(UTF-8)`) { (rs: Seq[DBQueryResponse]) =>
+      HttpResponse(
+        StatusCodes.OK,
+        entity = HttpEntity(`text/plain(UTF-8)`, rs.toJson.prettyPrint)
+      )
+    },
+    Marshaller.withFixedContentType(`application/json`) { (rs: Seq[DBQueryResponse]) =>
+      HttpResponse(
+        StatusCodes.OK,
+        entity = HttpEntity(`application/json`, rs.toJson.prettyPrint)
+      )
+    }
+  )
+
   implicit val serverErrorM: ToResponseMarshaller[(StatusCodes.ServerError, String)] = Marshaller.oneOf(
     Marshaller.withFixedContentType(`text/plain(UTF-8)`) { case (sc, st) =>
-      HttpResponse(sc, entity = HttpEntity(`text/plain(UTF-8)`, s"${sc.defaultMessage}  $st"))
+      HttpResponse(sc, entity = HttpEntity(`text/plain(UTF-8)`, JsObject("error" -> JsString(st)).prettyPrint))
     },
     Marshaller.withFixedContentType(`application/json`) { case (sc, st) =>
-      HttpResponse(sc, entity = HttpEntity(`application/json`, JsObject("ERROR" -> JsString(st)).prettyPrint))
+      HttpResponse(sc, entity = HttpEntity(`application/json`, JsObject("error" -> JsString(st)).prettyPrint))
     }
   )
 }

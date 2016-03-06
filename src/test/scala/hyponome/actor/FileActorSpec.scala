@@ -2,11 +2,13 @@ package hyponome.actor
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{TestActors, TestKit, ImplicitSender}
-import hyponome.core._
 import java.net.InetAddress
 import java.nio.file._
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.util.{Failure, Success}
+
+import hyponome.core._
+import Receptionist.{AddFile, RemoveFile, FindFile}
 
 class FileActorSpec(_system: ActorSystem) extends TestKit(_system)
     with ImplicitSender
@@ -73,40 +75,40 @@ class FileActorSpec(_system: ActorSystem) extends TestKit(_system)
 
     """respond with AddFileAck when attempting to add a file to the
     file store""" in withFileActor { fileActor =>
-      fileActor ! FileActor.AddFile(self, add)
+      fileActor ! AddFile(self, add)
       expectMsg(FileActor.AddFileAck(self, add))
     }
 
     """respond with PreviouslyAddedFile when attempting to add a file
    to the file store which has already been added""" in withFileActor { fileActor =>
-      fileActor ! FileActor.AddFile(self, add)
+      fileActor ! AddFile(self, add)
       expectMsg(FileActor.AddFileAck(self, add))
-      fileActor ! FileActor.AddFile(self, add)
+      fileActor ! AddFile(self, add)
       expectMsg(FileActor.PreviouslyAddedFile(self, add))
     }
 
     """respond with RemoveFileAck when attempting to remove a file
     from the file store""" in withFileActor { fileActor =>
-      fileActor ! FileActor.AddFile(self, add)
+      fileActor ! AddFile(self, add)
       expectMsg(FileActor.AddFileAck(self, add))
-      fileActor ! FileActor.RemoveFile(self, remove)
+      fileActor ! RemoveFile(self, remove)
       expectMsg(FileActor.RemoveFileAck(self, remove))
     }
 
     """respond with PreviouslyRemovedFile when attempting to remove a
     file from the file store which has already been removed""" in withFileActor { fileActor =>
-      fileActor ! FileActor.AddFile(self, add)
+      fileActor ! AddFile(self, add)
       expectMsg(FileActor.AddFileAck(self, add))
-      fileActor ! FileActor.RemoveFile(self, remove)
+      fileActor ! RemoveFile(self, remove)
       expectMsg(FileActor.RemoveFileAck(self, remove))
-      fileActor ! FileActor.RemoveFile(self, remove)
+      fileActor ! RemoveFile(self, remove)
       expectMsg(FileActor.PreviouslyRemovedFile(self, remove))
     }
 
     """respond with StoreFile when sent a FindFile msg""" in withFileActor { fileActor =>
-      fileActor ! FileActor.AddFile(self, add)
+      fileActor ! AddFile(self, add)
       expectMsg(FileActor.AddFileAck(self, add))
-      fileActor ! FileActor.FindFile(self, testPDFHash)
+      fileActor ! FindFile(self, testPDFHash)
       expectMsgType[FileActor.StoreFile]
     }
   }

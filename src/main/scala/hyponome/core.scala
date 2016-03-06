@@ -3,6 +3,7 @@ package hyponome.core
 import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import java.net.{InetAddress, URI}
 import java.nio.file.Path
+import java.sql.Timestamp
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
 import slick.driver.H2Driver.backend.DatabaseDef
@@ -52,7 +53,6 @@ final case class RemovalAck(removal: Removal) extends RemovalResponse
 final case class PreviouslyRemoved(removal: Removal) extends RemovalResponse
 final case class RemovalFail(removal: Removal, exception: Throwable) extends RemovalResponse
 
-final case class FindFile(h: SHA256Hash)
 final case class Result(file: Option[Path])
 
 sealed trait Status {
@@ -75,15 +75,20 @@ final case class Response(
   remoteAddress: Option[InetAddress]
 )
 
+final case class OK(ok: Boolean)
+
+final case object Objects
+final case class Info(path: String, count: Long, max: Long)
+
 // DB types
-sealed abstract class Operation(toString: String)
-final case object Add extends Operation("Add")
-final case object Remove extends Operation("Remove")
+sealed trait Operation extends Product with Serializable
+final case object Add extends Operation
+final case object Remove extends Operation
 
 object Operation {
   implicit val operationColumnType: BaseColumnType[Operation] =
     MappedColumnType.base[Operation, String](
-      { (op: Operation) => op.toString },
+      { case Add => "Add"; case Remove => "Remove" },
       { case "Add" => Add; case "Remove" => Remove }
     )
 }
@@ -101,4 +106,38 @@ final case class Event(
   operation: Operation,
   hash: SHA256Hash,
   remoteAddress: Option[InetAddress]
+)
+
+// Query
+
+sealed trait SortBy extends Product with Serializable
+final case object Tx extends SortBy
+final case object Time extends SortBy
+final case object Address extends SortBy
+
+sealed trait SortOrder extends Product with Serializable
+final case object Ascending extends SortOrder
+final case object Descending extends SortOrder
+
+@SuppressWarnings(Array("org.brianmckenna.wartremover.warts.DefaultArguments"))
+final case class DBQuery(
+  hash: Option[SHA256Hash] = None,
+  remoteAddress: Option[InetAddress] = None,
+  txLo: Option[Long] = None,
+  txHi: Option[Long] = None,
+  timeLo: Option[Timestamp] = None,
+  timeHi: Option[Timestamp] = None,
+  sortBy: SortBy = Tx,
+  sortOrder: SortOrder = Ascending
+)
+
+final case class DBQueryResponse(
+  tx: Long,
+  timestamp: java.sql.Timestamp,
+  operation: Operation,
+  remoteAddress: Option[InetAddress],
+  hash: SHA256Hash,
+  name: String,
+  contentType: String,
+  length: Long
 )

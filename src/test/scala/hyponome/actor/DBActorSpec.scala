@@ -2,13 +2,15 @@ package hyponome.actor
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{TestActors, TestKit, ImplicitSender}
-import hyponome.core._
 import java.net.InetAddress
 import java.nio.file._
 import java.util.concurrent.atomic.AtomicLong
 import java.util.UUID.randomUUID
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import slick.driver.H2Driver.api._
+
+import hyponome.core._
+import Receptionist.{AddFile, RemoveFile, FindFile}
 
 class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
     with ImplicitSender
@@ -77,49 +79,49 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
   "A DBActor" must {
 
     "respond with AddFileAck when adding a file" in withDBActor { dbActor =>
-      dbActor ! DBActor.AddFile(self, add)
+      dbActor ! AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
     }
 
     "respond with PreviouslyAddedFile when adding a file that has already been added" in withDBActor { dbActor =>
-      dbActor ! DBActor.AddFile(self, add)
+      dbActor ! AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
-      dbActor ! DBActor.AddFile(self, add)
+      dbActor ! AddFile(self, add)
       expectMsg(DBActor.PreviouslyAddedFile(self, add))
     }
 
     "respond with RemoveFileAck(self, remove) when removing a file" in withDBActor { dbActor =>
-      dbActor ! DBActor.AddFile(self, add)
+      dbActor ! AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
-      dbActor ! DBActor.RemoveFile(self, remove)
+      dbActor ! RemoveFile(self, remove)
       expectMsg(DBActor.RemoveFileAck(self, remove))
     }
 
     """respond with PreviouslyRemovedFile when removing a file that
     has already been removed""" in withDBActor { dbActor =>
-      dbActor ! DBActor.AddFile(self, add)
+      dbActor ! AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
-      dbActor ! DBActor.RemoveFile(self, remove)
+      dbActor ! RemoveFile(self, remove)
       expectMsg(DBActor.RemoveFileAck(self, remove))
-      dbActor ! DBActor.RemoveFile(self, remove)
+      dbActor ! RemoveFile(self, remove)
       expectMsg(DBActor.PreviouslyRemovedFile(self, remove))
     }
 
     """respond with the correct DBFile message when sent a FindFile
     message containing an added file's hash""" in withDBActor { dbActor =>
-      dbActor ! DBActor.AddFile(self, add)
+      dbActor ! AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
-      dbActor ! DBActor.FindFile(self, add.hash)
+      dbActor ! FindFile(self, add.hash)
       expectMsg(DBActor.DBFile(self, add.hash, Some(expected)))
     }
 
     """respond with the correct DBFile message when sent a FindFile
     message containing the hash of a file that has been removed""" in withDBActor { dbActor =>
-      dbActor ! DBActor.AddFile(self, add)
+      dbActor ! AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
-      dbActor ! DBActor.RemoveFile(self, remove)
+      dbActor ! RemoveFile(self, remove)
       expectMsg(DBActor.RemoveFileAck(self, remove))
-      dbActor ! DBActor.FindFile(self, add.hash)
+      dbActor ! FindFile(self, add.hash)
       expectMsg(DBActor.DBFile(self, add.hash, None))
     }
   }
