@@ -59,7 +59,7 @@ class DBActor(dbDef: Function0[DatabaseDef], count: AtomicLong) extends Actor wi
     val selfRef: ActorRef = self
     val initFut: Future[Unit] = this.exists.flatMap {
       case true  => this.syncCounter()
-      case false => this.createDB()
+      case false => this.create()
     }
     initFut onComplete {
       case Success(_: Unit) =>

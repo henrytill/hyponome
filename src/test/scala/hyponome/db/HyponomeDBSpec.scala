@@ -85,26 +85,26 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
 
   "An instance of a class that extends HyponomeDB" must {
 
-    "have a createDB method" which {
+    "have a create method" which {
       """returns a Future value of Success(()) when attempting to
       create a db if one doesn't already exist""" in withTestDBInstance { t =>
-        t.createDB().futureValue should equal(())
+        t.create().futureValue should equal(())
       }
       """returns a Future value of Failure(JdbcSQLException) when
       attempting to create a db if one already exists""" in withTestDBInstance { t =>
-        t.createDB().flatMap { _ =>
-          t.createDB()
+        t.create().flatMap { _ =>
+          t.create()
         }.failed.futureValue shouldBe a [org.h2.jdbc.JdbcSQLException]
       }
     }
 
     "have an addFile method" which {
       "returns a Future value of Success(()) when adding a file" in withTestDBInstance { t =>
-        t.createDB().flatMap { _ => t.addFile(add) }.futureValue should equal(())
+        t.create().flatMap { _ => t.addFile(add) }.futureValue should equal(())
       }
       """returns a Future value of Success(()) when adding a file that
       has already been removed""" in withTestDBInstance { t =>
-        t.createDB().flatMap { _ =>
+        t.create().flatMap { _ =>
           t.addFile(add)
         }.flatMap { _ =>
           t.removeFile(remove)
@@ -114,7 +114,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       }
       """returns a Future value of Failure(UnsupportedOperationException) when
       adding a file that has already been added""" in withTestDBInstance { t =>
-        t.createDB().flatMap { _ =>
+        t.create().flatMap { _ =>
           t.addFile(add)
         }.flatMap { _ =>
           t.addFile(add)
@@ -124,7 +124,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
 
     "have a removeFile method" which {
       "returns a Future value of Success(()) when removing a file" in withTestDBInstance { t =>
-        t.createDB().flatMap { _ =>
+        t.create().flatMap { _ =>
           t.addFile(add)
         }.flatMap { _ =>
           t.removeFile(remove)
@@ -132,13 +132,13 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       }
       """returns a Future value of Failure(UnsupportedOperationException)
       when removing a file that has never beend added""" in withTestDBInstance { t =>
-        t.createDB().flatMap { _ =>
+        t.create().flatMap { _ =>
           t.removeFile(remove)
         }.failed.futureValue shouldBe a [UnsupportedOperationException]
       }
       """returns a Future value of Failure(UnsupportedOperationException)
       when removing a file that has already been removed""" in withTestDBInstance { t =>
-        t.createDB().flatMap { _ =>
+        t.create().flatMap { _ =>
           t.addFile(add)
         }.flatMap { _ =>
           t.removeFile(remove)
@@ -151,13 +151,13 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
     "have a findFile method" which {
       """returns a Future value of a given File when called with an
       argument of a file's hash that has never been added""" in withTestDBInstance { t =>
-        t.createDB().flatMap { _ =>
+        t.create().flatMap { _ =>
           t.findFile(add.hash)
         }.futureValue should equal(None)
       }
       """returns a Future value of a given File when called with an
       argument of that file's hash""" in withTestDBInstance { t =>
-        t.createDB().flatMap { _ =>
+        t.create().flatMap { _ =>
           t.addFile(add)
         }.flatMap { _ =>
           t.findFile(add.hash)
@@ -166,7 +166,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       """returns a Future value of Failure(IllegalArgumentException)
       when called with an argument of the hash of a file that has been
       removed""" in withTestDBInstance { t =>
-        t.createDB().flatMap { _ =>
+        t.create().flatMap { _ =>
           t.addFile(add)
         }.flatMap { _ =>
           t.removeFile(remove)
@@ -179,11 +179,11 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
     "have a maxTx method" which {
       """returns a Future value of a None when called with an empty
       Events table""" in withTestDBInstance { t =>
-        t.createDB().flatMap { _ => t.maxTx }.futureValue should equal(None)
+        t.create().flatMap { _ => t.maxTx }.futureValue should equal(None)
       }
       """returns a Future value which corresponds to the number of
       items in the Events table""" in withTestDBInstance { t =>
-        t.createDB().flatMap { _ =>
+        t.create().flatMap { _ =>
           t.addFile(add)
         }.flatMap { _ =>
           t.removeFile(remove)
