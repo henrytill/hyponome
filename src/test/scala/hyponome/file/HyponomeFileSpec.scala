@@ -1,9 +1,7 @@
 package hyponome.file
 
 import com.typesafe.config.{Config, ConfigFactory}
-import hyponome.core._
-import java.net.InetAddress
-import java.nio.file._
+import java.nio.file.Path
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpecLike}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -11,32 +9,25 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
-class TestStore(p: Path) extends HyponomeFile {
+import hyponome.core._
+import hyponome.test._
 
+class TestStore(p: Path) extends HyponomeFile {
   val storePath: Path = p
 }
 
 class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
 
-  val fs: FileSystem = FileSystems.getDefault()
-
-  val tempStorePath: Path = fs.getPath("/tmp/hyponome/store")
-
-  val testPDF: Path = {
-    val s: String = getClass.getResource("/test.pdf").getPath
-    fs.getPath(s)
-  }
-
-  val testPDFHash = SHA256Hash(
-    "eba205fb9114750b2ce83db62f9c2a15dd068bcba31a2de32d8df7f7c8d85441"
-  )
-
   def withTestStoreInstance(testCode: TestStore => Any): Unit = {
-    val t: TestStore = new TestStore(tempStorePath)
+    val t: TestStore = new TestStore(testStorePath)
     val storeFuture: Future[Path] = t.createStore()
     val store: Path = Await.result(storeFuture, 5.seconds)
-    try     { testCode(t);                 () }
-    finally { deleteFolder(tempStorePath); () }
+    try {
+      testCode(t); ()
+    }
+    finally {
+      deleteFolder(testStorePath); ()
+    }
   }
 
   "An instance of a class that extends HyponomeFile" must {
@@ -45,7 +36,7 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
       "returns the correct file store Path" in withTestStoreInstance { t =>
         val hash = testPDFHash
         val (dir: String, file: String) = hash.value.splitAt(2)
-        val expected: Path = tempStorePath.resolve(dir).resolve(file).toAbsolutePath
+        val expected: Path = testStorePath.resolve(dir).resolve(file).toAbsolutePath
         t.getFilePath(hash) should equal(expected)
       }
     }

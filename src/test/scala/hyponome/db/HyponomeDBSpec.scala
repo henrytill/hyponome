@@ -1,10 +1,6 @@
 package hyponome.db
 
-import hyponome.core._
-import java.net.InetAddress
-import java.nio.file._
 import java.util.concurrent.atomic.AtomicLong
-import java.util.UUID.randomUUID
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpecLike}
 import org.scalatest.time.{Millis, Span}
@@ -12,6 +8,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Success, Failure}
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
+
+import hyponome.test._
 
 class TestDB(dbDef: DatabaseDef, count: AtomicLong) extends HyponomeDB {
 
@@ -27,56 +25,12 @@ class TestDB(dbDef: DatabaseDef, count: AtomicLong) extends HyponomeDB {
 class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
 
   def withTestDBInstance(testCode: TestDB => Any): Unit = {
-    val c = new AtomicLong()
-    val dbName = randomUUID.toString
-    val db = Database.forURL(
-      url = s"jdbc:h2:mem:$dbName;CIPHER=AES",
-      user = "hyponome",
-      password = "hyponome hyponome", // password = "filepwd userpwd"
-      driver = "org.h2.Driver",
-      keepAliveConnection = true
-    )
-    val t: TestDB = new TestDB(db, c)
+    val t: TestDB = new TestDB(makeTestDB(), makeCounter())
     try {
-      testCode(t)
-      ()
+      testCode(t); ()
     }
     finally t.close()
   }
-
-  val fs: FileSystem = FileSystems.getDefault()
-
-  val testPDF: Path = {
-    val s: String = getClass.getResource("/test.pdf").getPath
-    fs.getPath(s)
-  }
-
-  val testPDFHash = SHA256Hash(
-    "eba205fb9114750b2ce83db62f9c2a15dd068bcba31a2de32d8df7f7c8d85441"
-  )
-
-  val ip: Option[InetAddress] = Some(InetAddress.getByName("192.168.1.253"))
-
-  val add = Addition(
-    testPDF,
-    testPDFHash,
-    testPDF.toFile.getName,
-    "application/octet-stream",
-    testPDF.toFile.length,
-    ip
-  )
-
-  val remove = Removal(
-    add.hash,
-    add.remoteAddress
-  )
-
-  val expected = File(
-    add.hash,
-    add.name,
-    add.contentType,
-    add.length
-  )
 
   implicit val patience: PatienceConfig = PatienceConfig(
     Span(300, Millis),
@@ -110,7 +64,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           t.removeFile(remove)
         }.flatMap { _ =>
           t.addFile(add)
-        }.futureValue should equal(())
+        }.futureValue should equal (())
       }
       """returns a Future value of Failure(UnsupportedOperationException) when
       adding a file that has already been added""" in withTestDBInstance { t =>
@@ -128,7 +82,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           t.addFile(add)
         }.flatMap { _ =>
           t.removeFile(remove)
-        }.futureValue should equal(())
+        }.futureValue should equal (())
       }
       """returns a Future value of Failure(UnsupportedOperationException)
       when removing a file that has never beend added""" in withTestDBInstance { t =>
@@ -153,7 +107,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       argument of a file's hash that has never been added""" in withTestDBInstance { t =>
         t.create().flatMap { _ =>
           t.findFile(add.hash)
-        }.futureValue should equal(None)
+        }.futureValue should equal (None)
       }
       """returns a Future value of a given File when called with an
       argument of that file's hash""" in withTestDBInstance { t =>
@@ -161,7 +115,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           t.addFile(add)
         }.flatMap { _ =>
           t.findFile(add.hash)
-        }.futureValue should equal(Some(expected))
+        }.futureValue should equal (Some(expected))
       }
       """returns a Future value of Failure(IllegalArgumentException)
       when called with an argument of the hash of a file that has been
@@ -172,7 +126,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           t.removeFile(remove)
         }.flatMap { _ =>
           t.findFile(add.hash)
-        }.futureValue should equal(None)
+        }.futureValue should equal (None)
       }
     }
 
@@ -189,7 +143,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           t.removeFile(remove)
         }.flatMap { _ =>
           t.maxTx
-        }.futureValue should equal(Some(2))
+        }.futureValue should equal (Some(2))
       }
     }
   }

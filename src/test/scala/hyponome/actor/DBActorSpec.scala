@@ -2,15 +2,10 @@ package hyponome.actor
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{TestActors, TestKit, ImplicitSender}
-import java.net.InetAddress
-import java.nio.file._
-import java.util.concurrent.atomic.AtomicLong
-import java.util.UUID.randomUUID
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-import slick.driver.H2Driver.api._
 
-import hyponome.core._
 import Receptionist.{AddFile, RemoveFile, FindFile}
+import hyponome.test._
 
 class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
     with ImplicitSender
@@ -24,54 +19,10 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
     TestKit.shutdownActorSystem(system)
   }
 
-  val fs: FileSystem = FileSystems.getDefault()
-
-  val testPDF: Path = {
-    val s: String = getClass.getResource("/test.pdf").getPath
-    fs.getPath(s)
-  }
-
-  val testPDFHash = SHA256Hash(
-    "eba205fb9114750b2ce83db62f9c2a15dd068bcba31a2de32d8df7f7c8d85441"
-  )
-
-  val ip: Option[InetAddress] = Some(InetAddress.getByName("192.168.1.253"))
-
-  val add = Addition(
-    testPDF,
-    testPDFHash,
-    testPDF.toFile.getName,
-    "application/octet-stream",
-    testPDF.toFile.length,
-    ip
-  )
-
-  val remove = Removal(
-    add.hash,
-    add.remoteAddress
-  )
-
-  val expected = File(
-    add.hash,
-    add.name,
-    add.contentType,
-    add.length
-  )
-
   def withDBActor(testCode: ActorRef => Any): Unit = {
-    val c = new AtomicLong()
-    val dbName = randomUUID.toString
-    def db() = Database.forURL(
-      url = s"jdbc:h2:mem:$dbName;CIPHER=AES",
-      user = "hyponome",
-      password = "hyponome hyponome", // password = "filepwd userpwd"
-      driver = "org.h2.Driver",
-      keepAliveConnection = true
-    )
-    val dbActor = system.actorOf(DBActor.props(db, c))
+    val dbActor = system.actorOf(DBActor.props(makeTestDB, makeCounter()))
     try {
-      testCode(dbActor)
-      ()
+      testCode(dbActor); ()
     }
     finally system.stop(dbActor) // dbActor's postStop() calls db.close
   }

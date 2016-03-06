@@ -8,8 +8,6 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
 import akka.stream.scaladsl.StreamConverters
 import com.typesafe.config.{Config, ConfigFactory}
-import hyponome.core._
-import hyponome.file._
 import java.net.InetAddress
 import java.nio.file._
 import java.util.UUID.randomUUID
@@ -20,8 +18,9 @@ import org.scalatest.time.{Millis, Span}
 import org.scalatest.{Matchers, WordSpecLike}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import slick.driver.H2Driver.api._
-import slick.driver.H2Driver.backend.DatabaseDef
+
+import hyponome.core._
+import hyponome.test._
 
 class HttpServiceSpec extends WordSpecLike
     with Matchers
@@ -33,17 +32,6 @@ class HttpServiceSpec extends WordSpecLike
   implicit val materializer = ActorMaterializer()
 
   val http = Http(system)
-
-  val fs: FileSystem = FileSystems.getDefault()
-
-  val testPDF: Path = {
-    val s: String = getClass.getResource("/test.pdf").getPath
-    fs.getPath(s)
-  }
-
-  val testPDFHash = SHA256Hash(
-    "eba205fb9114750b2ce83db62f9c2a15dd068bcba31a2de32d8df7f7c8d85441"
-  )
 
   def createEntity(file: java.io.File): Future[RequestEntity] = {
     val f = FileIO.fromFile(file)
@@ -84,17 +72,7 @@ class HttpServiceSpec extends WordSpecLike
   )
 
   def withHttpService(testCode: HyponomeConfig => Any): Unit = {
-    val testStorePath: Path = fs.getPath("/tmp/hyponome/store")
-    val dbName = randomUUID.toString
-    def testDb(): DatabaseDef = Database.forURL(
-      url = s"jdbc:h2:mem:$dbName;CIPHER=AES",
-      user = "hyponome",
-      password = "hyponome hyponome", // password = "filepwd userpwd"
-      driver = "org.h2.Driver",
-      keepAliveConnection = true
-    )
-    val hostname: String = InetAddress.getLocalHost().getHostName()
-    val testConfig = HyponomeConfig(testDb, testStorePath, hostname, 3000, "file")
+    val testConfig: HyponomeConfig = HyponomeConfig(makeTestDB, testStorePath, hostname, 3000, "file")
     val service: HttpService = HttpService(testConfig).start()
     try {
       testCode(testConfig); ()

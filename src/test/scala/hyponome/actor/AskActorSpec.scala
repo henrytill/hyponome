@@ -2,13 +2,10 @@ package hyponome.actor
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{TestActors, TestKit, ImplicitSender}
-import java.net.InetAddress
-import java.nio.file.{FileSystem, FileSystems, Path}
-import java.util.UUID.randomUUID
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
-import slick.driver.H2Driver.api.Database
 
 import hyponome.core._
+import hyponome.test._
 
 class AskActorSpec(_system: ActorSystem) extends TestKit(_system)
     with ImplicitSender
@@ -16,68 +13,22 @@ class AskActorSpec(_system: ActorSystem) extends TestKit(_system)
     with Matchers
     with BeforeAndAfterAll {
 
-  def this() = this(ActorSystem("FileActorSpec"))
+  def this() = this(ActorSystem("AskActorSpec"))
 
   override def afterAll: Unit = {
     TestKit.shutdownActorSystem(system)
   }
 
-  val fs: FileSystem = FileSystems.getDefault()
-
-  val tempStorePath: Path = fs.getPath("/tmp/hyponome/store")
-
-  val testPDF: Path = {
-    val s: String = getClass.getResource("/test.pdf").getPath
-    fs.getPath(s)
-  }
-
-  val testPDFHash = SHA256Hash(
-    "eba205fb9114750b2ce83db62f9c2a15dd068bcba31a2de32d8df7f7c8d85441"
-  )
-
-  val ip: Option[InetAddress] = Some(InetAddress.getByName("192.168.1.253"))
-
-  val add = Addition(
-    testPDF,
-    testPDFHash,
-    testPDF.toFile.getName,
-    "application/octet-stream",
-    testPDF.toFile.length,
-    ip
-  )
-
-  val remove = Removal(
-    add.hash,
-    add.remoteAddress
-  )
-
-  val expected = File(
-    add.hash,
-    add.name,
-    add.contentType,
-    add.length
-  )
-
   def withAskActor(testCode: ActorRef => Any): Unit = {
-    val dbName = randomUUID.toString
-    def db() = Database.forURL(
-      url = s"jdbc:h2:mem:$dbName;CIPHER=AES",
-      user = "hyponome",
-      password = "hyponome hyponome", // password = "filepwd userpwd"
-      driver = "org.h2.Driver",
-      keepAliveConnection = true
-    )
-    val recActor = system.actorOf(Receptionist.props(db, tempStorePath))
+    val recActor = system.actorOf(Receptionist.props(makeTestDB, testStorePath))
     val askActor = system.actorOf(AskActor.props(recActor))
     try {
-      testCode(askActor)
-      ()
+      testCode(askActor); ()
     }
     finally {
       system.stop(askActor)
       system.stop(recActor)
-      hyponome.file.deleteFolder(tempStorePath)
-      ()
+      deleteFolder(testStorePath); ()
     }
   }
 
