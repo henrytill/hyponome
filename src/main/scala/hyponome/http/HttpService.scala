@@ -27,14 +27,17 @@ import hyponome.actor._
 import hyponome.core._
 import hyponome.http.Marshallers._
 
-@SuppressWarnings(Array("org.brianmckenna.wartremover.warts.ExplicitImplicitTypes"))
+@SuppressWarnings(Array(
+  "org.brianmckenna.wartremover.warts.DefaultArguments",
+  "org.brianmckenna.wartremover.warts.ExplicitImplicitTypes"
+))
 final class HttpService(
   conf: HyponomeConfig,
-  system: Option[ActorSystem],
-  recActor: Option[ActorRef],
-  askActor: Option[ActorRef],
-  bindingFuture: Option[Future[ServerBinding]]
-)(implicit ec: ExecutionContext) {
+  system: Option[ActorSystem] = None,
+  recActor: Option[ActorRef] = None,
+  askActor: Option[ActorRef] = None,
+  bindingFuture: Option[Future[ServerBinding]] = None
+)(implicit ec: ExecutionContext = ExecutionContext.global) {
 
   implicit val timeout: Timeout = Timeout(5.seconds)
   val logger: Logger  = LoggerFactory.getLogger(classOf[HttpService])
@@ -176,7 +179,7 @@ final class HttpService(
       case Some(bf) =>
         logger.info(s"Stopping server at http://$hostname:$port/")
         bf.flatMap(_.unbind).onComplete(_ => system.get.terminate())
-        HttpService(conf)
+        new HttpService(conf)
     }
   }
 }
@@ -199,11 +202,7 @@ object HttpService {
     "file"
   )
 
-  def apply(): HttpService = {
-    apply(defaultConfig)
-  }
+  def apply(): HttpService = new HttpService(defaultConfig)
 
-  def apply(conf: HyponomeConfig): HttpService = {
-    new HttpService(conf, None, None, None, None)(ExecutionContext.global)
-  }
+  def apply(conf: HyponomeConfig): HttpService = new HttpService(conf)
 }
