@@ -52,6 +52,19 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       }
     }
 
+    "have an exists method" which {
+      """returns a Future value of true if the db specified by `db`
+      exists""" in withTestDBInstance { t =>
+        t.create().flatMap { _ =>
+          t.exists
+        }.futureValue should equal(true)
+      }
+      """returns a Future value of false if the db specified by `db`
+      doesn't exist""" in withTestDBInstance { t =>
+        t.exists.futureValue should equal(false)
+      }
+    }
+
     "have an addFile method" which {
       "returns a Future value of Success(()) when adding a file" in withTestDBInstance { t =>
         t.create().flatMap { _ => t.addFile(add) }.futureValue should equal(())
