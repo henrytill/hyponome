@@ -23,7 +23,7 @@ trait HyponomeDB {
 
   val db: DatabaseDef
 
-  val dummyTimestamp = new java.sql.Timestamp(0)
+  private val dummyTimestamp = new java.sql.Timestamp(0)
 
   val counter: AtomicLong
 
