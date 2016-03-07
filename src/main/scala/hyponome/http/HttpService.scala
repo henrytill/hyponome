@@ -192,7 +192,7 @@ object HttpService {
 
   private val config: Config = ConfigFactory.parseFile(configFile.toFile)
 
-  private def dbConfig(): DatabaseDef = Database.forConfig("h2")
+  private val dbConfig: Function0[DatabaseDef] = { () => Database.forConfig("h2") }
 
   val defaultConfig = HyponomeConfig(
     dbConfig,
