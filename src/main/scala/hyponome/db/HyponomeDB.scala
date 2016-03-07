@@ -14,6 +14,7 @@ import slick.jdbc.meta.MTable
 import hyponome.core._
 import hyponome.db.Events._
 
+@SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
 trait HyponomeDB {
 
   val files: TableQuery[Files]
@@ -60,7 +61,6 @@ trait HyponomeDB {
     }
   }
 
-  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
   def addFile(a: Addition)(implicit ec: ExecutionContext): Future[Unit] = a match {
     case Addition(_, hash, name, contentType, length, remoteAddress) =>
       val c = counter.incrementAndGet()
@@ -79,7 +79,6 @@ trait HyponomeDB {
       }
   }
 
-  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
   def removeFile(r: Removal)(implicit ec: ExecutionContext): Future[Unit] = r match {
     case Removal(hash, remoteAddress) => removed(hash).flatMap {
       case true  => Future.failed(new UnsupportedOperationException)
@@ -94,7 +93,6 @@ trait HyponomeDB {
     }
   }
 
-  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
   def notRemovedQuery: Query[(Files, Events), (File, Event), Seq] = {
     val removes = events.filter(_.operation === (Remove: Operation))
     val adds = for {
@@ -107,7 +105,6 @@ trait HyponomeDB {
     } yield (f, e)
   }
 
-  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
   def runQuery(q: DBQuery)(implicit ec: ExecutionContext): Future[Seq[DBQueryResponse]] = q match {
     case DBQuery(None, None, None, None, None, None, _, _) =>
       Future(Seq())
@@ -176,7 +173,6 @@ trait HyponomeDB {
       }
   }
 
-  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
   def findFile(hash: SHA256Hash)(implicit ec: ExecutionContext): Future[Option[File]] =
     removed(hash).flatMap {
       case true  => Future(None)
@@ -190,7 +186,6 @@ trait HyponomeDB {
     db.run(q.result).map(_.longValue)
   }
 
-  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
   def maxTx: Future[Option[Long]] = {
     val q = events.map(_.tx).max
     db.run(q.result)
@@ -202,9 +197,8 @@ trait HyponomeDB {
       case None     => Future(counter.set(0))
     }
 
-  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.NonUnitStatements"))
   def close(): Unit = {
-    db.createSession().createStatement() execute "shutdown;"
+    val tmp = db.createSession().createStatement() execute "shutdown;"
     db.close
   }
 }
