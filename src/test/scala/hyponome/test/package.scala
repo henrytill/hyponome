@@ -56,6 +56,17 @@ package object test {
     )
   }
 
+  def makePersistentDBConfig(location: Path): Function0[DatabaseDef] = { () =>
+    val p: String = location.toString
+    Database.forURL(
+      url = s"jdbc:h2:$p;CIPHER=AES",
+      user = "hyponome",
+      password = "hyponome hyponome", // password = "filepwd userpwd"
+      driver = "org.h2.Driver",
+      keepAliveConnection = true
+    )
+  }
+
   /**
     * Makes a SimpleFileVisitor to delete files and their containing
     * directories.

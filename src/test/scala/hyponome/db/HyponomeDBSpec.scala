@@ -1,10 +1,13 @@
 package hyponome.db
 
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpecLike}
 import org.scalatest.time.{Millis, Span}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 import scala.util.{Success, Failure}
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
@@ -30,6 +33,12 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       testCode(t); ()
     }
     finally t.close()
+  }
+
+  def withPersistentDBConfig(testCode: (Function0[DatabaseDef], Path) => Any): Unit = {
+    val p  = fs.getPath("/tmp/hyponome/" + makeDbName())
+    val db = makePersistentDBConfig(p)
+    testCode(db, p); ()
   }
 
   implicit val patience: PatienceConfig = PatienceConfig(
@@ -157,6 +166,57 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
         }.flatMap { _ =>
           t.maxTx
         }.futureValue should equal (Some(2))
+      }
+    }
+
+    "have a syncCounter method" which {
+      "returns a Future value of Unit and syncs the counter (1)" in withPersistentDBConfig { (c, p) =>
+        // initial db
+        val q: TestDB = new TestDB(c(), makeCounter())
+        val addRemoveFuture01 =
+          q.create()
+            .flatMap { _ => q.addFile(add) }
+            .flatMap { _ => q.removeFile(remove) }
+            .flatMap { _ => q.addFile(add) }
+            .flatMap { _ => q.removeFile(remove) }
+        val tmp01: Unit = Await.result(addRemoveFuture01, 5.seconds)
+        q.close()
+        // re-open initial db
+        val r: TestDB = new TestDB(c(), makeCounter())
+        val syncFuture01: Future[Unit] = r.syncCounter()
+        val tmp02: Unit = Await.result(syncFuture01, 5.seconds)
+        syncFuture01.futureValue should equal (())
+        r.counter.get should equal (4)
+        deleteFolder(p.getParent)
+      }
+      "returns a Future value of Unit and syncs the counter (2)" in withPersistentDBConfig { (c, p) =>
+        // initial db
+        val q: TestDB = new TestDB(c(), makeCounter())
+        val addRemoveFuture01 =
+          q.create()
+            .flatMap { _ => q.addFile(add) }
+            .flatMap { _ => q.removeFile(remove) }
+            .flatMap { _ => q.addFile(add) }
+            .flatMap { _ => q.removeFile(remove) }
+        val tmp01: Unit = Await.result(addRemoveFuture01, 5.seconds)
+        q.close()
+        // re-open initial db
+        val r: TestDB = new TestDB(c(), makeCounter())
+        val syncFuture01: Future[Unit] = r.syncCounter()
+        val addRemoveFuture02 = syncFuture01.flatMap { _ =>
+          r.addFile(add)
+            .flatMap { _ => r.removeFile(remove) }
+            .flatMap { _ => r.addFile(add) }
+        }
+        val tmp02: Unit = Await.result(addRemoveFuture02, 5.seconds)
+        r.close()
+        // re-re-open initial db
+        val s: TestDB = new TestDB(c(), makeCounter())
+        val syncFuture02: Future[Unit] = s.syncCounter()
+        val tmp03: Unit = Await.result(syncFuture02, 5.seconds)
+        syncFuture02.futureValue should equal (())
+        s.counter.get should equal (7)
+        deleteFolder(p.getParent)
       }
     }
   }
