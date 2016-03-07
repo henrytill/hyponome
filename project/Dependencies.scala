@@ -7,6 +7,7 @@ object Dependencies {
   val coreDeps = Seq(
     "ch.qos.logback"         %  "logback-classic"                   % "1.1.3",
     "com.h2database"         %  "h2"                                % "1.4.190",
+    "com.lihaoyi"            %% "pprint"                            % "0.3.8"     % "test",
     "com.typesafe"           %  "config"                            % "1.3.0",
     "com.typesafe.akka"      %% "akka-actor"                        % akkaVersion,
     "com.typesafe.akka"      %% "akka-http-core"                    % akkaVersion,
