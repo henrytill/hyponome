@@ -46,18 +46,3 @@ class Events(tag: Tag) extends Table[Event](tag, "EVENTS") {
   def * = (tx, timestamp, operation, hash, remoteAddress) <> (Event.tupled, Event.unapply)
   def file = foreignKey("HASH_FK", hash, TableQuery[Files])(_.hash)
 }
-
-/**
-@SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
-class Objects(tag: Tag) extends Table[(Long, Timestamp, Operation, String, String, String, Long, String)](tag, "OBJECTS") {
-  def id = column[Long]("TX", O.SqlType("BIGINT UNIQUE"))
-  def timestamp = column[Timestamp]("TIMESTAMP", O.SqlType("TIMESTAMP AS CURRENT_TIMESTAMP"))
-  def operation = column[Operation]("OPERATION")
-  def hash = column[String]("HASH", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
-  def name = column[String]("NAME")
-  def contentType = column[String]("CONTENT_TYPE")
-  def length = column[Long]("LENGTH")
-  def remoteAddress = column[String]("REMOTE_ADDRESS")
-  def * = (id, timestamp, operation, hash, name, contentType, length, remoteAddress)
-}
-  */

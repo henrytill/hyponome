@@ -75,7 +75,7 @@ trait HyponomeDB {
           case false =>
             val s = DBIO.seq(files += f, events += e)
             db.run(s)
-          }
+        }
       }
   }
 

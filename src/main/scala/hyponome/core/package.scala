@@ -5,7 +5,7 @@ import org.apache.commons.codec.digest.DigestUtils.sha256Hex
 import scala.concurrent.{blocking, ExecutionContext, Future}
 
 package object core {
-  // Core functions
+
   private def withInputStream[T](path: Path)(op: java.io.InputStream => T): T = {
     val fist = Files.newInputStream(path)
     try {
