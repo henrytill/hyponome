@@ -17,6 +17,7 @@ import java.net.{InetAddress, URI}
 import java.nio.file.{FileSystem, FileSystems, Path}
 import java.sql.Timestamp
 import org.slf4j.{Logger, LoggerFactory}
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -186,20 +187,29 @@ final class HttpService(
 
 object HttpService {
 
+  private val dbConfig: Function0[DatabaseDef] = { () => Database.forConfig("h2") }
+
+  private val defaults: Map[String, String] = Map(
+    "file-store.path" -> "store",
+    "server.hostname" -> "localhost",
+    "server.port" -> "3000",
+    "upload.key" -> "file"
+  );
+
   private val fs: FileSystem = FileSystems.getDefault()
 
-  private val configFile: Path = fs.getPath("hyponome.conf")
+  private val configFile: java.io.File = fs.getPath("hyponome.conf").toFile
 
-  private val config: Config = ConfigFactory.parseFile(configFile.toFile)
+  private val configDefault: Config = ConfigFactory.parseMap(defaults.asJava)
 
-  private val dbConfig: Function0[DatabaseDef] = { () => Database.forConfig("h2") }
+  val config: Config = ConfigFactory.parseFile(configFile).withFallback(configDefault)
 
   val defaultConfig = HyponomeConfig(
     dbConfig,
     fs.getPath(config.getString("file-store.path")),
-    InetAddress.getLocalHost().getHostName(),
-    3000,
-    "file"
+    config.getString("server.hostname"),
+    config.getInt("server.port"),
+    config.getString("upload.key")
   )
 
   def apply(): HttpService = new HttpService(defaultConfig)
