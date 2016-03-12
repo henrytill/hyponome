@@ -72,18 +72,20 @@ final class HttpService(
   }
 
   def handleQueryObjects(a: ActorRef): Route =
-    parameters('hash.?, 'remoteAddress.?, 'txLo.?, 'txHi.?, 'timeLo.?, 'timeHi.?, 'sortBy.?, 'sortOrder.?) {
-      (hash, remoteAddress, txLo, txHi, timeLo, timeHi, sortBy, sortOrder) => {
+    parameters('hash.?, 'name.?, 'remoteAddress.?, 'txLo.?, 'txHi.?, 'timeLo.?, 'timeHi.?, 'sortBy.?, 'sortOrder.?) {
+      (hash, name, remoteAddress, txLo, txHi, timeLo, timeHi, sortBy, sortOrder) => {
         val q = DBQuery(
           hash.map(SHA256Hash(_)),
+          name,
           remoteAddress.map(InetAddress.getByName(_)),
           txLo.map(_.toLong),
           txHi.map(_.toLong),
           timeLo.map(Timestamp.valueOf(_)),
           timeHi.map(Timestamp.valueOf(_)),
           sortBy match {
-            case Some("time")    => Time
             case Some("address") => Address
+            case Some("name")    => Name
+            case Some("time")    => Time
             case _               => Tx
           },
           sortOrder match {

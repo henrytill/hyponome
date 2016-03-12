@@ -113,6 +113,7 @@ final case class Event(
 sealed trait SortBy extends Product with Serializable
 final case object Tx extends SortBy
 final case object Time extends SortBy
+final case object Name extends SortBy
 final case object Address extends SortBy
 
 sealed trait SortOrder extends Product with Serializable
@@ -122,6 +123,7 @@ final case object Descending extends SortOrder
 @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.DefaultArguments"))
 final case class DBQuery(
   hash: Option[SHA256Hash] = None,
+  name: Option[String] = None,
   remoteAddress: Option[InetAddress] = None,
   txLo: Option[Long] = None,
   txHi: Option[Long] = None,
