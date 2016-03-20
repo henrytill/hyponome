@@ -20,14 +20,14 @@ class AskActorSpec(_system: ActorSystem) extends TestKit(_system)
   }
 
   def withAskActor(testCode: ActorRef => Any): Unit = {
-    val recActor = system.actorOf(Receptionist.props(makeTestDB, testStorePath))
-    val askActor = system.actorOf(AskActor.props(recActor))
+    val ctlActor = system.actorOf(Controller.props(makeTestDB, testStorePath))
+    val askActor = system.actorOf(AskActor.props(ctlActor))
     try {
       testCode(askActor); ()
     }
     finally {
       system.stop(askActor)
-      system.stop(recActor)
+      system.stop(ctlActor)
       deleteFolder(testStorePath); ()
     }
   }

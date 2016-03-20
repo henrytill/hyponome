@@ -5,7 +5,7 @@ import akka.testkit.{TestActors, TestKit, ImplicitSender}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.util.{Failure, Success}
 
-import Receptionist.{AddFile, RemoveFile, FindFile}
+import Controller.{AddFile, RemoveFile, FindFile}
 import hyponome.test._
 
 class FileActorSpec(_system: ActorSystem) extends TestKit(_system)

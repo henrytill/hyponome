@@ -175,13 +175,13 @@ final class HttpService(
         logger.info(s"Starting server at http://$hostname:$port/")
         implicit val sys: ActorSystem       = ActorSystem("Hyponome")
         implicit val mat: ActorMaterializer = ActorMaterializer()
-        val recActor: ActorRef = sys.actorOf(Receptionist.props(db, store))
-        val askActor: ActorRef = sys.actorOf(AskActor.props(recActor))
+        val ctlActor: ActorRef = sys.actorOf(Controller.props(db, store))
+        val askActor: ActorRef = sys.actorOf(AskActor.props(ctlActor))
         val route:    Route    = objectsRoute(askActor, uploadKey)
         new HttpService(
           conf,
           Some(sys),
-          Some(recActor),
+          Some(ctlActor),
           Some(askActor),
           Some(Http().bindAndHandle(route, hostname, port))
         )(sys.dispatcher)

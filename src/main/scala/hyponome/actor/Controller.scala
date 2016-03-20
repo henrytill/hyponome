@@ -7,7 +7,7 @@ import slick.driver.H2Driver.backend.DatabaseDef
 
 import hyponome.core._
 
-object Receptionist {
+object Controller {
 
   final case class AddFile(client: ActorRef, addition: Addition)
 
@@ -17,12 +17,12 @@ object Receptionist {
 
   final case class GetInfo(client: ActorRef)
 
-  def props(db: Function0[DatabaseDef], store: Path): Props = Props(new Receptionist(db, store))
+  def props(db: Function0[DatabaseDef], store: Path): Props = Props(new Controller(db, store))
 }
 
-class Receptionist(db: Function0[DatabaseDef], store: Path) extends Actor {
+class Controller(db: Function0[DatabaseDef], store: Path) extends Actor {
 
-  import Receptionist._
+  import Controller._
 
   val counter: AtomicLong = new AtomicLong()
 

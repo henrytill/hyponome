@@ -8,7 +8,7 @@ import scala.util.{Failure, Success, Try}
 
 import hyponome.core._
 import hyponome.file._
-import Receptionist.{AddFile, RemoveFile, FindFile}
+import Controller.{AddFile, RemoveFile, FindFile}
 
 object FileActor {
 

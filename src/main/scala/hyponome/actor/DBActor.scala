@@ -10,7 +10,7 @@ import slick.driver.H2Driver.backend.DatabaseDef
 
 import hyponome.core._
 import hyponome.db._
-import Receptionist.{AddFile, RemoveFile, FindFile, GetInfo}
+import Controller.{AddFile, RemoveFile, FindFile, GetInfo}
 
 object DBActor {
 

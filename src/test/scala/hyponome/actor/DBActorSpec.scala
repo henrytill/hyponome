@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{TestActors, TestKit, ImplicitSender}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
-import Receptionist.{AddFile, RemoveFile, FindFile}
+import Controller.{AddFile, RemoveFile, FindFile}
 import hyponome.test._
 
 class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
