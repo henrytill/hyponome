@@ -30,6 +30,25 @@ object Marshallers {
     }
   )
 
+  implicit val redirectM: ToResponseMarshaller[Redirect] = Marshaller.oneOf(
+    Marshaller.withFixedContentType(`text/plain(UTF-8)`) { (r: Redirect) =>
+      val locationHeader = headers.Location(r.toString)
+      HttpResponse(
+        StatusCodes.Found,
+        headers = List(locationHeader),
+        entity = HttpEntity(`text/plain(UTF-8)`, r.uri.toJson.prettyPrint)
+      )
+    },
+    Marshaller.withFixedContentType(`application/json`) { (r: Redirect) =>
+      val locationHeader = headers.Location(r.toString)
+      HttpResponse(
+        StatusCodes.Found,
+        headers = List(locationHeader),
+        entity = HttpEntity(`application/json`, r.uri.toJson.prettyPrint)
+      )
+    }
+  )
+
   implicit val infoM: ToResponseMarshaller[Info] = Marshaller.oneOf(
     Marshaller.withFixedContentType(`text/plain(UTF-8)`) { (i: Info) =>
       HttpResponse(

@@ -32,7 +32,7 @@ package object test {
   val add = Addition(
     testPDF,
     testPDFHash,
-    testPDF.toFile.getName,
+    Some(testPDF.toFile.getName),
     "application/octet-stream",
     testPDF.toFile.length,
     ip

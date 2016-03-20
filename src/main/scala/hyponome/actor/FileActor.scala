@@ -22,7 +22,7 @@ object FileActor {
   final case class RemoveFileFail(client: ActorRef, removal: Removal, e: Throwable)
   final case class PreviouslyRemovedFile(client: ActorRef, removal: Removal)
 
-  final case class StoreFile(client: ActorRef, hash: SHA256Hash, file: Option[Path])
+  final case class StoreFile(client: ActorRef, hash: SHA256Hash, file: Option[Path], name: Option[String])
 
   def props(p: Path): Props = Props(new FileActor(p))
 }
@@ -74,14 +74,14 @@ class FileActor(p: Path) extends Actor with Stash with HyponomeFile {
         case Failure(e: Throwable) =>
           replyToRef ! RemoveFileFail(c, r, e)
       }
-    case FindFile(c: ActorRef, h: SHA256Hash) =>
+    case FindFile(c: ActorRef, h: SHA256Hash, n: Option[String]) =>
       val replyToRef: ActorRef = sender
       val possiblePath: Path = this.getFilePath(h)
       val existsFut: Future[Boolean] = this.existsInStore(possiblePath)
       existsFut onComplete {
-        case Success(true)  => replyToRef ! StoreFile(c, h, Some(possiblePath))
-        case Success(false) => replyToRef ! StoreFile(c, h, None)
-        case Failure(_)     => replyToRef ! StoreFile(c, h, None)
+        case Success(true)  => replyToRef ! StoreFile(c, h, Some(possiblePath), n)
+        case Success(false) => replyToRef ! StoreFile(c, h, None, None)
+        case Failure(_)     => replyToRef ! StoreFile(c, h, None, None)
       }
   }
 

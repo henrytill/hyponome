@@ -63,19 +63,20 @@ trait HyponomeDB {
 
   def addFile(a: Addition)(implicit ec: ExecutionContext): Future[Unit] = a match {
     case Addition(_, hash, name, contentType, length, remoteAddress) =>
-      val c = counter.incrementAndGet()
-      val f = File(hash, name, contentType, length)
-      val e = Event(c, dummyTimestamp, Add, hash, remoteAddress)
       added(hash) flatMap {
         case true  => Future.failed(new UnsupportedOperationException)
-        case false => removed(hash).flatMap {
-          case true =>
-            val s = DBIO.seq(events += e)
-            db.run(s)
-          case false =>
-            val s = DBIO.seq(files += f, events += e)
-            db.run(s)
-        }
+        case false =>
+          val c = counter.incrementAndGet()
+          val f = File(hash, name, contentType, length)
+          val e = Event(c, dummyTimestamp, Add, hash, remoteAddress)
+          removed(hash).flatMap {
+            case true =>
+              val s = DBIO.seq(events += e)
+              db.run(s)
+            case false =>
+              val s = DBIO.seq(files += f, events += e)
+              db.run(s)
+          }
       }
   }
 

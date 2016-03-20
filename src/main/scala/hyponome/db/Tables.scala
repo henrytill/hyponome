@@ -8,7 +8,7 @@ import slick.driver.H2Driver.api._
 @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
 class Files(tag: Tag) extends Table[File](tag, "FILES") {
   def hash = column[SHA256Hash]("HASH", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
-  def name = column[String]("NAME")
+  def name = column[Option[String]]("NAME")
   def contentType = column[String]("CONTENT_TYPE")
   def length = column[Long]("LENGTH")
   def * = (hash, name, contentType, length) <> (File.tupled, File.unapply)

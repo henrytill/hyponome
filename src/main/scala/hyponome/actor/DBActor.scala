@@ -101,7 +101,7 @@ class DBActor(dbDef: Function0[DatabaseDef], count: AtomicLong) extends Actor wi
         case Failure(e) =>
           replyToRef ! RemoveFileFail(c, r, e)
       }
-    case FindFile(c: ActorRef, h: SHA256Hash) =>
+    case FindFile(c: ActorRef, h: SHA256Hash, n: Option[String]) =>
       val replyToRef: ActorRef = sender
       val findFut: Future[Option[File]] = this.findFile(h)
       findFut onComplete {

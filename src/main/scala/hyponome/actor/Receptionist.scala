@@ -13,7 +13,7 @@ object Receptionist {
 
   final case class RemoveFile(client: ActorRef, removal: Removal)
 
-  final case class FindFile(client: ActorRef, hash: SHA256Hash)
+  final case class FindFile(client: ActorRef, hash: SHA256Hash, name: Option[String])
 
   final case class GetInfo(client: ActorRef)
 
@@ -57,13 +57,13 @@ class Receptionist(db: Function0[DatabaseDef], store: Path) extends Actor {
       c ! RemovalFail(r, e)
     // Finding a file
     case h: SHA256Hash  =>
-      dbActor ! FindFile(sender, h)
-    case DBActor.DBFile(c: ActorRef, h: SHA256Hash, Some(_: File)) =>
-      fileActor ! FindFile(c, h)
+      dbActor ! FindFile(sender, h, None)
+    case DBActor.DBFile(c: ActorRef, h: SHA256Hash, Some(f: File)) =>
+      fileActor ! FindFile(c, h, f.name)
     case DBActor.DBFile(c: ActorRef, h: SHA256Hash, None) =>
-      c ! Result(None)
-    case FileActor.StoreFile(c: ActorRef, h: SHA256Hash, f: Option[Path]) =>
-      c ! Result(f)
+      c ! Result(None, None)
+    case FileActor.StoreFile(c: ActorRef, h: SHA256Hash, f: Option[Path], n: Option[String]) =>
+      c ! Result(f, n)
     // GetInfo
     case Objects =>
       dbActor ! GetInfo(sender)

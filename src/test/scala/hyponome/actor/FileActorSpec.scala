@@ -68,7 +68,7 @@ class FileActorSpec(_system: ActorSystem) extends TestKit(_system)
     """respond with StoreFile when sent a FindFile msg""" in withFileActor { fileActor =>
       fileActor ! AddFile(self, add)
       expectMsg(FileActor.AddFileAck(self, add))
-      fileActor ! FindFile(self, testPDFHash)
+      fileActor ! FindFile(self, add.hash, add.name)
       expectMsgType[FileActor.StoreFile]
     }
   }

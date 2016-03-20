@@ -32,7 +32,7 @@ object SHA256Hash {
 final case class Addition(
   file: Path,
   hash: SHA256Hash,
-  name: String,
+  name: Option[String],
   contentType: String,
   length: Long,
   remoteAddress: Option[InetAddress]
@@ -53,7 +53,7 @@ final case class RemovalAck(removal: Removal) extends RemovalResponse
 final case class PreviouslyRemoved(removal: Removal) extends RemovalResponse
 final case class RemovalFail(removal: Removal, exception: Throwable) extends RemovalResponse
 
-final case class Result(file: Option[Path])
+final case class Result(file: Option[Path], name: Option[String])
 
 sealed trait Status {
   def toStatusCode: StatusCode
@@ -69,7 +69,7 @@ final case class Response(
   status: Status,
   file: URI,
   hash: SHA256Hash,
-  name: String,
+  name: Option[String],
   contentType: String,
   length: Long,
   remoteAddress: Option[InetAddress]
@@ -79,6 +79,10 @@ final case class OK(ok: Boolean)
 
 final case object Objects
 final case class Info(path: String, count: Long, max: Long)
+
+final case class Redirect(uri: URI) {
+  override def toString: String = uri.toString
+}
 
 // DB types
 sealed trait Operation extends Product with Serializable
@@ -95,7 +99,7 @@ object Operation {
 
 final case class File(
   hash: SHA256Hash,
-  name: String,
+  name: Option[String],
   contentType: String,
   length: Long
 )
@@ -139,7 +143,7 @@ final case class DBQueryResponse(
   operation: Operation,
   remoteAddress: Option[InetAddress],
   hash: SHA256Hash,
-  name: String,
+  name: Option[String],
   contentType: String,
   length: Long
 )

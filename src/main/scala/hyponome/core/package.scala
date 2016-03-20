@@ -1,5 +1,6 @@
 package hyponome
 
+import java.net.URI
 import java.nio.file.{Files, Path}
 import org.apache.commons.codec.digest.DigestUtils.sha256Hex
 import scala.concurrent.{blocking, ExecutionContext, Future}
@@ -20,5 +21,11 @@ package object core {
         val s: String = withInputStream(p)(sha256Hex)
         SHA256Hash(s)
       }
+    }
+
+  def makeURI(hostname: String, port: Int, hash: SHA256Hash, name: Option[String]): URI =
+    name match {
+      case Some(n) => new URI(s"http://$hostname:$port/objects/$hash/$n")
+      case None    => new URI(s"http://$hostname:$port/objects/$hash")
     }
 }

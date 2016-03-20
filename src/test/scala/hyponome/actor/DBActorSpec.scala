@@ -62,7 +62,7 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
     message containing an added file's hash""" in withDBActor { dbActor =>
       dbActor ! AddFile(self, add)
       expectMsg(DBActor.AddFileAck(self, add))
-      dbActor ! FindFile(self, add.hash)
+      dbActor ! FindFile(self, add.hash, add.name)
       expectMsg(DBActor.DBFile(self, add.hash, Some(expected)))
     }
 
@@ -72,7 +72,7 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
       expectMsg(DBActor.AddFileAck(self, add))
       dbActor ! RemoveFile(self, remove)
       expectMsg(DBActor.RemoveFileAck(self, remove))
-      dbActor ! FindFile(self, add.hash)
+      dbActor ! FindFile(self, add.hash, add.name)
       expectMsg(DBActor.DBFile(self, add.hash, None))
     }
   }

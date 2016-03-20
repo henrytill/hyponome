@@ -49,13 +49,14 @@ final class HttpService(
 
   def handlePostObjects(a: ActorRef, r: RemoteAddress, i: FileInfo, f: java.io.File): Route = {
     def makeAddition(i: FileInfo, f: java.io.File, r: RemoteAddress): Future[Addition] = {
+      val name = if (i.fileName == "-") None else Some(i.fileName)
       val p: Path = f.toPath
       getSHA256Hash(p).map { h =>
-        Addition(p, h, i.fileName, i.contentType.toString, f.length, r.toOption)
+        Addition(p, h, name, i.contentType.toString, f.length, r.toOption)
       }
     }
     def response(f: Addition, s: Status): Response = {
-      val uri = new URI(s"http://$hostname:$port/objects/${f.hash}")
+      val uri  = makeURI(hostname, port, f.hash, f.name)
       Response(s, uri, f.hash, f.name, f.contentType, f.length, f.remoteAddress)
     }
     @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Any"))
@@ -102,28 +103,33 @@ final class HttpService(
       }
     }
 
-  def handleGetObject(a: ActorRef, h: String): Route = {
-    val responseFuture: Future[Option[java.io.File]] =
-      ask(a, SHA256Hash(h))
-        .mapTo[Result]
-        .map(_.file)
-        .map(_.map(_.toFile))
+  def handleRedirectObject(a: ActorRef, h: SHA256Hash): Route = {
+    val responseFuture: Future[Result] = ask(a, h).mapTo[Result]
     onComplete(responseFuture) {
-      case Success(Some(f)) => getFromFile(f)
-      case Success(None)    => reject
-      case Failure(ex)      => complete { handleFailure(ex) }
+      case Success(Result(Some(_),    Some(name))) => complete { Redirect(makeURI(hostname, port, h, Some(name))) }
+      case Success(Result(Some(file), None))       => getFromFile(file.toFile)
+      case Success(Result(None,       _))          => reject
+      case Failure(ex)                             => complete { handleFailure(ex) }
     }
   }
 
-  def handleDeleteObject(a: ActorRef, h: String, r: RemoteAddress): Route = {
-    val responseFuture: Future[RemovalResponse] =
-      ask(a, Removal(SHA256Hash(h), r.toOption))
-        .mapTo[RemovalResponse]
+  def handleGetObject(a: ActorRef, h: SHA256Hash, n: String): Route = {
+    val responseFuture: Future[Result] = ask(a, h).mapTo[Result]
+    onComplete(responseFuture) {
+      case Success(Result(Some(file), Some(name))) if name == n => getFromFile(file.toFile)
+      case Success(Result(Some(file), None))                    => getFromFile(file.toFile)
+      case Success(Result(_,          _))                       => reject
+      case Failure(ex)                                          => complete { handleFailure(ex) }
+    }
+  }
+
+  def handleDeleteObject(a: ActorRef, h: SHA256Hash, r: RemoteAddress): Route = {
+    val responseFuture: Future[RemovalResponse] = ask(a, Removal(h, r.toOption)).mapTo[RemovalResponse]
     onComplete(responseFuture) {
       case Success(RemovalAck(a))        => complete { OK(true) }
       case Success(PreviouslyRemoved(a)) => complete { OK(true) }
-      case Success(RemovalFail(a, ex))   => complete { handleFailure(ex)    }
-      case Failure(ex)                   => complete { handleFailure(ex)    }
+      case Success(RemovalFail(a, ex))   => complete { handleFailure(ex) }
+      case Failure(ex)                   => complete { handleFailure(ex) }
     }
   }
 
@@ -142,13 +148,19 @@ final class HttpService(
             handleQueryObjects(a)
           }
         } ~
-        path(Rest) { hash =>
-          get {
-            handleGetObject(a, hash)
+        pathPrefix(Segment) { hash =>
+          val obj = SHA256Hash(hash)
+          pathEnd {
+            get {
+              handleRedirectObject(a, obj)
+            } ~
+            delete {
+              extractClientIP { ip => handleDeleteObject(a, obj, ip) }
+            }
           } ~
-          delete {
-            extractClientIP { ip =>
-              handleDeleteObject(a, hash, ip)
+          path(Segment) { name =>
+            get {
+              handleGetObject(a, obj, name)
             }
           }
         }
