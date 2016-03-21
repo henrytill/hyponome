@@ -46,9 +46,9 @@ This project exists primarily as a vehicle for exploring ideas related to conten
 In order to use hyponome, you will need [a JDK](http://openjdk.java.net/) and [sbt](http://www.scala-sbt.org/).
 
 ```
-$ git clone https://github.com/henrytill/hyponome.git
+$ git clone https://github.com/henrytill/hyponome-scala.git
 
-$ cd hyponome
+$ cd hyponome-scala
 
 $ sbt run
 ```
