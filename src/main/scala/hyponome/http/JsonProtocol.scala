@@ -56,8 +56,8 @@ object JsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
-  implicit object StatusFormat extends RootJsonFormat[Status] {
-    def write(s: Status) = s match {
+  implicit object PostStatusFormat extends RootJsonFormat[PostStatus] {
+    def write(s: PostStatus) = s match {
       case Created => JsString("Created")
       case Exists  => JsString("Exists")
     }
@@ -67,12 +67,18 @@ object JsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
-  implicit val additionFormat:        RootJsonFormat[Addition]        = jsonFormat6(Addition)
-  implicit val removalFormat:         RootJsonFormat[Removal]         = jsonFormat2(Removal)
-  implicit val fileFormat:            RootJsonFormat[File]            = jsonFormat4(File)
-  implicit val eventFormat:           RootJsonFormat[Event]           = jsonFormat5(Event)
-  implicit val responseFormat:        RootJsonFormat[Response]        = jsonFormat7(Response)
-  implicit val infoFormat:            RootJsonFormat[Info]            = jsonFormat3(Info)
-  implicit val okFormat:              RootJsonFormat[OK]              = jsonFormat1(OK)
+  implicit object DeleteStatusFormat extends RootJsonFormat[DeleteStatus] {
+    def write(s: DeleteStatus) = s match {
+      case Deleted   => JsObject("Deleted" -> JsBoolean(true))
+      case NotFound  => JsObject("Deleted" -> JsBoolean(false))
+    }
+    def read(value: JsValue) = value.asJsObject.getFields("Deleted") match {
+      case(Seq(JsBoolean(true)))  => Deleted
+      case(Seq(JsBoolean(false))) => NotFound
+    }
+  }
+
+  implicit val postFormat:            RootJsonFormat[Post]            = jsonFormat8(Post)
+  implicit val postedFormat:          RootJsonFormat[Posted]          = jsonFormat6(Posted.apply)
   implicit val dbQueryResponseFormat: RootJsonFormat[DBQueryResponse] = jsonFormat8(DBQueryResponse)
 }

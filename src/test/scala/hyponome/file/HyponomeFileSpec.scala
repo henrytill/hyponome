@@ -44,14 +44,15 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
     "have a copyToStore method" which {
       "copies a file to the correct file store Path" in withTestStoreInstance { t =>
         t.copyToStore(testPDFHash, testPDF).flatMap { p =>
-          getSHA256Hash(p)
+          val destination: Path = t.getFilePath(testPDFHash)
+          getSHA256Hash(destination)
         }.futureValue should equal(testPDFHash)
       }
-      """returns a Future of a Failure(FileAlreadyExistsException)
-      when trying to copy a file to a path that already exists""" in withTestStoreInstance { t =>
+      """returns a Future of a Exists when trying to copy a file to a
+      path that already exists""" in withTestStoreInstance { t =>
         t.copyToStore(testPDFHash, testPDF).flatMap { _ =>
           t.copyToStore(testPDFHash, testPDF)
-        }.failed.futureValue shouldBe a [java.nio.file.FileAlreadyExistsException]
+        }.futureValue should equal (Exists)
       }
     }
 
@@ -59,7 +60,8 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
       """returns a Future with the value of true if the specified path
       exists in the file store""" in withTestStoreInstance { t =>
         t.copyToStore(testPDFHash, testPDF).flatMap { p =>
-          t.existsInStore(p)
+          val destination: Path = t.getFilePath(testPDFHash)
+          t.existsInStore(destination)
         }.futureValue should equal(true)
       }
       """returns a Future with the value of false if the specified path
@@ -79,9 +81,9 @@ class HyponomeFileSpec extends WordSpecLike with Matchers with ScalaFutures {
           t.existsInStore(t.getFilePath(testPDFHash))
         }.futureValue should equal(false)
       }
-      """returns a Future of value Failed(NoSuchFileException) when
-      attempting to delete a file which doesn't exist""" in withTestStoreInstance { t =>
-        t.deleteFromStore(testPDFHash).failed.futureValue shouldBe a [java.nio.file.NoSuchFileException]
+      """returns a Future of value NotFound when attempting to delete
+      a file which doesn't exist""" in withTestStoreInstance { t =>
+        t.deleteFromStore(testPDFHash).futureValue should equal (NotFound)
       }
     }
   }

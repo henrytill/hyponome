@@ -72,7 +72,7 @@ class HttpServiceSpec extends WordSpecLike
   )
 
   def withHttpService(testCode: HyponomeConfig => Any): Unit = {
-    val testConfig: HyponomeConfig = HyponomeConfig(makeTestDB, testStorePath, hostname, 3000, "file")
+    val testConfig: HyponomeConfig = HyponomeConfig(makeTestDB, testStorePath, hostname, port, "file")
     val service: HttpService = HttpService(testConfig).start()
     try {
       testCode(testConfig); ()

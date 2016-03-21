@@ -8,6 +8,9 @@ import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
 import slick.driver.H2Driver.backend.DatabaseDef
 
+
+// Configuration
+
 final case class HyponomeConfig(
   db: Function0[DatabaseDef],
   store: Path,
@@ -15,6 +18,9 @@ final case class HyponomeConfig(
   port: Int,
   uploadKey: String
 )
+
+
+// DB Types
 
 final case class SHA256Hash(value: String) {
   override def toString: String = value
@@ -28,63 +34,6 @@ object SHA256Hash {
     )
 }
 
-// Message API
-final case class Addition(
-  file: Path,
-  hash: SHA256Hash,
-  name: Option[String],
-  contentType: String,
-  length: Long,
-  remoteAddress: Option[InetAddress]
-)
-
-sealed trait AdditionResponse
-final case class AdditionAck(addition: Addition) extends AdditionResponse
-final case class PreviouslyAdded(addition: Addition) extends AdditionResponse
-final case class AdditionFail(addition: Addition, exception: Throwable) extends AdditionResponse
-
-final case class Removal(
-  hash: SHA256Hash,
-  remoteAddress: Option[InetAddress]
-)
-
-sealed trait RemovalResponse
-final case class RemovalAck(removal: Removal) extends RemovalResponse
-final case class PreviouslyRemoved(removal: Removal) extends RemovalResponse
-final case class RemovalFail(removal: Removal, exception: Throwable) extends RemovalResponse
-
-final case class Result(file: Option[Path], name: Option[String])
-
-sealed trait Status {
-  def toStatusCode: StatusCode
-}
-final case object Created extends Status {
-  def toStatusCode: StatusCode = StatusCodes.Created
-}
-final case object Exists extends Status {
-  def toStatusCode: StatusCode = StatusCodes.OK
-}
-
-final case class Response(
-  status: Status,
-  file: URI,
-  hash: SHA256Hash,
-  name: Option[String],
-  contentType: String,
-  length: Long,
-  remoteAddress: Option[InetAddress]
-)
-
-final case class OK(ok: Boolean)
-
-final case object Objects
-final case class Info(path: String, count: Long, max: Long)
-
-final case class Redirect(uri: URI) {
-  override def toString: String = uri.toString
-}
-
-// DB types
 sealed trait Operation extends Product with Serializable
 final case object Add extends Operation
 final case object Remove extends Operation
@@ -112,7 +61,83 @@ final case class Event(
   remoteAddress: Option[InetAddress]
 )
 
-// Query
+
+// AskActor + HttpService API
+
+// POST
+final case class Post(
+  hostname: String,
+  port: Int,
+  file: Path,
+  hash: SHA256Hash,
+  name: Option[String],
+  contentType: String,
+  length: Long,
+  remoteAddress: Option[InetAddress]
+)
+
+sealed trait PostStatus extends Product with Serializable {
+  def toStatusCode: StatusCode
+}
+
+final case object Created extends PostStatus {
+  def toStatusCode: StatusCode = StatusCodes.Created
+}
+
+final case object Exists extends PostStatus {
+  def toStatusCode: StatusCode = StatusCodes.OK
+}
+
+sealed trait PostResponse extends Product with Serializable
+final case class PostAck(post: Posted) extends PostResponse
+final case class PostFail(exception: Throwable) extends PostResponse
+
+final case class Posted(
+  status: PostStatus,
+  file: URI,
+  hash: SHA256Hash,
+  name: Option[String],
+  contentType: String,
+  length: Long
+)
+
+object Posted {
+  def apply(post: Post, status: PostStatus): Posted = {
+    val uri  = getURI(post.hostname, post.port, post.hash, post.name)
+    Posted(status, uri, post.hash, post.name, post.contentType, post.length)
+  }
+}
+
+// DELETE
+final case class Delete(
+  hash: SHA256Hash,
+  remoteAddress: Option[InetAddress]
+)
+
+sealed trait DeleteStatus extends Product with Serializable {
+  def toStatusCode: StatusCode
+}
+
+final case object Deleted extends DeleteStatus {
+  def toStatusCode: StatusCode = StatusCodes.OK
+}
+
+final case object NotFound extends DeleteStatus {
+  def toStatusCode: StatusCode = StatusCodes.NotFound
+}
+
+sealed trait DeleteResponse extends Product with Serializable
+final case class DeleteAck(delete: Delete, status: DeleteStatus) extends DeleteResponse
+final case class DeleteFail(delete: Delete, exception: Throwable) extends DeleteResponse
+
+// GET File
+final case class Result(file: Option[Path], name: Option[String])
+
+final case class Redirect(uri: URI) {
+  override def toString: String = uri.toString
+}
+
+// GET Query
 
 sealed trait SortBy extends Product with Serializable
 final case object Tx extends SortBy

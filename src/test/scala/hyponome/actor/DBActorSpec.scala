@@ -4,7 +4,8 @@ import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{TestActors, TestKit, ImplicitSender}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
-import Controller.{AddFile, RemoveFile, FindFile}
+import Controller.{PostWr, DeleteWr, GetWr}
+import hyponome.core._
 import hyponome.test._
 
 class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
@@ -29,51 +30,51 @@ class DBActorSpec(_system: ActorSystem) extends TestKit(_system)
 
   "A DBActor" must {
 
-    "respond with AddFileAck when adding a file" in withDBActor { dbActor =>
-      dbActor ! AddFile(self, add)
-      expectMsg(DBActor.AddFileAck(self, add))
+    "respond with PostAckWr when adding a file" in withDBActor { dbActor =>
+      dbActor ! PostWr(self, add)
+      expectMsg(DBActor.PostAckWr(self, add, Created))
     }
 
-    "respond with PreviouslyAddedFile when adding a file that has already been added" in withDBActor { dbActor =>
-      dbActor ! AddFile(self, add)
-      expectMsg(DBActor.AddFileAck(self, add))
-      dbActor ! AddFile(self, add)
-      expectMsg(DBActor.PreviouslyAddedFile(self, add))
+    "respond with PostAckWr when adding a file that has already been added" in withDBActor { dbActor =>
+      dbActor ! PostWr(self, add)
+      expectMsg(DBActor.PostAckWr(self, add, Created))
+      dbActor ! PostWr(self, add)
+      expectMsg(DBActor.PostAckWr(self, add, Exists))
     }
 
-    "respond with RemoveFileAck(self, remove) when removing a file" in withDBActor { dbActor =>
-      dbActor ! AddFile(self, add)
-      expectMsg(DBActor.AddFileAck(self, add))
-      dbActor ! RemoveFile(self, remove)
-      expectMsg(DBActor.RemoveFileAck(self, remove))
+    "respond with DeleteAckWr(self, remove) when removing a file" in withDBActor { dbActor =>
+      dbActor ! PostWr(self, add)
+      expectMsg(DBActor.PostAckWr(self, add, Created))
+      dbActor ! DeleteWr(self, remove)
+      expectMsg(DBActor.DeleteAckWr(self, remove, Deleted))
     }
 
-    """respond with PreviouslyRemovedFile when removing a file that
+    """respond with DeleteAckWr when removing a file that
     has already been removed""" in withDBActor { dbActor =>
-      dbActor ! AddFile(self, add)
-      expectMsg(DBActor.AddFileAck(self, add))
-      dbActor ! RemoveFile(self, remove)
-      expectMsg(DBActor.RemoveFileAck(self, remove))
-      dbActor ! RemoveFile(self, remove)
-      expectMsg(DBActor.PreviouslyRemovedFile(self, remove))
+      dbActor ! PostWr(self, add)
+      expectMsg(DBActor.PostAckWr(self, add, Created))
+      dbActor ! DeleteWr(self, remove)
+      expectMsg(DBActor.DeleteAckWr(self, remove, Deleted))
+      dbActor ! DeleteWr(self, remove)
+      expectMsg(DBActor.DeleteAckWr(self, remove, NotFound))
     }
 
-    """respond with the correct DBFile message when sent a FindFile
+    """respond with the correct DBFile message when sent a GetWr
     message containing an added file's hash""" in withDBActor { dbActor =>
-      dbActor ! AddFile(self, add)
-      expectMsg(DBActor.AddFileAck(self, add))
-      dbActor ! FindFile(self, add.hash, add.name)
-      expectMsg(DBActor.DBFile(self, add.hash, Some(expected)))
+      dbActor ! PostWr(self, add)
+      expectMsg(DBActor.PostAckWr(self, add, Created))
+      dbActor ! GetWr(self, add.hash, add.name)
+      expectMsg(DBActor.FileWr(self, Some(expected)))
     }
 
-    """respond with the correct DBFile message when sent a FindFile
+    """respond with the correct DBFile message when sent a GetWr
     message containing the hash of a file that has been removed""" in withDBActor { dbActor =>
-      dbActor ! AddFile(self, add)
-      expectMsg(DBActor.AddFileAck(self, add))
-      dbActor ! RemoveFile(self, remove)
-      expectMsg(DBActor.RemoveFileAck(self, remove))
-      dbActor ! FindFile(self, add.hash, add.name)
-      expectMsg(DBActor.DBFile(self, add.hash, None))
+      dbActor ! PostWr(self, add)
+      expectMsg(DBActor.PostAckWr(self, add, Created))
+      dbActor ! DeleteWr(self, remove)
+      expectMsg(DBActor.DeleteAckWr(self, remove, Deleted))
+      dbActor ! GetWr(self, add.hash, add.name)
+      expectMsg(DBActor.FileWr(self, None))
     }
   }
 }

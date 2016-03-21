@@ -1,6 +1,7 @@
 package hyponome.actor
 
 import akka.actor.{Actor, ActorRef, Props, Stash}
+import akka.pattern.{pipe, PipeableFuture}
 import java.nio.file.Path
 import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.Future
@@ -8,21 +9,21 @@ import scala.util.{Failure, Success, Try}
 
 import hyponome.core._
 import hyponome.file._
-import Controller.{AddFile, RemoveFile, FindFile}
+import Controller.{PostWr, DeleteWr, GetWr}
 
 object FileActor {
 
   final case object Ready
 
-  final case class AddFileAck(client: ActorRef, addition: Addition)
-  final case class AddFileFail(client: ActorRef, addition: Addition, e: Throwable)
-  final case class PreviouslyAddedFile(client: ActorRef, addition: Addition)
+  sealed trait PostResponseWr extends Product with Serializable
+  final case class PostAckWr(client: ActorRef, post: Post, status: PostStatus) extends PostResponseWr
+  final case class PostFailWr(client: ActorRef, post: Post, e: Throwable) extends PostResponseWr
 
-  final case class RemoveFileAck(client: ActorRef, removal: Removal)
-  final case class RemoveFileFail(client: ActorRef, removal: Removal, e: Throwable)
-  final case class PreviouslyRemovedFile(client: ActorRef, removal: Removal)
+  sealed trait DeleteResponseWr extends Product with Serializable
+  final case class DeleteAckWr(client: ActorRef, delete: Delete, status: DeleteStatus) extends DeleteResponseWr
+  final case class DeleteFailWr(client: ActorRef, delete: Delete, e: Throwable) extends DeleteResponseWr
 
-  final case class StoreFile(client: ActorRef, hash: SHA256Hash, file: Option[Path], name: Option[String])
+  final case class ResultWr(client: ActorRef, file: Option[Path], name: Option[String])
 
   def props(p: Path): Props = Props(new FileActor(p))
 }
@@ -38,7 +39,7 @@ class FileActor(p: Path) extends Actor with Stash with HyponomeFile {
 
   override def preStart(): Unit = {
     val selfRef: ActorRef = self
-    this.createStore() onComplete {
+    createStore() onComplete {
       case Success(p: Path) =>
         logger.info(s"Using store at ${p.toAbsolutePath}")
         selfRef ! Ready
@@ -52,37 +53,25 @@ class FileActor(p: Path) extends Actor with Stash with HyponomeFile {
     "org.brianmckenna.wartremover.warts.IsInstanceOf"
   ))
   def prime: Receive = {
-    case AddFile(c: ActorRef, a: Addition) =>
-      val replyToRef: ActorRef = sender
-      val copyFut: Future[Path] = this.copyToStore(a.hash, a.file)
-      copyFut onComplete {
-        case Success(_: Path) =>
-          replyToRef ! AddFileAck(c, a)
-        case Failure(_: java.nio.file.FileAlreadyExistsException) =>
-          replyToRef ! PreviouslyAddedFile(c, a)
-        case Failure(e: Throwable) =>
-          replyToRef ! AddFileFail(c, a, e)
+    case PostWr(c: ActorRef, p: Post) =>
+      val copyFut: Future[PostResponseWr] = copyToStore(p.hash, p.file).map {
+        case Created => PostAckWr(c, p, Created)
+        case Exists  => PostAckWr(c, p, Exists)
+      }.recover { case ex => PostFailWr(c, p, ex) }
+      val tmp: PipeableFuture[PostResponseWr] = pipe(copyFut) to sender
+    case DeleteWr(c: ActorRef, d: Delete) =>
+      val deleteFut: Future[DeleteResponseWr] = deleteFromStore(d.hash).map {
+        case Deleted  => DeleteAckWr(c, d, Deleted)
+        case NotFound => DeleteAckWr(c, d, NotFound)
+      }.recover { case ex => DeleteFailWr(c, d, ex) }
+      val tmp: PipeableFuture[DeleteResponseWr] = pipe(deleteFut) to sender
+    case GetWr(c: ActorRef, h: SHA256Hash, n: Option[String]) =>
+      val possiblePath: Path = getFilePath(h)
+      val existsFut: Future[ResultWr] = existsInStore(possiblePath).map {
+        case true  => ResultWr(c, Some(possiblePath), n)
+        case false => ResultWr(c, None, None)
       }
-    case RemoveFile(c: ActorRef, r: Removal) =>
-      val replyToRef: ActorRef = sender
-      val deleteFut: Future[Unit] = this.deleteFromStore(r.hash)
-      deleteFut onComplete {
-        case Success(_: Unit) =>
-          replyToRef ! RemoveFileAck(c, r)
-        case Failure(_: java.nio.file.NoSuchFileException) =>
-          replyToRef ! PreviouslyRemovedFile(c, r)
-        case Failure(e: Throwable) =>
-          replyToRef ! RemoveFileFail(c, r, e)
-      }
-    case FindFile(c: ActorRef, h: SHA256Hash, n: Option[String]) =>
-      val replyToRef: ActorRef = sender
-      val possiblePath: Path = this.getFilePath(h)
-      val existsFut: Future[Boolean] = this.existsInStore(possiblePath)
-      existsFut onComplete {
-        case Success(true)  => replyToRef ! StoreFile(c, h, Some(possiblePath), n)
-        case Success(false) => replyToRef ! StoreFile(c, h, None, None)
-        case Failure(_)     => replyToRef ! StoreFile(c, h, None, None)
-      }
+      val tmp: PipeableFuture[ResultWr] = pipe(existsFut) to sender
   }
 
   @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Any"))

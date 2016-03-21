@@ -1,6 +1,7 @@
 package hyponome.actor
 
 import akka.actor.{Actor, ActorRef, Props, Stash}
+import akka.pattern.{pipe, PipeableFuture}
 import java.util.concurrent.atomic.AtomicLong
 import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.Future
@@ -10,32 +11,21 @@ import slick.driver.H2Driver.backend.DatabaseDef
 
 import hyponome.core._
 import hyponome.db._
-import Controller.{AddFile, RemoveFile, FindFile, GetInfo}
+import Controller.{PostWr, DeleteWr, GetWr}
 
 object DBActor {
 
   final case object Ready
 
-  final case class AddFileAck(client: ActorRef, addition: Addition)
-  final case class AddFileFail(client: ActorRef, addition: Addition, e: Throwable)
-  final case class PreviouslyAddedFile(client: ActorRef, addition: Addition)
+  sealed trait PostResponseWr extends Product with Serializable
+  final case class PostAckWr(client: ActorRef, post: Post, status: PostStatus) extends PostResponseWr
+  final case class PostFailWr(client: ActorRef, post: Post, e: Throwable) extends PostResponseWr
 
-  final case class RemoveFileAck(client: ActorRef, removal: Removal)
-  final case class RemoveFileFail(client: ActorRef, removal: Removal, e: Throwable)
-  final case class PreviouslyRemovedFile(client: ActorRef, removal: Removal)
+  sealed trait DeleteResponseWr extends Product with Serializable
+  final case class DeleteAckWr(client: ActorRef, delete: Delete, status: DeleteStatus) extends DeleteResponseWr
+  final case class DeleteFailWr(client: ActorRef, delete: Delete, e: Throwable) extends DeleteResponseWr
 
-  final case class DBFile(client: ActorRef, hash: SHA256Hash, file: Option[File])
-
-  final case class CountFiles(client: ActorRef)
-  final case class Count(client: ActorRef, count: Long)
-
-  final case class DumpFiles(client: ActorRef)
-  final case class FileDump(client: ActorRef, fs: Seq[File])
-
-  final case class DumpEvents(client: ActorRef)
-  final case class EventDump(client: ActorRef, es: Seq[Event])
-
-  final case class DBInfo(client: ActorRef, count: Long, max: Long)
+  final case class FileWr(client: ActorRef, file: Option[File])
 
   def props(dbDef: Function0[DatabaseDef], count: AtomicLong): Props = Props(new DBActor(dbDef, count))
 }
@@ -57,7 +47,7 @@ class DBActor(dbDef: Function0[DatabaseDef], count: AtomicLong) extends Actor wi
 
   override def preStart(): Unit = {
     val selfRef: ActorRef = self
-    val initFut: Future[Unit] = this.exists.flatMap {
+    val initFut: Future[Unit] = exists.flatMap {
       case true  => this.syncCounter()
       case false => this.create()
     }
@@ -79,75 +69,31 @@ class DBActor(dbDef: Function0[DatabaseDef], count: AtomicLong) extends Actor wi
     "org.brianmckenna.wartremover.warts.IsInstanceOf"
   ))
   def prime: Receive = {
-    case AddFile(c: ActorRef, f: Addition) =>
-      val replyToRef: ActorRef = sender
-      val addFut: Future[Unit] = this.addFile(f)
-      addFut onComplete {
-        case Success(_: Unit) =>
-          replyToRef ! AddFileAck(c, f)
-        case Failure(_: UnsupportedOperationException) =>
-          replyToRef ! PreviouslyAddedFile(c, f)
-        case Failure(e) =>
-          replyToRef ! AddFileFail(c, f, e)
+    case PostWr(c: ActorRef, p: Post) =>
+      val addFut: Future[PostResponseWr] = addFile(p).flatMap {
+        case Created => Future(PostAckWr(c, p, Created))
+        case Exists  => findFile(p.hash).map {
+          case Some(f) =>
+            val newp = Post(p.hostname, p.port, p.file, f.hash, f.name, f.contentType, f.length, p.remoteAddress)
+            PostAckWr(c, newp, Exists)
+          case None =>
+            PostFailWr(c, p, new NoSuchElementException)
+        }
+      }.recover { case ex => PostFailWr(c, p, ex) }
+      val tmp: PipeableFuture[PostResponseWr] = pipe(addFut) to sender
+    case DeleteWr(c: ActorRef, d: Delete) =>
+      val removeFut: Future[DeleteResponseWr] = removeFile(d).map { (s: DeleteStatus) =>
+        DeleteAckWr(c, d, s)
+      }.recover { case ex => DeleteFailWr(c, d, ex) }
+      val tmp: PipeableFuture[DeleteResponseWr] = pipe(removeFut) to sender
+    case GetWr(c: ActorRef, h: SHA256Hash, n: Option[String]) =>
+      val findFut: Future[FileWr] = findFile(h).map { (f: Option[File]) =>
+        FileWr(c, f)
       }
-    case RemoveFile(c: ActorRef, r: Removal) =>
-      val replyToRef: ActorRef = sender
-      val removeFut: Future[Unit] = this.removeFile(r)
-      removeFut onComplete {
-        case Success(_: Unit) =>
-          replyToRef ! RemoveFileAck(c, r)
-        case Failure(_: UnsupportedOperationException) =>
-          replyToRef ! PreviouslyRemovedFile(c, r)
-        case Failure(e) =>
-          replyToRef ! RemoveFileFail(c, r, e)
-      }
-    case FindFile(c: ActorRef, h: SHA256Hash, n: Option[String]) =>
-      val replyToRef: ActorRef = sender
-      val findFut: Future[Option[File]] = this.findFile(h)
-      findFut onComplete {
-        case Success(f)    => replyToRef ! DBFile(c, h, f)
-        case Failure(_)    => replyToRef ! DBFile(c, h, None)
-      }
-    case CountFiles(c: ActorRef) =>
-      val replyToRef: ActorRef = sender
-      val countFut: Future[Long] = this.countFiles
-      countFut onComplete {
-        case Success(l: Long) => replyToRef ! Count(c, l)
-        case _                =>
-      }
-    case DumpFiles(c: ActorRef) =>
-      val replyToRef: ActorRef = sender
-      val dumpFilesFut: Future[Seq[File]] = this.dumpFiles
-      dumpFilesFut onComplete {
-        case Success(fs: Seq[File]) => replyToRef ! FileDump(c, fs)
-        case _                      =>
-      }
-    case DumpEvents(c: ActorRef) =>
-      val replyToRef: ActorRef = sender
-      val dumpEventsFut: Future[Seq[Event]] = this.dumpEvents
-      dumpEventsFut onComplete {
-        case Success(es: Seq[Event]) => replyToRef ! EventDump(c, es)
-        case _                       =>
-      }
-    case GetInfo(c: ActorRef) =>
-      val replyToRef: ActorRef = sender
-      val maxFuture: Future[Long] = maxTx.map {
-        case Some(x) => x
-        case None    => 0
-      }
-      val replyFuture: Future[List[Long]] =
-        Future.sequence(List(countFiles, maxFuture))
-      replyFuture onComplete {
-        case Success(count :: max :: Nil) => replyToRef ! DBInfo(c, count, max)
-        case _                            =>
-      }
+      val tmp: PipeableFuture[FileWr] = pipe(findFut) to sender
     case q: DBQuery =>
-      val replyToRef: ActorRef = sender
-      val queryFuture: Future[Seq[DBQueryResponse]] = this.runQuery(q)
-      queryFuture onComplete {
-        case Success(rs: Seq[DBQueryResponse]) => replyToRef ! rs
-        case _                                 =>
-      }
+      val queryFuture: Future[Seq[DBQueryResponse]] = runQuery(q)
+      val tmp: PipeableFuture[Seq[DBQueryResponse]] = pipe(queryFuture) to sender
   }
 
   @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Any"))

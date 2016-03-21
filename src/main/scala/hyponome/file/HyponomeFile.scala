@@ -28,20 +28,28 @@ trait HyponomeFile {
       }
     }
 
-  def copyToStore(hash: SHA256Hash, source: Path)(implicit ec: ExecutionContext): Future[Path] =
+  def copyToStore(hash: SHA256Hash, source: Path)(implicit ec: ExecutionContext): Future[PostStatus] = 
     Future {
       blocking {
         val destination: Path = getFilePath(hash)
         val parent: Path = Files.createDirectories(destination.getParent)
         Files.copy(source, destination)
       }
+    }.map { (p: Path) =>
+      Created
+    }.recover {
+      case e: java.nio.file.FileAlreadyExistsException => Exists
     }
 
-  def deleteFromStore(hash: SHA256Hash)(implicit ec: ExecutionContext): Future[Unit] =
+  def deleteFromStore(hash: SHA256Hash)(implicit ec: ExecutionContext): Future[DeleteStatus] =
     Future {
       blocking {
         val p: Path = getFilePath(hash)
         Files.delete(p)
       }
+    }.map { (_: Unit) =>
+      Deleted
+    }.recover {
+      case e: java.nio.file.NoSuchFileException => NotFound
     }
 }

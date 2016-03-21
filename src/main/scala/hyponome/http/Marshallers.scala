@@ -11,21 +11,21 @@ import hyponome.http.JsonProtocol._
 
 object Marshallers {
 
-  implicit val responseM: ToResponseMarshaller[Response] = Marshaller.oneOf(
-    Marshaller.withFixedContentType(`text/plain(UTF-8)`) { (r: Response) =>
-      val locationHeader = headers.Location(r.file.toString)
+  implicit val responseM: ToResponseMarshaller[Posted] = Marshaller.oneOf(
+    Marshaller.withFixedContentType(`text/plain(UTF-8)`) { (p: Posted) =>
+      val locationHeader = headers.Location(p.file.toString)
       HttpResponse(
-        r.status.toStatusCode,
+        p.status.toStatusCode,
         headers = List(locationHeader),
-        entity = HttpEntity(`text/plain(UTF-8)`, r.toJson.prettyPrint)
+        entity = HttpEntity(`text/plain(UTF-8)`, p.toJson.prettyPrint)
       )
     },
-    Marshaller.withFixedContentType(`application/json`) { (r: Response) =>
-      val locationHeader = headers.Location(r.file.toString)
+    Marshaller.withFixedContentType(`application/json`) { (p: Posted) =>
+      val locationHeader = headers.Location(p.file.toString)
       HttpResponse(
-        r.status.toStatusCode,
+        p.status.toStatusCode,
         headers = List(locationHeader),
-        entity = HttpEntity(`application/json`, r.toJson.prettyPrint)
+        entity = HttpEntity(`application/json`, p.toJson.prettyPrint)
       )
     }
   )
@@ -49,32 +49,17 @@ object Marshallers {
     }
   )
 
-  implicit val infoM: ToResponseMarshaller[Info] = Marshaller.oneOf(
-    Marshaller.withFixedContentType(`text/plain(UTF-8)`) { (i: Info) =>
+  implicit val deletedM: ToResponseMarshaller[DeleteStatus] = Marshaller.oneOf(
+    Marshaller.withFixedContentType(`text/plain(UTF-8)`) { (d: DeleteStatus) =>
       HttpResponse(
-        StatusCodes.OK,
-        entity = HttpEntity(`text/plain(UTF-8)`, i.toJson.prettyPrint)
+        d.toStatusCode,
+        entity = HttpEntity(`text/plain(UTF-8)`, d.toJson.prettyPrint)
       )
     },
-    Marshaller.withFixedContentType(`application/json`) { (i: Info) =>
+    Marshaller.withFixedContentType(`application/json`) { (d: DeleteStatus) =>
       HttpResponse(
-        StatusCodes.OK,
-        entity = HttpEntity(`application/json`, i.toJson.prettyPrint)
-      )
-    }
-  )
-
-  implicit val okM: ToResponseMarshaller[OK] = Marshaller.oneOf(
-    Marshaller.withFixedContentType(`text/plain(UTF-8)`) { (ok: OK) =>
-      HttpResponse(
-        StatusCodes.OK,
-        entity = HttpEntity(`text/plain(UTF-8)`, ok.toJson.prettyPrint)
-      )
-    },
-    Marshaller.withFixedContentType(`application/json`) { (ok: OK) =>
-      HttpResponse(
-        StatusCodes.OK,
-        entity = HttpEntity(`application/json`, ok.toJson.prettyPrint)
+        d.toStatusCode,
+        entity = HttpEntity(`application/json`, d.toJson.prettyPrint)
       )
     }
   )

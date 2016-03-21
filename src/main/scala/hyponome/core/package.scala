@@ -23,9 +23,9 @@ package object core {
       }
     }
 
-  def makeURI(hostname: String, port: Int, hash: SHA256Hash, name: Option[String]): URI =
+  def getURI(hostname: String, port: Int, hash: SHA256Hash, name: Option[String]): URI =
     name match {
-      case Some(n) => new URI(s"http://$hostname:$port/objects/$hash/$n")
-      case None    => new URI(s"http://$hostname:$port/objects/$hash")
+      case Some(n) => new URI("http", s"//$hostname:$port/objects/$hash/$n", null)
+      case None    => new URI("http", s"//$hostname:$port/objects/$hash"   , null)
     }
 }

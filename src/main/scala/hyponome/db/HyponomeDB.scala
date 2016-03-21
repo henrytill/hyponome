@@ -61,10 +61,10 @@ trait HyponomeDB {
     }
   }
 
-  def addFile(a: Addition)(implicit ec: ExecutionContext): Future[Unit] = a match {
-    case Addition(_, hash, name, contentType, length, remoteAddress) =>
+  def addFile(a: Post)(implicit ec: ExecutionContext): Future[PostStatus] = a match {
+    case Post(_, _, _, hash, name, contentType, length, remoteAddress) =>
       added(hash) flatMap {
-        case true  => Future.failed(new UnsupportedOperationException)
+        case true  => Future(Exists)
         case false =>
           val c = counter.incrementAndGet()
           val f = File(hash, name, contentType, length)
@@ -76,22 +76,23 @@ trait HyponomeDB {
             case false =>
               val s = DBIO.seq(files += f, events += e)
               db.run(s)
-          }
+          }.map(_ => Created)
       }
   }
 
-  def removeFile(r: Removal)(implicit ec: ExecutionContext): Future[Unit] = r match {
-    case Removal(hash, remoteAddress) => removed(hash).flatMap {
-      case true  => Future.failed(new UnsupportedOperationException)
-      case false => added(hash).flatMap {
-        case false => Future.failed(new UnsupportedOperationException)
-        case true  =>
-          val c = counter.incrementAndGet()
-          val e = Event(c, dummyTimestamp, Remove, hash, remoteAddress)
-          val s = DBIO.seq(events += e)
-          db.run(s)
+  def removeFile(r: Delete)(implicit ec: ExecutionContext): Future[DeleteStatus] = r match {
+    case Delete(hash, remoteAddress) =>
+      removed(hash).flatMap {
+        case true  => Future(NotFound)
+        case false => added(hash).flatMap {
+          case false => Future(NotFound)
+          case true  =>
+            val c = counter.incrementAndGet()
+            val e = Event(c, dummyTimestamp, Remove, hash, remoteAddress)
+            val s = DBIO.seq(events += e)
+            db.run(s).map(_ => Deleted)
+        }
       }
-    }
   }
 
   def notRemovedQuery: Query[(Files, Events), (File, Event), Seq] = {

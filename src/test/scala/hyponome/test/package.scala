@@ -14,6 +14,8 @@ package object test {
 
   val hostname: String = InetAddress.getLocalHost().getHostName()
 
+  val port: Int = 3000
+
   val fs: FileSystem = FileSystems.getDefault()
 
   val testStorePath: Path = fs.getPath("/tmp/hyponome/store")
@@ -29,7 +31,9 @@ package object test {
 
   val ip: Option[InetAddress] = Some(InetAddress.getByName("192.168.1.253"))
 
-  val add = Addition(
+  val add = Post(
+    hostname,
+    port,
     testPDF,
     testPDFHash,
     Some(testPDF.toFile.getName),
@@ -38,7 +42,25 @@ package object test {
     ip
   )
 
-  val remove = Removal(add.hash, add.remoteAddress)
+  val added = Posted(
+    Created,
+    getURI(add.hostname, add.port, add.hash, add.name),
+    add.hash,
+    add.name,
+    add.contentType,
+    add.length
+  )
+
+  val existed = Posted(
+    Exists,
+    getURI(add.hostname, add.port, add.hash, add.name),
+    add.hash,
+    add.name,
+    add.contentType,
+    add.length
+  )
+
+  val remove = Delete(add.hash, add.remoteAddress)
 
   val expected = File(add.hash, add.name, add.contentType, add.length)
 

@@ -12,6 +12,7 @@ import scala.util.{Success, Failure}
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
 
+import hyponome.core._
 import hyponome.test._
 
 class TestDB(dbDef: DatabaseDef, count: AtomicLong) extends HyponomeDB {
@@ -75,10 +76,10 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
     }
 
     "have an addFile method" which {
-      "returns a Future value of Success(()) when adding a file" in withTestDBInstance { t =>
-        t.create().flatMap { _ => t.addFile(add) }.futureValue should equal(())
+      "returns a Future value of Success(Created) when adding a file" in withTestDBInstance { t =>
+        t.create().flatMap { _ => t.addFile(add) }.futureValue should equal(Created)
       }
-      """returns a Future value of Success(()) when adding a file that
+      """returns a Future value of Success(Created) when adding a file that
       has already been removed""" in withTestDBInstance { t =>
         t.create().flatMap { _ =>
           t.addFile(add)
@@ -86,33 +87,33 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           t.removeFile(remove)
         }.flatMap { _ =>
           t.addFile(add)
-        }.futureValue should equal (())
+        }.futureValue should equal (Created)
       }
-      """returns a Future value of Failure(UnsupportedOperationException) when
+      """returns a Future value of Success(Exists) when
       adding a file that has already been added""" in withTestDBInstance { t =>
         t.create().flatMap { _ =>
           t.addFile(add)
         }.flatMap { _ =>
           t.addFile(add)
-        }.failed.futureValue shouldBe a [UnsupportedOperationException]
+        }.futureValue should equal (Exists)
       }
     }
 
     "have a removeFile method" which {
-      "returns a Future value of Success(()) when removing a file" in withTestDBInstance { t =>
+      "returns a Future value of Success(Removed) when removing a file" in withTestDBInstance { t =>
         t.create().flatMap { _ =>
           t.addFile(add)
         }.flatMap { _ =>
           t.removeFile(remove)
-        }.futureValue should equal (())
+        }.futureValue should equal (Deleted)
       }
-      """returns a Future value of Failure(UnsupportedOperationException)
+      """returns a Future value of Success(NotFound)
       when removing a file that has never beend added""" in withTestDBInstance { t =>
         t.create().flatMap { _ =>
           t.removeFile(remove)
-        }.failed.futureValue shouldBe a [UnsupportedOperationException]
+        }.futureValue should equal (NotFound)
       }
-      """returns a Future value of Failure(UnsupportedOperationException)
+      """returns a Future value of Success(NotFound)
       when removing a file that has already been removed""" in withTestDBInstance { t =>
         t.create().flatMap { _ =>
           t.addFile(add)
@@ -120,7 +121,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           t.removeFile(remove)
         }.flatMap { _ =>
           t.removeFile(remove)
-        }.failed.futureValue shouldBe a [UnsupportedOperationException]
+        }.futureValue should equal (NotFound)
       }
     }
 
@@ -179,7 +180,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
             .flatMap { _ => q.removeFile(remove) }
             .flatMap { _ => q.addFile(add) }
             .flatMap { _ => q.removeFile(remove) }
-        val tmp01: Unit = Await.result(addRemoveFuture01, 5.seconds)
+        val tmp01: DeleteStatus = Await.result(addRemoveFuture01, 5.seconds)
         q.close()
         // re-open initial db
         val r: TestDB = new TestDB(c(), makeCounter())
@@ -198,7 +199,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
             .flatMap { _ => q.removeFile(remove) }
             .flatMap { _ => q.addFile(add) }
             .flatMap { _ => q.removeFile(remove) }
-        val tmp01: Unit = Await.result(addRemoveFuture01, 5.seconds)
+        val tmp01: DeleteStatus = Await.result(addRemoveFuture01, 5.seconds)
         q.close()
         // re-open initial db
         val r: TestDB = new TestDB(c(), makeCounter())
@@ -208,7 +209,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
             .flatMap { _ => r.removeFile(remove) }
             .flatMap { _ => r.addFile(add) }
         }
-        val tmp02: Unit = Await.result(addRemoveFuture02, 5.seconds)
+        val tmp02: PostStatus = Await.result(addRemoveFuture02, 5.seconds)
         r.close()
         // re-re-open initial db
         val s: TestDB = new TestDB(c(), makeCounter())

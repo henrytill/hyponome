@@ -34,45 +34,45 @@ class AskActorSpec(_system: ActorSystem) extends TestKit(_system)
 
   "An AskActor" must {
 
-    """respond with AdditionAck when attempting to add a file to the
+    """respond with PostAck when attempting to add a file to the
     store""" in withAskActor { askActor =>
       askActor ! add
-      expectMsg(AdditionAck(add))
+      expectMsg(PostAck(added))
     }
 
-    """respond with PreviouslyAdded when attempting to add a file to the
+    """respond with PostAck when attempting to add a file to the
     store which has already been added""" in withAskActor { askActor =>
       askActor ! add
-      expectMsg(AdditionAck(add))
+      expectMsg(PostAck(added))
       askActor ! add
-      expectMsg(PreviouslyAdded(add))
+      expectMsg(PostAck(existed))
     }
 
-    """respond with RemovalAck when attempting to remove a file from the
+    """respond with DeleteAck when attempting to remove a file from the
     store""" in withAskActor { askActor =>
       askActor ! add
-      expectMsg(AdditionAck(add))
+      expectMsg(PostAck(added))
       askActor ! remove
-      expectMsg(RemovalAck(remove))
+      expectMsg(DeleteAck(remove, Deleted))
     }
 
-    """respond with PreviouslyRemoved when attempting to remove a file from the
+    """respond with DeleteAck when attempting to remove a file from the
     store that has already been removed""" in withAskActor { askActor =>
       askActor ! add
-      expectMsg(AdditionAck(add))
+      expectMsg(PostAck(added))
       askActor ! remove
-      expectMsg(RemovalAck(remove))
+      expectMsg(DeleteAck(remove, Deleted))
       askActor ! remove
-      expectMsg(PreviouslyRemoved(remove))
+      expectMsg(DeleteAck(remove, NotFound))
     }
 
     """respond with Result when sent a SHA256Hash""" in withAskActor { askActor =>
       askActor ! add
-      expectMsg(AdditionAck(add))
+      expectMsg(PostAck(added))
       askActor ! add.hash
       expectMsgType[Result]
       askActor ! remove
-      expectMsg(RemovalAck(remove))
+      expectMsg(DeleteAck(remove, Deleted))
       askActor ! add.hash
       expectMsgType[Result]
     }
