@@ -38,10 +38,9 @@ class Controller(db: Function0[DatabaseDef], store: Path) extends Actor {
 
   import Controller._
 
-  val counter: AtomicLong = new AtomicLong()
-
-  val dbActor   = context.actorOf(DBActor.props(db, counter))
-  val fileActor = context.actorOf(FileActor.props(store))
+  val counter:   AtomicLong = new AtomicLong()
+  val dbActor:   ActorRef   = context.actorOf(DBActor.props(db, counter))
+  val fileActor: ActorRef   = context.actorOf(FileActor.props(store))
 
   def prime: Receive = {
     // Adding files

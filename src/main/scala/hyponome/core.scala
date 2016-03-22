@@ -90,7 +90,11 @@ final case class Post(
   contentType: String,
   length: Long,
   remoteAddress: Option[InetAddress]
-)
+) {
+  def mergeWithFile(f: File): Post = {
+    Post(hostname, port, file, f.hash, f.name, f.contentType, f.length, remoteAddress)
+  }
+}
 
 sealed trait PostStatus extends Product with Serializable {
   def toStatusCode: StatusCode

@@ -51,29 +51,21 @@ class DBActor(dbDef: Function0[DatabaseDef], count: AtomicLong) extends Actor wi
   import context.dispatcher
   import DBActor._
 
-  val logger: Logger = LoggerFactory.getLogger(classOf[DBActor])
-
-  val files: TableQuery[Files] = TableQuery[Files]
-
-  val events: TableQuery[Events] = TableQuery[Events]
-
-  val db: DatabaseDef = dbDef()
-
-  val counter: AtomicLong = count
+  val logger:  Logger             = LoggerFactory.getLogger(classOf[DBActor])
+  val files:   TableQuery[Files]  = TableQuery[Files]
+  val events:  TableQuery[Events] = TableQuery[Events]
+  val db:      DatabaseDef        = dbDef()
+  val counter: AtomicLong         = count
 
   override def preStart(): Unit = {
-    val selfRef: ActorRef = self
-    val initFut: Future[Unit] = exists.flatMap {
-      case true  => this.syncCounter()
-      case false => this.create()
-    }
-    initFut onComplete {
-      case Success(_: Unit) =>
+    val initFut: PipeableFuture[Ready.type] =
+      exists.flatMap {
+        case true  => this.syncCounter()
+        case false => this.create()
+      }.map { (_: Unit) =>
         logger.info("DB Initialized")
-        self ! Ready
-      case Failure(ex) =>
-        logger.error(ex.getMessage)
-    }
+        Ready
+      }.pipeTo(self)
   }
 
   override def postStop(): Unit = {
@@ -82,30 +74,31 @@ class DBActor(dbDef: Function0[DatabaseDef], count: AtomicLong) extends Actor wi
 
   def prime: Receive = {
     case PostWr(c: ActorRef, p: Post) =>
-      val addFut: Future[PostResponseWr] = addFile(p).flatMap {
-        case Created => Future(PostAckWr(c, p, Created))
-        case Exists  => findFile(p.hash).map {
-          case Some(f) =>
-            val newp = Post(p.hostname, p.port, p.file, f.hash, f.name, f.contentType, f.length, p.remoteAddress)
-            PostAckWr(c, newp, Exists)
-          case None =>
-            PostFailWr(c, p, new NoSuchElementException)
-        }
-      }.recover { case ex => PostFailWr(c, p, ex) }
-      val tmp: PipeableFuture[PostResponseWr] = pipe(addFut) to sender
+      val addFut: PipeableFuture[PostResponseWr] =
+        addFile(p).flatMap {
+          case Created => Future(PostAckWr(c, p, Created))
+          case Exists  => findFile(p.hash).map {
+            case Some(f) => PostAckWr(c, p.mergeWithFile(f), Exists)
+            case None    => PostFailWr(c, p, new NoSuchElementException)
+          }
+        }.recover {
+          case ex => PostFailWr(c, p, ex)
+        }.pipeTo(sender)
     case DeleteWr(c: ActorRef, d: Delete) =>
-      val removeFut: Future[DeleteResponseWr] = removeFile(d).map { (s: DeleteStatus) =>
-        DeleteAckWr(c, d, s)
-      }.recover { case ex => DeleteFailWr(c, d, ex) }
-      val tmp: PipeableFuture[DeleteResponseWr] = pipe(removeFut) to sender
+      val removeFut: PipeableFuture[DeleteResponseWr] =
+        removeFile(d).map { (s: DeleteStatus) =>
+          DeleteAckWr(c, d, s)
+        }.recover {
+          case ex => DeleteFailWr(c, d, ex)
+        }.pipeTo(sender)
     case GetWr(c: ActorRef, h: SHA256Hash, n: Option[String]) =>
-      val findFut: Future[FileWr] = findFile(h).map { (f: Option[File]) =>
-        FileWr(c, f)
-      }
-      val tmp: PipeableFuture[FileWr] = pipe(findFut) to sender
+      val findFut: PipeableFuture[FileWr] =
+        findFile(h).map { (f: Option[File]) =>
+          FileWr(c, f)
+        }.pipeTo(sender)
     case q: DBQuery =>
-      val queryFuture: Future[Seq[DBQueryResponse]] = runQuery(q)
-      val tmp: PipeableFuture[Seq[DBQueryResponse]] = pipe(queryFuture) to sender
+      val queryFuture: PipeableFuture[Seq[DBQueryResponse]] =
+        runQuery(q).pipeTo(sender)
   }
 
   def pre: Receive = {

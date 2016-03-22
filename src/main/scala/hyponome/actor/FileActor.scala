@@ -49,41 +49,41 @@ class FileActor(p: Path) extends Actor with Stash with HyponomeFile {
   import context.dispatcher
   import FileActor._
 
-  val logger: Logger = LoggerFactory.getLogger(classOf[FileActor])
-
-  val storePath: Path = p
+  val logger:    Logger = LoggerFactory.getLogger(classOf[FileActor])
+  val storePath: Path   = p
 
   override def preStart(): Unit = {
-    val selfRef: ActorRef = self
-    createStore() onComplete {
-      case Success(p: Path) =>
+    val createFut: PipeableFuture[Ready.type] =
+      createStore().map { (p: Path) =>
         logger.info(s"Using store at ${p.toAbsolutePath}")
-        selfRef ! Ready
-      case Failure(ex)      =>
-        logger.error(ex.getMessage)
-    }
+        Ready
+      }.pipeTo(self)
   }
 
   def prime: Receive = {
     case PostWr(c: ActorRef, p: Post) =>
-      val copyFut: Future[PostResponseWr] = copyToStore(p.hash, p.file).map {
-        case Created => PostAckWr(c, p, Created)
-        case Exists  => PostAckWr(c, p, Exists)
-      }.recover { case ex => PostFailWr(c, p, ex) }
-      val tmp: PipeableFuture[PostResponseWr] = pipe(copyFut) to sender
+      val copyFut: PipeableFuture[PostResponseWr] =
+        copyToStore(p.hash, p.file).map {
+          case Created => PostAckWr(c, p, Created)
+          case Exists  => PostAckWr(c, p, Exists)
+        }.recover {
+          case ex => PostFailWr(c, p, ex)
+        }.pipeTo(sender)
     case DeleteWr(c: ActorRef, d: Delete) =>
-      val deleteFut: Future[DeleteResponseWr] = deleteFromStore(d.hash).map {
-        case Deleted  => DeleteAckWr(c, d, Deleted)
-        case NotFound => DeleteAckWr(c, d, NotFound)
-      }.recover { case ex => DeleteFailWr(c, d, ex) }
-      val tmp: PipeableFuture[DeleteResponseWr] = pipe(deleteFut) to sender
+      val deleteFut: PipeableFuture[DeleteResponseWr] =
+        deleteFromStore(d.hash).map {
+          case Deleted  => DeleteAckWr(c, d, Deleted)
+          case NotFound => DeleteAckWr(c, d, NotFound)
+        }.recover {
+          case ex => DeleteFailWr(c, d, ex)
+        }.pipeTo(sender)
     case GetWr(c: ActorRef, h: SHA256Hash, n: Option[String]) =>
       val possiblePath: Path = getFilePath(h)
-      val existsFut: Future[ResultWr] = existsInStore(possiblePath).map {
-        case true  => ResultWr(c, Some(possiblePath), n)
-        case false => ResultWr(c, None, None)
-      }
-      val tmp: PipeableFuture[ResultWr] = pipe(existsFut) to sender
+      val existsFut: PipeableFuture[ResultWr] =
+        existsInStore(possiblePath).map {
+          case true  => ResultWr(c, Some(possiblePath), n)
+          case false => ResultWr(c, None, None)
+        }.pipeTo(sender)
   }
 
   def pre: Receive = {
