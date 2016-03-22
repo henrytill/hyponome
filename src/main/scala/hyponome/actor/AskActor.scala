@@ -23,6 +23,5 @@ object AskActor {
 }
 
 class AskActor(recActor: ActorRef) extends Actor {
-  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Any"))
   def receive: Receive = { case msg => recActor forward msg }
 }

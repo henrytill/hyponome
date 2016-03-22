@@ -33,7 +33,11 @@ lazy val commonSettings = Seq(
     import java.nio.file._
     val fs: FileSystem  = FileSystems.getDefault()
   """,
-  wartremoverErrors in (Compile, compile) ++= Warts.allBut(Wart.Throw)
+  wartremoverErrors in (Compile, compile) ++= Warts.allBut(
+    Wart.Any,
+    Wart.DefaultArguments,
+    Wart.Throw
+  )
 )
 
 lazy val root = (project in file("."))

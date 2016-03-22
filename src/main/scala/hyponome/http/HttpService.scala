@@ -44,10 +44,7 @@ import hyponome.actor._
 import hyponome.core._
 import hyponome.http.Marshallers._
 
-@SuppressWarnings(Array(
-  "org.brianmckenna.wartremover.warts.DefaultArguments",
-  "org.brianmckenna.wartremover.warts.ExplicitImplicitTypes"
-))
+@SuppressWarnings(Array("org.brianmckenna.wartremover.warts.ExplicitImplicitTypes"))
 final class HttpService(
   conf: HyponomeConfig,
   system: Option[ActorSystem] = None,
@@ -71,7 +68,6 @@ final class HttpService(
         Post(hostname, port, p, h, name, i.contentType.toString, f.length, r.toOption)
       }
     }
-    @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Any"))
     val responseFuture: Future[PostResponse] =
       makePost(i, f, r)
         .flatMap(ask(a, _))

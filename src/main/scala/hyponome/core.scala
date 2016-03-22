@@ -165,7 +165,6 @@ sealed trait SortOrder extends Product with Serializable
 final case object Ascending extends SortOrder
 final case object Descending extends SortOrder
 
-@SuppressWarnings(Array("org.brianmckenna.wartremover.warts.DefaultArguments"))
 final case class DBQuery(
   hash: Option[SHA256Hash] = None,
   name: Option[String] = None,

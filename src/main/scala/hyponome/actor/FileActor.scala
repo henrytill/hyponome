@@ -64,10 +64,6 @@ class FileActor(p: Path) extends Actor with Stash with HyponomeFile {
     }
   }
 
-  @SuppressWarnings(Array(
-    "org.brianmckenna.wartremover.warts.Any",
-    "org.brianmckenna.wartremover.warts.IsInstanceOf"
-  ))
   def prime: Receive = {
     case PostWr(c: ActorRef, p: Post) =>
       val copyFut: Future[PostResponseWr] = copyToStore(p.hash, p.file).map {
@@ -90,7 +86,6 @@ class FileActor(p: Path) extends Actor with Stash with HyponomeFile {
       val tmp: PipeableFuture[ResultWr] = pipe(existsFut) to sender
   }
 
-  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Any"))
   def pre: Receive = {
     case Ready =>
       unstashAll()

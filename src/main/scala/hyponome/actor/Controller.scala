@@ -43,7 +43,6 @@ class Controller(db: Function0[DatabaseDef], store: Path) extends Actor {
   val dbActor   = context.actorOf(DBActor.props(db, counter))
   val fileActor = context.actorOf(FileActor.props(store))
 
-  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Any"))
   def prime: Receive = {
     // Adding files
     case p: Post =>

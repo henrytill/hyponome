@@ -80,10 +80,6 @@ class DBActor(dbDef: Function0[DatabaseDef], count: AtomicLong) extends Actor wi
     this.close()
   }
 
-  @SuppressWarnings(Array(
-    "org.brianmckenna.wartremover.warts.Any",
-    "org.brianmckenna.wartremover.warts.IsInstanceOf"
-  ))
   def prime: Receive = {
     case PostWr(c: ActorRef, p: Post) =>
       val addFut: Future[PostResponseWr] = addFile(p).flatMap {
@@ -112,7 +108,6 @@ class DBActor(dbDef: Function0[DatabaseDef], count: AtomicLong) extends Actor wi
       val tmp: PipeableFuture[Seq[DBQueryResponse]] = pipe(queryFuture) to sender
   }
 
-  @SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Any"))
   def pre: Receive = {
     case Ready =>
       unstashAll()
