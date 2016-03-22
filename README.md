@@ -22,7 +22,7 @@ $ curl -F file=@hello.txt http://localhost:3000/objects
   "contentType": "text/plain; charset=UTF-8",
   "status": "Created",
   "file": {
-    "URI": "http://thalassa:3000/objects/d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5/hello.txt"
+    "URI": "http://localhost:3000/objects/d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5/hello.txt"
   },
   "length": 14,
   "remoteAddress": {
