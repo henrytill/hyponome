@@ -17,7 +17,7 @@
 package hyponome.http
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.http.scaladsl.Http
+import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.model.{HttpResponse, RemoteAddress, StatusCodes}
 import akka.http.scaladsl.model.headers._
@@ -31,7 +31,9 @@ import com.typesafe.config.{Config, ConfigFactory}
 import java.lang.SuppressWarnings
 import java.net.{InetAddress, URI}
 import java.nio.file.{FileSystem, FileSystems, Path}
+import java.security.{SecureRandom, KeyStore}
 import java.sql.Timestamp
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import org.slf4j.{Logger, LoggerFactory}
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -179,11 +181,25 @@ final class HttpService(
       }
     }
 
+  def serverContext: HttpsConnectionContext = {
+    val keystoreResource:    String              = "keystore.jks"
+    val password:            Array[Char]         = "password".toCharArray
+    val keystore:            KeyStore            = KeyStore.getInstance("jks")
+    val keyManagerFactory:   KeyManagerFactory   = KeyManagerFactory.getInstance("SunX509")
+    val trustManagerFactory: TrustManagerFactory = TrustManagerFactory.getInstance("SunX509")
+    val context:             SSLContext          = SSLContext.getInstance("TLS")
+    keystore.load(getClass.getClassLoader.getResourceAsStream(keystoreResource), password)
+    keyManagerFactory.init(keystore, password)
+    trustManagerFactory.init(keystore)
+    context.init(keyManagerFactory.getKeyManagers, trustManagerFactory.getTrustManagers, new SecureRandom)
+    ConnectionContext.https(context)
+  }
+
   def start(): HttpService = {
     bindingFuture match {
       case Some(_) => this
       case None    =>
-        logger.info(s"Starting server at http://$hostname:$port/")
+        logger.info(s"Starting server at https://$hostname:$port/")
         implicit val sys: ActorSystem       = ActorSystem("Hyponome")
         implicit val mat: ActorMaterializer = ActorMaterializer()
         val ctlActor: ActorRef = sys.actorOf(Controller.props(db, store))
@@ -194,7 +210,7 @@ final class HttpService(
           Some(sys),
           Some(ctlActor),
           Some(askActor),
-          Some(Http().bindAndHandle(route, hostname, port))
+          Some(Http().bindAndHandle(route, hostname, port, connectionContext = serverContext))
         )(sys.dispatcher)
     }
   }
@@ -203,7 +219,7 @@ final class HttpService(
     bindingFuture match {
       case None     => this
       case Some(bf) =>
-        logger.info(s"Stopping server at http://$hostname:$port/")
+        logger.info(s"Stopping server at https://$hostname:$port/")
         bf.flatMap(_.unbind).onComplete(_ => system.get.terminate())
         new HttpService(conf)
     }
@@ -217,7 +233,7 @@ object HttpService {
   private val defaults: Map[String, String] = Map(
     "file-store.path" -> "store",
     "server.hostname" -> "localhost",
-    "server.port" -> "3000",
+    "server.port" -> "4000",
     "upload.key" -> "file"
   );
 

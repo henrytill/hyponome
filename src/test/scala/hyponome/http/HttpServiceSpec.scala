@@ -58,7 +58,7 @@ class HttpServiceSpec extends WordSpecLike
 
   def postFile(p: Path, u: String): Future[HttpResponse] =
     createEntity(p.toFile).flatMap { e =>
-      http.singleRequest(HttpRequest(method = HttpMethods.POST, uri = u, entity = e))
+      http.singleRequest(HttpRequest(method = HttpMethods.POST, uri = u, entity = e), connectionContext = clientContext)
     }
 
   def roundTripper(p: Path, u: String): Future[SHA256Hash] = {
@@ -66,7 +66,7 @@ class HttpServiceSpec extends WordSpecLike
       location match {
         case Some(loc) =>
           val req = HttpRequest(method = HttpMethods.GET, uri = loc)
-          http.singleRequest(req)
+          http.singleRequest(req, connectionContext = clientContext)
         case None =>
           Future.failed(new Exception("Header did not contain a Location"))
       }
@@ -102,7 +102,7 @@ class HttpServiceSpec extends WordSpecLike
   "An instance of HttpService" must {
 
     "do this" in withHttpService { cfg =>
-      val u = s"http://${cfg.hostname}:${cfg.port}/objects"
+      val u = s"https://${cfg.hostname}:${cfg.port}/objects"
       roundTripper(testPDF, u).futureValue shouldEqual testPDFHash
     }
 
@@ -110,7 +110,7 @@ class HttpServiceSpec extends WordSpecLike
       val testFiles: Path = fs.getPath("/tmp/hyponome/test")
       val pathCreated = Files.createDirectories(testFiles)
       forAll { (ba: Array[Byte]) =>
-        val u = s"http://${cfg.hostname}:${cfg.port}/objects"
+        val u = s"https://${cfg.hostname}:${cfg.port}/objects"
         lazy val testFileHash: String = sha256Hex(ba)
         lazy val testFilePath: Path   = testFiles.resolve(testFileHash)
         Files.write(testFilePath, ba)

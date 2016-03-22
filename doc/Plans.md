@@ -3,7 +3,7 @@ Plans
 
 > "I see many things...I see plans within plans."
 
-- [ ] TLS
+- [x] TLS
 - [ ] Capability-based security model (via API tokens?)
 - [ ] Multi-user enhancements
 - [ ] Encrypted file store

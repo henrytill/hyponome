@@ -16,21 +16,27 @@
 
 package hyponome
 
+import akka.http.scaladsl.{ConnectionContext, HttpsConnectionContext}
 import java.net.InetAddress
 import java.nio.file._
-import java.util.concurrent.atomic.AtomicLong
+import java.io.InputStream
+import java.security.cert.{CertificateFactory, Certificate}
+import java.security.{SecureRandom, KeyStore}
 import java.util.UUID.randomUUID
+import java.util.concurrent.atomic.AtomicLong
+import javax.net.ssl.{SSLParameters, SSLContext, TrustManagerFactory}
+import scala.util.{Success, Try}
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
-import scala.util.{Success, Try}
 
 import hyponome.core._
 
 package object test {
 
-  val hostname: String = InetAddress.getLocalHost().getHostName()
+  // val hostname: String = InetAddress.getLocalHost().getHostName()
+  val hostname: String = "localhost"
 
-  val port: Int = 3000
+  val port: Int = 4000
 
   val fs: FileSystem = FileSystems.getDefault()
 
@@ -129,4 +135,27 @@ package object test {
   def deleteFolder(p: Path): Try[Path] =
     if (Files.exists(p)) Try(recursiveDeletePath(p))
     else Success(p)
+
+  private def resourceStream(resourceName: String): InputStream = {
+    val is = getClass.getClassLoader.getResourceAsStream(resourceName)
+    require(is ne null, s"Resource $resourceName not found")
+    is
+  }
+
+  private def loadX509Certificate(resourceName: String): Certificate =
+    CertificateFactory.getInstance("X.509").generateCertificate(resourceStream(resourceName))
+
+  // https://github.com/akka/akka/blob/v2.4.2/akka-http-core/src/test/scala/akka/http/impl/util/ExampleHttpContexts.scala
+  val clientContext: HttpsConnectionContext = {
+    val keystore:            KeyStore            = KeyStore.getInstance(KeyStore.getDefaultType)
+    val trustManagerFactory: TrustManagerFactory = TrustManagerFactory.getInstance("SunX509")
+    val context:             SSLContext          = SSLContext.getInstance("TLS")
+    val params:              SSLParameters       = new SSLParameters
+    keystore.load(null, null)
+    keystore.setCertificateEntry("ca", loadX509Certificate("hyponome.pem"))
+    trustManagerFactory.init(keystore)
+    context.init(null, trustManagerFactory.getTrustManagers, new SecureRandom)
+    params.setEndpointIdentificationAlgorithm("https")
+    ConnectionContext.https(context, sslParameters = Some(params))
+  }
 }

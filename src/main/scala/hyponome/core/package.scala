@@ -41,7 +41,7 @@ package object core {
 
   def getURI(hostname: String, port: Int, hash: SHA256Hash, name: Option[String]): URI =
     name match {
-      case Some(n) => new URI("http", s"//$hostname:$port/objects/$hash/$n", null)
-      case None    => new URI("http", s"//$hostname:$port/objects/$hash"   , null)
+      case Some(n) => new URI("https", s"//$hostname:$port/objects/$hash/$n", null)
+      case None    => new URI("https", s"//$hostname:$port/objects/$hash"   , null)
     }
 }
