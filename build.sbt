@@ -31,7 +31,7 @@ lazy val commonSettings = Seq(
   initialCommands in console := """
     import hyponome._, actor._, core._, db._, file._, http._
     import java.nio.file._
-    val fs: FileSystem  = FileSystems.getDefault()
+    val fs: FileSystem  = FileSystems.getDefault
   """,
   wartremoverErrors in (Compile, compile) ++= Warts.allBut(
     Wart.Any,

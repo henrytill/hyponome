@@ -36,7 +36,7 @@ object JsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
   implicit object pathJsonFormat extends RootJsonFormat[Path] {
     def write(p: Path) = JsObject("Path" -> JsString(p.toFile.toString))
     def read(value: JsValue) = value.asJsObject.getFields("Path") match {
-      case Seq(JsString(p)) => FileSystems.getDefault().getPath(p)
+      case Seq(JsString(p)) => FileSystems.getDefault.getPath(p)
     }
   }
 

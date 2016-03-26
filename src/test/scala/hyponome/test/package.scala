@@ -38,7 +38,7 @@ package object test {
 
   val port: Int = 4000
 
-  val fs: FileSystem = FileSystems.getDefault()
+  val fs: FileSystem = FileSystems.getDefault
 
   val testStorePath: Path = fs.getPath("/tmp/hyponome/store")
 

@@ -237,7 +237,7 @@ object HttpService {
     "upload.key" -> "file"
   );
 
-  private val fs: FileSystem = FileSystems.getDefault()
+  private val fs: FileSystem = FileSystems.getDefault
 
   private val configFile: java.io.File = fs.getPath("hyponome.conf").toFile
 
