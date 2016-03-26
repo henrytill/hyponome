@@ -29,7 +29,7 @@ import Controller.{PostWr, DeleteWr, GetWr}
 
 object FileActor {
 
-  final case object Ready
+  case object Ready
 
   sealed trait PostResponseWr extends Product with Serializable
   final case class PostAckWr(client: ActorRef, post: Post, status: PostStatus) extends PostResponseWr

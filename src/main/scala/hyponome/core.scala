@@ -51,8 +51,8 @@ object SHA256Hash {
 }
 
 sealed trait Operation extends Product with Serializable
-final case object Add extends Operation
-final case object Remove extends Operation
+case object Add extends Operation
+case object Remove extends Operation
 
 object Operation {
   implicit val operationColumnType: BaseColumnType[Operation] =
@@ -100,11 +100,11 @@ sealed trait PostStatus extends Product with Serializable {
   def toStatusCode: StatusCode
 }
 
-final case object Created extends PostStatus {
+case object Created extends PostStatus {
   def toStatusCode: StatusCode = StatusCodes.Created
 }
 
-final case object Exists extends PostStatus {
+case object Exists extends PostStatus {
   def toStatusCode: StatusCode = StatusCodes.OK
 }
 
@@ -138,11 +138,11 @@ sealed trait DeleteStatus extends Product with Serializable {
   def toStatusCode: StatusCode
 }
 
-final case object Deleted extends DeleteStatus {
+case object Deleted extends DeleteStatus {
   def toStatusCode: StatusCode = StatusCodes.OK
 }
 
-final case object NotFound extends DeleteStatus {
+case object NotFound extends DeleteStatus {
   def toStatusCode: StatusCode = StatusCodes.NotFound
 }
 
@@ -160,14 +160,14 @@ final case class Redirect(uri: URI) {
 // GET Query
 
 sealed trait SortBy extends Product with Serializable
-final case object Tx extends SortBy
-final case object Time extends SortBy
-final case object Name extends SortBy
-final case object Address extends SortBy
+case object Tx extends SortBy
+case object Time extends SortBy
+case object Name extends SortBy
+case object Address extends SortBy
 
 sealed trait SortOrder extends Product with Serializable
-final case object Ascending extends SortOrder
-final case object Descending extends SortOrder
+case object Ascending extends SortOrder
+case object Descending extends SortOrder
 
 final case class DBQuery(
   hash: Option[SHA256Hash] = None,
