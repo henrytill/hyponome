@@ -50,7 +50,7 @@ trait HyponomeDB {
 
   def exists(implicit ec: ExecutionContext): Future[Boolean] = {
     val q = MTable.getTables
-    db.run(q).map { ts => !ts.isEmpty }
+    db.run(q).map { ts => ts.nonEmpty }
   }
 
   def dumpFiles: Future[Seq[File]] = {
@@ -128,27 +128,24 @@ trait HyponomeDB {
       Future(Seq())
     case DBQuery(hash, name, address, txLo, txHi, timeLo, timeHi, sortBy, sortOrder) =>
       type Q = Query[(Files, Events), (File, Event), Seq]
-      def filterByHash: Q => Q = { (in: Q) =>
+      def filterByHash: Q => Q = (in: Q) =>
         hash match {
-          case Some(hash) => in.filter(_._1.hash === hash)
-          case None       => in
+          case Some(h) => in.filter(_._1.hash === h)
+          case None    => in
         }
-      }
-      def filterByName: Q => Q = { (in: Q) =>
+      def filterByName: Q => Q = (in: Q) =>
         name match {
-          case Some(name) => in.filter(_._1.name like s"%$name%")
-          case None       => in
+          case Some(n) => in.filter(_._1.name like s"%$n%")
+          case None    => in
         }
-      }
-      def filterByAddress: Q => Q = { (in: Q) =>
+      def filterByAddress: Q => Q = (in: Q) =>
         address match {
           case Some(address: InetAddress) =>
             val criteriaAddress: Option[InetAddress] = Option(address)
             in.filter(r => r._2.remoteAddress === criteriaAddress)
           case None              => in
         }
-      }
-      def filterByTx: Q => Q = { (in: Q) =>
+      def filterByTx: Q => Q = (in: Q) =>
         (txLo, txHi) match {
           case (Some(lo), Some(hi)) =>
             in.filter(_._2.tx >= txLo).filter(_._2.tx <= txHi)
@@ -159,8 +156,7 @@ trait HyponomeDB {
           case (None, None) =>
             in
         }
-      }
-      def filterByTimestamp: Q => Q = { (in: Q) =>
+      def filterByTimestamp: Q => Q = (in: Q) =>
         (timeLo, timeHi) match {
           case (Some(lo), Some(hi)) =>
             in.filter(_._2.timestamp >= timeLo).filter(_._2.timestamp <= timeHi)
@@ -171,8 +167,7 @@ trait HyponomeDB {
           case (None, None) =>
             in
         }
-      }
-      def sort: Q => Q = { (in: Q) =>
+      def sort: Q => Q = (in: Q) =>
         (sortBy, sortOrder) match {
           case (Tx, Ascending) =>
             in.sortBy(_._2.tx.asc)
@@ -191,7 +186,6 @@ trait HyponomeDB {
           case (Address, Descending) =>
             in.sortBy(_._2.remoteAddress.desc)
         }
-      }
       val filterAndSort = filterByHash andThen filterByName andThen filterByAddress andThen filterByTx andThen filterByTimestamp andThen sort
       val composedQuery = filterAndSort(notRemovedQuery)
       db.run(composedQuery.result).map { r =>

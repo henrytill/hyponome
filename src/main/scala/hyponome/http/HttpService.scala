@@ -87,7 +87,7 @@ final class HttpService(
       val q = DBQuery(
         hash.map(SHA256Hash(_)),
         name,
-        remoteAddress.map(InetAddress.getByName(_)),
+        remoteAddress.map(InetAddress.getByName _),
         txLo.map(_.toLong),
         txHi.map(_.toLong),
         timeLo.map(Timestamp.valueOf(_)),
@@ -235,7 +235,7 @@ object HttpService {
     "server.hostname" -> "localhost",
     "server.port" -> "4000",
     "upload.key" -> "file"
-  );
+  )
 
   private val fs: FileSystem = FileSystems.getDefault
 

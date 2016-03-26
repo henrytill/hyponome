@@ -22,7 +22,7 @@ import hyponome.http._
 
 object Main extends App {
 
-  val sht: ShutdownHookThread = sys.addShutdownHook(shutdown)
+  val sht: ShutdownHookThread = sys.addShutdownHook(shutdown())
 
   val service: HttpService = HttpService().start()
 

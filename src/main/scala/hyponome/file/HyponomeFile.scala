@@ -44,7 +44,7 @@ trait HyponomeFile {
       }
     }
 
-  def copyToStore(hash: SHA256Hash, source: Path)(implicit ec: ExecutionContext): Future[PostStatus] = 
+  def copyToStore(hash: SHA256Hash, source: Path)(implicit ec: ExecutionContext): Future[PostStatus] =
     Future {
       blocking {
         val destination: Path = getFilePath(hash)

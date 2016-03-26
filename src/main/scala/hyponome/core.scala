@@ -24,7 +24,6 @@ import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
 import slick.driver.H2Driver.backend.DatabaseDef
 
-
 // Configuration
 
 final case class HyponomeConfig(
@@ -35,7 +34,6 @@ final case class HyponomeConfig(
   uploadKey: String
 )
 
-
 // DB Types
 
 final case class SHA256Hash(value: String) {
@@ -77,7 +75,6 @@ final case class Event(
   remoteAddress: Option[InetAddress]
 )
 
-
 // AskActor + HttpService API
 
 // POST

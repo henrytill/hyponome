@@ -92,7 +92,7 @@ package object test {
 
   def makeTestDB: Function0[DatabaseDef] = { () =>
     Database.forURL(
-      url = s"jdbc:h2:mem:$makeDbName;CIPHER=AES",
+      url = s"jdbc:h2:mem:$makeDbName();CIPHER=AES",
       user = "hyponome",
       password = "hyponome hyponome", // password = "filepwd userpwd"
       driver = "org.h2.Driver",
