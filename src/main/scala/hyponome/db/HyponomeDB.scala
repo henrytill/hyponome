@@ -16,7 +16,6 @@
 
 package hyponome.db
 
-import java.lang.SuppressWarnings
 import java.net.InetAddress
 import java.util.concurrent.atomic.AtomicLong
 import scala.concurrent.Future
@@ -30,7 +29,6 @@ import slick.jdbc.meta.MTable
 import hyponome.core._
 import hyponome.db.Events._
 
-@SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
 trait HyponomeDB {
 
   val files: TableQuery[Files]

@@ -36,6 +36,8 @@ lazy val commonSettings = Seq(
   wartremoverErrors in (Compile, compile) ++= Warts.allBut(
     Wart.Any,
     Wart.DefaultArguments,
+    Wart.ExplicitImplicitTypes,
+    Wart.Nothing,
     Wart.Throw
   )
 )

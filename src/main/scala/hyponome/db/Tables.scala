@@ -21,7 +21,6 @@ import java.net.InetAddress
 import java.sql.Timestamp
 import slick.driver.H2Driver.api._
 
-@SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
 class Files(tag: Tag) extends Table[File](tag, "FILES") {
   def hash = column[SHA256Hash]("HASH", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
   def name = column[Option[String]]("NAME")
@@ -51,7 +50,6 @@ object Events {
     )
 }
 
-@SuppressWarnings(Array("org.brianmckenna.wartremover.warts.Nothing"))
 class Events(tag: Tag) extends Table[Event](tag, "EVENTS") {
   import Events._
   def tx = column[Long]("TX", O.PrimaryKey)

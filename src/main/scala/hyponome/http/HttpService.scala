@@ -28,7 +28,6 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
-import java.lang.SuppressWarnings
 import java.net.{InetAddress, URI}
 import java.nio.file.{FileSystem, FileSystems, Path}
 import java.security.{SecureRandom, KeyStore}
@@ -46,7 +45,6 @@ import hyponome.actor._
 import hyponome.core._
 import hyponome.http.Marshallers._
 
-@SuppressWarnings(Array("org.brianmckenna.wartremover.warts.ExplicitImplicitTypes"))
 final class HttpService(
   conf: HyponomeConfig,
   system: Option[ActorSystem] = None,
