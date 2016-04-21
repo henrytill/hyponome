@@ -19,6 +19,8 @@ val consoleOptions = commonOptions diff Seq(
   "-Ywarn-unused-import"
 )
 
+lazy val up = taskKey[Unit]("Convenience task to run hyponome from sbt's interactive mode.")
+
 lazy val commonSettings = Seq(
   name := "hyponome",
   organization := "net.xngns",
@@ -27,6 +29,8 @@ lazy val commonSettings = Seq(
   scalacOptions := commonOptions,
   scalacOptions in (Compile, console) := consoleOptions,
   scalacOptions in (Test, console) := consoleOptions,
+  fullRunTask(up, Compile, "hyponome.http.HttpMain"),
+  mainClass in (Compile, run) := Some("hyponome.Main"),
   fork in Test := true,
   initialCommands in console := """
     import hyponome._, actor._, core._, db._, file._, http._
