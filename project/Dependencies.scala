@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
 
-  val akkaVersion = "2.4.2"
+  val akkaVersion = "2.4.4"
 
   val coreDeps = Seq(
     "ch.qos.logback"         %  "logback-classic"                   % "1.1.3",
