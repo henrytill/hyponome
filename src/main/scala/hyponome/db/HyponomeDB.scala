@@ -20,10 +20,9 @@ import java.net.InetAddress
 import java.util.concurrent.atomic.AtomicLong
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Try}
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
-import slick.lifted.{Rep, Query}
+import slick.lifted.Query
 import slick.jdbc.meta.MTable
 
 import hyponome.core._

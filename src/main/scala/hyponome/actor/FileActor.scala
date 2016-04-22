@@ -20,8 +20,6 @@ import akka.actor.{Actor, ActorRef, Props, Stash}
 import akka.pattern.{pipe, PipeableFuture}
 import java.nio.file.Path
 import org.slf4j.{Logger, LoggerFactory}
-import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
 
 import hyponome.core._
 import hyponome.file._

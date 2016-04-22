@@ -19,7 +19,6 @@ package hyponome.file
 import hyponome.core._
 import java.nio.file._
 import scala.concurrent.{blocking, ExecutionContext, Future}
-import scala.util.{Success, Try}
 
 trait HyponomeFile {
 

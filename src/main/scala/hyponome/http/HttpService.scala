@@ -16,10 +16,10 @@
 
 package hyponome.http
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.http.scaladsl.Http.ServerBinding
-import akka.http.scaladsl.model.{HttpResponse, RemoteAddress, StatusCodes}
+import akka.http.scaladsl.model.{RemoteAddress, StatusCodes}
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -28,7 +28,7 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
-import java.net.{InetAddress, URI}
+import java.net.InetAddress
 import java.nio.file.{FileSystem, FileSystems, Path}
 import java.security.{SecureRandom, KeyStore}
 import java.sql.Timestamp

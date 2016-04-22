@@ -16,14 +16,12 @@
 
 package hyponome.file
 
-import com.typesafe.config.{Config, ConfigFactory}
 import java.nio.file.Path
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpecLike}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
 
 import hyponome.core._
 import hyponome.test._

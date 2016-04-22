@@ -21,7 +21,6 @@ import akka.pattern.{pipe, PipeableFuture}
 import java.util.concurrent.atomic.AtomicLong
 import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.Future
-import scala.util.{Success, Failure}
 import slick.driver.H2Driver.api.TableQuery
 import slick.driver.H2Driver.backend.DatabaseDef
 

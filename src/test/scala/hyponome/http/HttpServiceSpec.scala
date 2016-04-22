@@ -23,10 +23,7 @@ import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
 import akka.stream.scaladsl.StreamConverters
-import com.typesafe.config.{Config, ConfigFactory}
-import java.net.InetAddress
 import java.nio.file._
-import java.util.UUID.randomUUID
 import org.apache.commons.codec.digest.DigestUtils.sha256Hex
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
 import org.scalatest.prop.PropertyChecks

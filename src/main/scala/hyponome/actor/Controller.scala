@@ -17,7 +17,7 @@
 package hyponome.actor
 
 import akka.actor.{Actor, ActorRef, Props}
-import java.nio.file.{FileSystem, FileSystems, Path}
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
 import slick.driver.H2Driver.backend.DatabaseDef
 

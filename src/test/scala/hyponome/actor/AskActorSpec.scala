@@ -16,8 +16,8 @@
 
 package hyponome.actor
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.testkit.{TestActors, TestKit, ImplicitSender}
+import akka.actor.{ActorRef, ActorSystem}
+import akka.testkit.{TestKit, ImplicitSender}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import hyponome.core._

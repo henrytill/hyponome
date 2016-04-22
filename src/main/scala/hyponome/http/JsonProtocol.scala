@@ -18,7 +18,7 @@ package hyponome.http
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import java.net.{InetAddress, URI}
-import java.nio.file.{Files, FileSystem, FileSystems, Path}
+import java.nio.file.{FileSystems, Path}
 import java.sql.Timestamp
 import spray.json._
 

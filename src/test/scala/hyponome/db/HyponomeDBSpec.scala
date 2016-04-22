@@ -24,7 +24,6 @@ import org.scalatest.time.{Millis, Span}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import scala.util.{Success, Failure}
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
 
