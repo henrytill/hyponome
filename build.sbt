@@ -26,7 +26,7 @@ lazy val commonSettings = Seq(
   organization := "net.xngns",
   version := "0.1.0-SNAPSHOT",
   scalaVersion := "2.11.8",
-  resolvers += Opts.resolver.sonatypeSnapshots,
+  resolvers += Resolver.sonatypeRepo("snapshots"),
   scalacOptions := commonOptions,
   scalacOptions in (Compile, console) := consoleOptions,
   scalacOptions in (Test, console) := consoleOptions,
@@ -34,14 +34,12 @@ lazy val commonSettings = Seq(
   mainClass in (Compile, run) := Some("hyponome.Main"),
   fork in Test := true,
   initialCommands in console := """
-    import hyponome._, actor._, core._, db._, file._, http._
+    import hyponome._, core._, db._, file._, http._
     import java.nio.file._
     val fs: FileSystem  = FileSystems.getDefault
   """,
   wartremoverErrors in (Compile, compile) ++= Warts.allBut(
-    Wart.Any,
     Wart.DefaultArguments,
-    Wart.ExplicitImplicitTypes,
     Wart.Nothing,
     Wart.Throw
   )

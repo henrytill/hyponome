@@ -16,7 +16,6 @@
 
 package hyponome.core
 
-import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import java.net.{InetAddress, URI}
 import java.nio.file.Path
 import java.sql.Timestamp
@@ -93,17 +92,11 @@ final case class Post(
   }
 }
 
-sealed trait PostStatus extends Product with Serializable {
-  def toStatusCode: StatusCode
-}
+sealed trait PostStatus extends Product with Serializable
 
-case object Created extends PostStatus {
-  def toStatusCode: StatusCode = StatusCodes.Created
-}
+case object Created extends PostStatus
 
-case object Exists extends PostStatus {
-  def toStatusCode: StatusCode = StatusCodes.OK
-}
+case object Exists extends PostStatus
 
 sealed trait PostResponse extends Product with Serializable
 final case class PostAck(post: Posted) extends PostResponse
@@ -131,17 +124,11 @@ final case class Delete(
   remoteAddress: Option[InetAddress]
 )
 
-sealed trait DeleteStatus extends Product with Serializable {
-  def toStatusCode: StatusCode
-}
+sealed trait DeleteStatus extends Product with Serializable
 
-case object Deleted extends DeleteStatus {
-  def toStatusCode: StatusCode = StatusCodes.OK
-}
+case object Deleted extends DeleteStatus
 
-case object NotFound extends DeleteStatus {
-  def toStatusCode: StatusCode = StatusCodes.NotFound
-}
+case object NotFound extends DeleteStatus
 
 sealed trait DeleteResponse extends Product with Serializable
 final case class DeleteAck(delete: Delete, status: DeleteStatus) extends DeleteResponse
