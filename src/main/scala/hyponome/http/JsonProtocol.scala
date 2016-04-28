@@ -16,85 +16,116 @@
 
 package hyponome.http
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import argonaut._
+import Argonaut._
 import java.net.{InetAddress, URI}
 import java.nio.file.{FileSystems, Path}
 import java.sql.Timestamp
-import spray.json._
 
 import hyponome.core._
 
-object JsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
+object JsonProtocol {
 
-  implicit object sha256HashFormat extends RootJsonFormat[SHA256Hash] {
-    def write(h: SHA256Hash) = JsObject("SHA256Hash" -> JsString(h.value))
-    def read(value: JsValue) = value.asJsObject.getFields("SHA256Hash") match {
-      case Seq(JsString(h)) => new SHA256Hash(h)
-    }
-  }
+  implicit def sha256HashEncodeJson: EncodeJson[SHA256Hash] =
+    jencode1L((h: SHA256Hash) => h.value)("SHA256Hash")
 
-  implicit object pathJsonFormat extends RootJsonFormat[Path] {
-    def write(p: Path) = JsObject("Path" -> JsString(p.toFile.toString))
-    def read(value: JsValue) = value.asJsObject.getFields("Path") match {
-      case Seq(JsString(p)) => FileSystems.getDefault.getPath(p)
-    }
-  }
+  implicit def sha256HashDecodeJson: DecodeJson[SHA256Hash] =
+    jdecode1L(SHA256Hash.apply)("SHA256Hash")
 
-  implicit object InetAddressFormat extends RootJsonFormat[InetAddress] {
-    def write(i: InetAddress) = JsObject("InetAddress" -> JsString(i.getHostAddress))
-    def read(value: JsValue) = value.asJsObject.getFields("InetAddress") match {
-      case Seq(JsString(i)) => InetAddress.getByName(i)
-    }
-  }
+  implicit def pathEncodeJson: EncodeJson[Path] =
+    jencode1L((p: Path) => p.toFile.toString)("Path")
 
-  implicit object URIFormat extends RootJsonFormat[URI] {
-    def write(uri: URI) = JsObject("URI" -> JsString(uri.toString))
-    def read(value: JsValue) = value.asJsObject.getFields("URI") match {
-      case Seq(JsString(uri)) => new URI(uri)
-    }
-  }
+  implicit def pathDecodeJson: DecodeJson[Path] =
+    jdecode1L(FileSystems.getDefault.getPath(_: String))("Path")
 
-  implicit object TimestampFormat extends RootJsonFormat[Timestamp] {
-    def write(t: Timestamp) = JsObject("Timestamp" -> JsString(t.toString))
-    def read(value: JsValue) = value.asJsObject.getFields("Timestamp") match {
-      case Seq(JsString(t)) => Timestamp.valueOf(t)
-    }
-  }
+  implicit def inetAddressEncodeJson: EncodeJson[InetAddress] =
+    jencode1L((i: InetAddress) => i.getHostAddress)("InetAddress")
 
-  implicit object OperationFormat extends RootJsonFormat[Operation] {
-    def write(op: Operation) = op match {
-      case Add    => JsString("Add")
-      case Remove => JsString("Remove")
-    }
-    def read(value: JsValue) = (value: @unchecked) match {
-      case JsString("Add")    => Add
-      case JsString("Remove") => Remove
-    }
-  }
+  implicit def inetAddressDecodeJson: DecodeJson[InetAddress] =
+    jdecode1L(InetAddress.getByName(_: String))("InetAddress")
 
-  implicit object PostStatusFormat extends RootJsonFormat[PostStatus] {
-    def write(s: PostStatus) = s match {
-      case Created => JsString("Created")
-      case Exists  => JsString("Exists")
-    }
-    def read(value: JsValue) = (value: @unchecked) match {
-      case JsString("Created") => Created
-      case JsString("Exists")  => Exists
-    }
-  }
+  implicit def uriEncodeJson: EncodeJson[URI] =
+    jencode1L((u: URI) => u.toString)("URI")
 
-  implicit object DeleteStatusFormat extends RootJsonFormat[DeleteStatus] {
-    def write(s: DeleteStatus) = s match {
-      case Deleted   => JsObject("Deleted" -> JsBoolean(true))
-      case NotFound  => JsObject("Deleted" -> JsBoolean(false))
-    }
-    def read(value: JsValue) = value.asJsObject.getFields("Deleted") match {
-      case(Seq(JsBoolean(true)))  => Deleted
-      case(Seq(JsBoolean(false))) => NotFound
-    }
-  }
+  implicit def uriDecodeJson: DecodeJson[URI] =
+    jdecode1L(new URI(_: String))("URI")
 
-  implicit val postFormat:            RootJsonFormat[Post]            = jsonFormat8(Post)
-  implicit val postedFormat:          RootJsonFormat[Posted]          = jsonFormat6(Posted.apply)
-  implicit val dbQueryResponseFormat: RootJsonFormat[DBQueryResponse] = jsonFormat8(DBQueryResponse)
+  implicit def timestampEncodeJson: EncodeJson[Timestamp] =
+    jencode1L((t: Timestamp) => t.toString)("Timestamp")
+
+  implicit def timestampDecodeJson: DecodeJson[Timestamp] =
+    jdecode1L(Timestamp.valueOf(_: String))("Timestamp")
+
+  // https://gist.github.com/markhibberd/8231912
+  def tagged[A](tag: String, c: HCursor, decoder: DecodeJson[A]): DecodeResult[A] =
+    (c --\ tag).hcursor.fold(DecodeResult.fail[A]("Invalid tagged type", c.history))(decoder.decode)
+
+  implicit def operationEncodeJson: EncodeJson[Operation] =
+    EncodeJson(_ match {
+      case Add    => jString("Add")
+      case Remove => jString("Remove")
+    })
+
+  implicit def operationDecodeJson: DecodeJson[Operation] =
+    DecodeJson(c =>
+      tagged("Add", c, implicitly[DecodeJson[Unit]].map(_ => Add)) |||
+        tagged("Remove", c, implicitly[DecodeJson[Unit]].map(_ => Remove))
+    )
+
+  implicit def postStatusEncodeJson: EncodeJson[PostStatus] =
+    EncodeJson(_ match {
+      case Created => jString("Created")
+      case Exists  => jString("Exists")
+    })
+
+  implicit def postStatusDecodeJson: DecodeJson[PostStatus] =
+    DecodeJson(c =>
+      tagged("Created", c, implicitly[DecodeJson[Unit]].map(_ => Created)) |||
+        tagged("Exists", c, implicitly[DecodeJson[Unit]].map(_ => Exists)))
+
+  implicit def deleteStatusEncodeJson: EncodeJson[DeleteStatus] =
+    EncodeJson(_ match {
+      case Deleted  => Json("Deleted" -> jBool(true))
+      case NotFound => Json("Deleted" -> jBool(false))
+    })
+
+  // TODO: deleteStatusDecodeJson
+
+  implicit def PostCodecJson: CodecJson[Post] =
+    casecodec8(Post.apply, Post.unapply)(
+      "hostname",
+      "port",
+      "file",
+      "hash",
+      "name",
+      "contentType",
+      "length",
+      "remoteAddress"
+    )
+
+  implicit def PostedCodecJson: CodecJson[Posted] =
+    casecodec6(Posted.apply, Posted.unapply)(
+      "status",
+      "file",
+      "hash",
+      "name",
+      "contentType",
+      "length"
+    )
+
+  implicit def DBQueryResponseCodecJson: CodecJson[DBQueryResponse] =
+    casecodec8(DBQueryResponse.apply, DBQueryResponse.unapply)(
+      "tx",
+      "timestamp",
+      "operation",
+      "remoteAddress",
+      "hash",
+      "name",
+      "contentType",
+      "length"
+    )
+
+  implicit def seqDBQueryResponseEncodeJson[T]: EncodeJson[Seq[DBQueryResponse]] =
+    EncodeJson((ds: Seq[DBQueryResponse]) =>
+      jArray(ds.map(_.asJson).toList))
 }

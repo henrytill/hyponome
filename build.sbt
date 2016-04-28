@@ -26,6 +26,7 @@ lazy val commonSettings = Seq(
   organization := "net.xngns",
   version := "0.1.0-SNAPSHOT",
   scalaVersion := "2.11.8",
+  resolvers += Opts.resolver.sonatypeSnapshots,
   scalacOptions := commonOptions,
   scalacOptions in (Compile, console) := consoleOptions,
   scalacOptions in (Test, console) := consoleOptions,

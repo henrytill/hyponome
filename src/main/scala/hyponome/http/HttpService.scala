@@ -19,7 +19,8 @@ package hyponome.http
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.http.scaladsl.Http.ServerBinding
-import akka.http.scaladsl.model.{RemoteAddress, StatusCodes}
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -27,6 +28,8 @@ import akka.http.scaladsl.server.directives.FileInfo
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import argonaut._
+import Argonaut._
 import com.typesafe.config.{Config, ConfigFactory}
 import java.net.InetAddress
 import java.nio.file.{FileSystem, FileSystems, Path}
@@ -43,7 +46,7 @@ import slick.driver.H2Driver.backend.DatabaseDef
 
 import hyponome.actor._
 import hyponome.core._
-import hyponome.http.Marshallers._
+import hyponome.http.JsonProtocol._
 
 final class HttpService(
   conf: HyponomeConfig,
@@ -57,8 +60,11 @@ final class HttpService(
   val logger: Logger  = LoggerFactory.getLogger(classOf[HttpService])
   val HyponomeConfig(db, store, hostname, port, uploadKey) = conf
 
-  def handleFailure(ex: Throwable): (StatusCodes.ServerError, String) =
-    (StatusCodes.InternalServerError, ex.getMessage)
+  def handleFailure(ex: Throwable): HttpResponse =
+    HttpResponse(
+      StatusCodes.InternalServerError,
+      entity = HttpEntity(`application/json`, Json("error" -> jString(ex.getMessage)).spaces2)
+    )
 
   def handlePostObjects(a: ActorRef, r: RemoteAddress, i: FileInfo, f: java.io.File): Route = {
     def makePost(i: FileInfo, f: java.io.File, r: RemoteAddress): Future[Post] = {
@@ -73,9 +79,16 @@ final class HttpService(
         .flatMap(ask(a, _))
         .mapTo[PostResponse]
     onComplete(responseFuture) {
-      case Success(PostAck(p: Posted)) => complete { p }
-      case Success(PostFail(ex))       => complete { handleFailure(ex) }
-      case Failure(ex)                 => complete { handleFailure(ex) }
+      case Success(PostAck(p: Posted)) => complete {
+        val locationHeader = headers.Location(p.file.toString)
+        HttpResponse(
+          p.status.toStatusCode,
+          headers = List(locationHeader),
+          entity = HttpEntity(`application/json`, p.asJson.spaces2)
+        )
+      }
+      case Success(PostFail(ex)) => complete { handleFailure(ex) }
+      case Failure(ex)           => complete { handleFailure(ex) }
     }
   }
 
@@ -104,27 +117,39 @@ final class HttpService(
       val responseFuture: Future[Seq[DBQueryResponse]] =
         ask(a, q).mapTo[Seq[DBQueryResponse]]
       onComplete(responseFuture) {
-        case Success(rs: Seq[DBQueryResponse]) => complete { rs }
-        case Failure(ex)                       => complete { handleFailure(ex) }
+        case Success(rs: Seq[DBQueryResponse]) => complete {
+          HttpResponse(StatusCodes.OK, entity = HttpEntity(`application/json`, rs.asJson.spaces2))
+        }
+        case Failure(ex) => complete { handleFailure(ex) }
       }
     }
 
   def handleRedirectObject(a: ActorRef, h: SHA256Hash): Route = {
     val responseFuture: Future[Result] = ask(a, h).mapTo[Result]
     onComplete(responseFuture) {
-      case Success(Result(Some(_),    Some(name))) => complete { Redirect(getURI(hostname, port, h, Some(name))) }
-      case Success(Result(Some(file), None))       => getFromFile(file.toFile)
-      case Success(Result(None,       _))          => reject
-      case Failure(ex)                             => complete { handleFailure(ex) }
+      case Success(Result(Some(_), Some(name))) => complete {
+        val r: Redirect    = Redirect(getURI(hostname, port, h, Some(name)))
+        val locationHeader = headers.Location(r.toString)
+        HttpResponse(
+          StatusCodes.Found,
+          headers = List(locationHeader),
+          entity = HttpEntity(`application/json`, r.uri.asJson.spaces2)
+        )
+      }
+      case Success(Result(Some(file), None)) => getFromFile(file.toFile)
+      case Success(Result(None, _))          => reject
+      case Failure(ex)                       => complete { handleFailure(ex) }
     }
   }
 
   def handleDeleteObject(a: ActorRef, h: SHA256Hash, r: RemoteAddress): Route = {
     val responseFuture: Future[DeleteResponse] = ask(a, Delete(h, r.toOption)).mapTo[DeleteResponse]
     onComplete(responseFuture) {
-      case Success(DeleteAck(_, s: DeleteStatus)) => complete { s }
-      case Success(DeleteFail(_, ex))             => complete { handleFailure(ex) }
-      case Failure(ex)                            => complete { handleFailure(ex) }
+      case Success(DeleteAck(_, s: DeleteStatus)) => complete {
+        HttpResponse(s.toStatusCode, entity = HttpEntity(`application/json`, s.asJson.spaces2))
+      }
+      case Success(DeleteFail(_, ex)) => complete { handleFailure(ex) }
+      case Failure(ex)                => complete { handleFailure(ex) }
     }
   }
 
