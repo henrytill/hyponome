@@ -19,7 +19,7 @@ package hyponome
 import java.net.URI
 import java.nio.file.{Files, Path}
 import org.apache.commons.codec.digest.DigestUtils.sha256Hex
-import scala.concurrent.{blocking, ExecutionContext, Future}
+import scalaz.concurrent.Task
 
 package object core {
 
@@ -31,13 +31,10 @@ package object core {
     finally fist.close()
   }
 
-  def getSHA256Hash(p: Path)(implicit ec: ExecutionContext): Future[SHA256Hash] =
-    Future {
-      blocking {
-        val s: String = withInputStream(p)(sha256Hex)
-        SHA256Hash(s)
-      }
-    }
+  def getSHA256Hash(p: Path): Task[SHA256Hash] = Task {
+    val s: String = withInputStream(p)(sha256Hex)
+    SHA256Hash(s)
+  }
 
   def getURI(hostname: String, port: Int, hash: SHA256Hash, name: Option[String]): URI =
     name match {
