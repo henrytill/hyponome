@@ -19,7 +19,11 @@ src/test/resources/hyponome.pem: src/main/resources/keystore.jks
 		-storepass password \
 
 clean:
+	rm -rf store
+	rm -f *.db
+
+distclean: clean
 	rm -f src/main/resources/keystore.jks
 	rm -f src/test/resources/hyponome.pem
 
-.PHONY: all clean
+.PHONY: all clean distclean
