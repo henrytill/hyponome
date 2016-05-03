@@ -14,22 +14,14 @@
  * limitations under the License.
  */
 
-package hyponome.file
+package hyponome.config
 
-import scalaz.concurrent.Task
-import hyponome.core.{DeleteStatus, Post, PostStatus, SHA256Hash}
+import java.nio.file.Path
+import slick.driver.H2Driver.backend.DatabaseDef
 
-trait FileStore[T] {
-
-  def exists(): Task[Boolean]
-
-  def create(): Task[Unit]
-
-  def getFileLocation(hash: SHA256Hash): T
-
-  def existsInStore(p: T): Task[Boolean]
-
-  def copyToStore(p: Post): Task[PostStatus]
-
-  def deleteFromStore(hash: SHA256Hash): Task[DeleteStatus]
-}
+final case class ServiceConfig(
+  db: Function0[DatabaseDef],
+  store: Path,
+  hostname: String,
+  port: Int,
+  uploadKey: String)

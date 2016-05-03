@@ -30,7 +30,7 @@ lazy val commonSettings = Seq(
   scalacOptions := commonOptions,
   scalacOptions in (Compile, console) := consoleOptions,
   scalacOptions in (Test, console) := consoleOptions,
-  fullRunTask(up, Compile, "hyponome.http.HttpMain"),
+  fullRunTask(up, Test, "hyponome.http.Main"),
   mainClass in (Compile, run) := Some("hyponome.Main"),
   fork in Test := true,
   initialCommands in console := """
@@ -39,11 +39,15 @@ lazy val commonSettings = Seq(
     val fs: FileSystem  = FileSystems.getDefault
   """,
   wartremoverErrors in (Compile, compile) ++= Warts.allBut(
+    Wart.Any,
     Wart.DefaultArguments,
+    Wart.ExplicitImplicitTypes,
+    Wart.NonUnitStatements,
     Wart.Nothing,
     Wart.Throw
   )
 )
+    Wart.Null,
 
 lazy val root = (project in file("."))
   .settings(commonSettings: _*)

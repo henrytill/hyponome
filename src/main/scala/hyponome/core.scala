@@ -21,17 +21,6 @@ import java.nio.file.Path
 import java.sql.Timestamp
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
-import slick.driver.H2Driver.backend.DatabaseDef
-
-// Configuration
-
-final case class HyponomeConfig(
-  db: Function0[DatabaseDef],
-  store: Path,
-  hostname: String,
-  port: Int,
-  uploadKey: String
-)
 
 // DB Types
 
@@ -74,8 +63,6 @@ final case class Event(
   remoteAddress: Option[InetAddress]
 )
 
-// AskActor + HttpService API
-
 // POST
 final case class Post(
   hostname: String,
@@ -93,14 +80,8 @@ final case class Post(
 }
 
 sealed trait PostStatus extends Product with Serializable
-
 case object Created extends PostStatus
-
 case object Exists extends PostStatus
-
-sealed trait PostResponse extends Product with Serializable
-final case class PostAck(post: Posted) extends PostResponse
-final case class PostFail(exception: Throwable) extends PostResponse
 
 final case class Posted(
   status: PostStatus,
@@ -125,14 +106,8 @@ final case class Delete(
 )
 
 sealed trait DeleteStatus extends Product with Serializable
-
 case object Deleted extends DeleteStatus
-
 case object NotFound extends DeleteStatus
-
-sealed trait DeleteResponse extends Product with Serializable
-final case class DeleteAck(delete: Delete, status: DeleteStatus) extends DeleteResponse
-final case class DeleteFail(delete: Delete, exception: Throwable) extends DeleteResponse
 
 // GET File
 final case class Result(file: Option[Path], name: Option[String])

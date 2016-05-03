@@ -14,22 +14,8 @@
  * limitations under the License.
  */
 
-package hyponome.file
+package hyponome
 
-import scalaz.concurrent.Task
-import hyponome.core.{DeleteStatus, Post, PostStatus, SHA256Hash}
-
-trait FileStore[T] {
-
-  def exists(): Task[Boolean]
-
-  def create(): Task[Unit]
-
-  def getFileLocation(hash: SHA256Hash): T
-
-  def existsInStore(p: T): Task[Boolean]
-
-  def copyToStore(p: Post): Task[PostStatus]
-
-  def deleteFromStore(hash: SHA256Hash): Task[DeleteStatus]
+package object util extends TaskHelpers {
+  def randomUUID(): java.util.UUID = java.util.UUID.randomUUID()
 }

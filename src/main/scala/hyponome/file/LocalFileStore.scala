@@ -17,10 +17,13 @@
 package hyponome.file
 
 import java.nio.file.{Files, Path}
+import org.slf4j.{Logger, LoggerFactory}
 import scalaz.concurrent.Task
 import hyponome.core._
 
 final class LocalFileStore(storePath: Path) extends FileStore[Path] {
+
+  val logger: Logger = LoggerFactory.getLogger(classOf[LocalFileStore])
 
   def exists(): Task[Boolean] = Task { Files.exists(storePath) }
 
@@ -36,11 +39,11 @@ final class LocalFileStore(storePath: Path) extends FileStore[Path] {
     storePath.resolve(dir).resolve(file).toAbsolutePath
   }
 
-  def copyToStore(hash: SHA256Hash, source: Path): Task[PostStatus] =
+  def copyToStore(p: Post): Task[PostStatus] =
     Task {
-      val destination: Path = getFileLocation(hash)
+      val destination: Path = getFileLocation(p.hash)
       val parent: Path = Files.createDirectories(destination.getParent)
-      Files.copy(source, destination)
+      Files.copy(p.file, destination)
     }.map { (_: Path) =>
       Created
     }.handle {
@@ -56,4 +59,8 @@ final class LocalFileStore(storePath: Path) extends FileStore[Path] {
     }.handle {
       case _: java.nio.file.NoSuchFileException => NotFound
     }
+
+  def init(): Task[Unit] = create().map { (_: Unit) =>
+    logger.info(s"Using store at ${storePath.toAbsolutePath}")
+  }
 }

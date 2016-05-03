@@ -18,27 +18,24 @@ package hyponome.db
 
 import java.net.InetAddress
 import java.util.concurrent.atomic.AtomicLong
+import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
 import slick.lifted.Query
 import slick.jdbc.meta.MTable
-
 import hyponome.core._
 import hyponome.db.Events._
 
-trait HyponomeDB {
+final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionContext) {
 
-  val files: TableQuery[Files]
-
-  val events: TableQuery[Events]
-
-  val db: DatabaseDef
-
-  private val dummyTimestamp = new java.sql.Timestamp(0)
-
-  val counter: AtomicLong
+  val logger: Logger             = LoggerFactory.getLogger(classOf[HyponomeDB])
+  val db: DatabaseDef            = dbConfig()
+  val files: TableQuery[Files]   = TableQuery[Files]
+  val events: TableQuery[Events] = TableQuery[Events]
+  val counter: AtomicLong        = new AtomicLong()
+  private val dummyTimestamp     = new java.sql.Timestamp(0)
 
   def create(): Future[Unit] = {
     val s = DBIO.seq((events.schema ++ files.schema).create)
@@ -219,5 +216,14 @@ trait HyponomeDB {
   def close(): Unit = {
     val tmp = db.createSession().createStatement() execute "shutdown;"
     db.close
+  }
+
+  def init(): Future[Unit] = {
+    exists.flatMap {
+      case true  => this.syncCounter()
+      case false => this.create()
+    }.map { (_: Unit) =>
+      logger.info("DB Initialized")
+    }
   }
 }
