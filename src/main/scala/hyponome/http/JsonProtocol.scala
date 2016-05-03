@@ -62,8 +62,8 @@ object JsonProtocol {
 
   implicit def operationEncodeJson: EncodeJson[Operation] =
     EncodeJson(_ match {
-      case Add    => jString("Add")
-      case Remove => jString("Remove")
+      case Add    => Json("Add" := (()))
+      case Remove => Json("Remove" := (()))
     })
 
   implicit def operationDecodeJson: DecodeJson[Operation] =
@@ -74,8 +74,8 @@ object JsonProtocol {
 
   implicit def postStatusEncodeJson: EncodeJson[PostStatus] =
     EncodeJson(_ match {
-      case Created => jString("Created")
-      case Exists  => jString("Exists")
+      case Created => Json("Created" := (()))
+      case Exists  => Json("Exists" := (()))
     })
 
   implicit def postStatusDecodeJson: DecodeJson[PostStatus] =
