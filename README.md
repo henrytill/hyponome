@@ -46,21 +46,27 @@ $ sha256sum hello.txt
 d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5  hello.txt
 
 $ curl --cacert <path/to/hyponome.pem> -F file=@hello.txt https://localhost:4000/objects
-{
-  "name": "hello.txt",
-  "hash": {
-    "SHA256Hash": "d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5"
-  },
-  "contentType": "text/plain; charset=UTF-8",
-  "status": "Created",
-  "file": {
-    "URI": "https://localhost:4000/objects/d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5/hello.txt"
-  },
-  "length": 14,
-  "remoteAddress": {
-    "InetAddress": "192.168.1.253"
+[
+  {
+    "name" : "hello.txt",
+    "hash" : {
+      "SHA256Hash" : "d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5"
+    },
+    "contentType" : "text/plain; charset=UTF-8",
+    "status" : {
+      "Created" : {
+
+      }
+    },
+    "file" : {
+      "URI" : "https://localhost:4000/objects/d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5/hello.txt"
+    },
+    "length" : 14,
+    "remoteAddress" : {
+      "InetAddress" : "192.168.1.253"
+    }
   }
-}%
+]%
 
 $ curl --cacert <path/to/hyponome.pem> https://localhost:4000/objects/d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5/hello.txt
 Hello, world!
