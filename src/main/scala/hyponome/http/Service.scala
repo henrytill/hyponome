@@ -47,24 +47,22 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
     parameters.flatMap(_.get("name")) match {
       // check if it matches the uploadKey specified in the config
       case Some(x) if x == cfg.uploadKey =>
-        // if it does, get the filename from header parameters
+        // if it does, get the filename, content-type, and address from request/headers
         val filename: Option[String] =
           parameters
             .flatMap(_.get("filename"))
             .flatMap((x: String) => if (x != "-") Some(x) else None)
-        // get the content-type and address
         val contentType: String =
           hs.get(headers.`Content-Type`)
             .map(_.mediaType)
             .map((m: MediaType) => s"${m.mainType}/${m.subType}")
             .getOrElse("application/octet-stream")
-        val inetAddress: Option[InetAddress] =
-          r.remote.map(_.getAddress())
+        val inetAddress: Option[InetAddress] = r.remote.map(_.getAddress())
         // create a path where the upload will be temporarily copied
         val tempFilePath: JPath = tmpDir.resolve(s"${randomUUID}.tmp")
         // for comprehension helper functions
-        def writeTempFile(file: JPath): Task[JPath] ={
-          body.to(fileChunkW(file.toFile.toString)).run.map((_: Unit) => file)
+        def bodyToFile(b: EntityBody, p: JPath): Task[JPath] = {
+          b.to(fileChunkW(p.toFile.toString)).run.map((_: Unit) => p)
         }
         def createAdd(hash: SHA256Hash, file: JPath, filename: Option[String]): Task[Add] =
           Task.now {
@@ -86,7 +84,7 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
         }
         // add the file to the store and yield a Task[Option[Added]]
         for {
-          p <- bodyToTempFile(body, tempFilePath)
+          p <- bodyToFile(body, tempFilePath)
           h <- getSHA256Hash(p)
           x <- createAdd(h, p, filename)
           y <- addToDB(x)
