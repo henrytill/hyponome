@@ -36,9 +36,11 @@ package object core {
     SHA256Hash(s)
   }
 
-  def getURI(hostname: String, port: Int, hash: SHA256Hash, name: Option[String]): URI =
-    name match {
-      case Some(n) => new URI("http", s"//$hostname:$port/objects/$hash/$n", null)
-      case None    => new URI("http", s"//$hostname:$port/objects/$hash"   , null)
+  def getURI(hostname: String, port: Int, hash: SHA256Hash, name: Option[String]): URI = {
+    val end: String = name match {
+      case Some(n) => s"$hash/$n"
+      case None    => s"$hash"
     }
+    new URI("http", s"//$hostname:$port/objects/$end", null)
+  }
 }
