@@ -71,8 +71,8 @@ final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionC
     }
   }
 
-  def addFile(a: Post)(implicit ec: ExecutionContext): Future[PostStatus] = a match {
-    case Post(_, _, _, hash, name, contentType, length, remoteAddress) =>
+  def addFile(a: Add)(implicit ec: ExecutionContext): Future[AddStatus] = a match {
+    case Add(_, _, _, hash, name, contentType, length, remoteAddress) =>
       added(hash) flatMap {
         case true  => Future(Exists)
         case false =>

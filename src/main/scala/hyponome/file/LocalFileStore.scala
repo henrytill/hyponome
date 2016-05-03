@@ -37,11 +37,11 @@ final class LocalFileStore(storePath: Path) extends FileStore[Path] {
     storePath.resolve(dir).resolve(file).toAbsolutePath
   }
 
-  def copyToStore(p: Post): Task[PostStatus] =
+  def copyToStore(a: Add): Task[AddStatus] =
     Task {
-      val destination: Path = getFileLocation(p.hash)
+      val destination: Path = getFileLocation(a.hash)
       val parent: Path = Files.createDirectories(destination.getParent)
-      Files.copy(p.file, destination)
+      Files.copy(a.file, destination)
     }.map { (_: Path) =>
       Created
     }.handle {

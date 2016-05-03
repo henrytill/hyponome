@@ -17,7 +17,7 @@
 package hyponome.file
 
 import scalaz.concurrent.Task
-import hyponome.core.{DeleteStatus, Post, PostStatus, SHA256Hash}
+import hyponome.core.{DeleteStatus, Add, AddStatus, SHA256Hash}
 
 trait FileStore[T] {
 
@@ -29,7 +29,7 @@ trait FileStore[T] {
 
   def existsInStore(p: T): Task[Boolean]
 
-  def copyToStore(p: Post): Task[PostStatus]
+  def copyToStore(a: Add): Task[AddStatus]
 
   def deleteFromStore(hash: SHA256Hash): Task[DeleteStatus]
 }

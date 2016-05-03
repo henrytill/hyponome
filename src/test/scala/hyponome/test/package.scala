@@ -66,7 +66,7 @@ package object test {
 
   val ip: Option[InetAddress] = Some(InetAddress.getByName("192.168.1.253"))
 
-  val add = Post(
+  val add = Add(
     testHostname,
     testPort,
     testPDF,
@@ -76,7 +76,7 @@ package object test {
     testPDF.toFile.length,
     ip)
 
-  val added = Posted(
+  val added = Added(
     Created,
     getURI(add.hostname, add.port, add.hash, add.name),
     add.hash,
@@ -84,7 +84,7 @@ package object test {
     add.contentType,
     add.length)
 
-  val existed = Posted(
+  val existed = Added(
     Exists,
     getURI(add.hostname, add.port, add.hash, add.name),
     add.hash,

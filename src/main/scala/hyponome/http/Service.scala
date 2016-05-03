@@ -40,7 +40,7 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
   def createTmpDir(): JPath = JFiles.createTempDirectory("hyponome")
   val tmpDir: JPath         = createTmpDir()
 
-  def handlePart(r: Request, p: Part)(implicit ec: ExecutionContext): Task[Option[Posted]] = {
+  def handlePart(r: Request, p: Part)(implicit ec: ExecutionContext): Task[Option[Added]] = {
     val Part(hs, body) = p
     val parameters: Option[Map[String, String]] = hs.get(headers.`Content-Disposition`).map(_.parameters)
     // get the "name" parameter
@@ -66,29 +66,29 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
         def writeTempFile(file: JPath): Task[JPath] ={
           body.to(fileChunkW(file.toFile.toString)).run.map((_: Unit) => file)
         }
-        def createPost(hash: SHA256Hash, file: JPath, filename: Option[String]): Task[Post] =
+        def createAdd(hash: SHA256Hash, file: JPath, filename: Option[String]): Task[Add] =
           Task.now {
-            Post(cfg.hostname, cfg.port, file, hash, filename, contentType, file.toFile.length, inetAddress)
+            Add(cfg.hostname, cfg.port, file, hash, filename, contentType, file.toFile.length, inetAddress)
           }
-        def addToDB(p: Post): Task[PostStatus] =
+        def addToDB(p: Add): Task[AddStatus] =
           futureToTask {
             db.addFile(p)
           }
-        def addToFileStore(p: Post): PartialFunction[PostStatus, Task[Posted]] = {
+        def addToFileStore(p: Add): PartialFunction[AddStatus, Task[Added]] = {
           case Exists => futureToTask(db.findFile(p.hash)).flatMap {
-            case Some(f) => Task.now(Posted(p.mergeWithFile(f), Exists))
+            case Some(f) => Task.now(Added(p.mergeWithFile(f), Exists))
             case None    => Task.fail(new RuntimeException)
           }
           case Created => store.copyToStore(p).map {
-            case Exists  => Posted(p, Exists)
-            case Created => Posted(p, Created)
+            case Exists  => Added(p, Exists)
+            case Created => Added(p, Created)
           }
         }
-        // add the file to the store and yield a Task[Option[Posted]]
+        // add the file to the store and yield a Task[Option[Added]]
         for {
-          f <- writeTempFile(tempFilePath)
-          h <- getSHA256Hash(f)
-          x <- createPost(h, f, filename)
+          p <- bodyToTempFile(body, tempFilePath)
+          h <- getSHA256Hash(p)
+          x <- createAdd(h, p, filename)
           y <- addToDB(x)
           z <- addToFileStore(x)(y)
         } yield Some(z)
@@ -150,8 +150,8 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
 
     case req @ POST -> Root / "objects" =>
       req.decode[Multipart] { mp =>
-        val tasks: Seq[Task[Option[Posted]]]     = mp.parts.map((p: Part) => handlePart(req, p))
-        val response: Task[List[Option[Posted]]] = Nondeterminism[Task].gather(tasks)
+        val tasks: Seq[Task[Option[Added]]]     = mp.parts.map((p: Part) => handlePart(req, p))
+        val response: Task[List[Option[Added]]] = Nondeterminism[Task].gather(tasks)
         Ok(response.map(_.asJson.spaces2))
       }
 

@@ -60,7 +60,7 @@ final case class Event(
   remoteAddress: Option[InetAddress])
 
 // POST
-final case class Post(
+final case class Add(
   hostname: String,
   port: Int,
   file: Path,
@@ -70,27 +70,27 @@ final case class Post(
   length: Long,
   remoteAddress: Option[InetAddress]) {
 
-  def mergeWithFile(f: File): Post = {
-    Post(hostname, port, file, f.hash, f.name, f.contentType, f.length, remoteAddress)
+  def mergeWithFile(f: File): Add = {
+    Add(hostname, port, file, f.hash, f.name, f.contentType, f.length, remoteAddress)
   }
 }
 
-sealed trait PostStatus extends Product with Serializable
-case object Created extends PostStatus
-case object Exists extends PostStatus
+sealed trait AddStatus extends Product with Serializable
+case object Created extends AddStatus
+case object Exists extends AddStatus
 
-final case class Posted(
-  status: PostStatus,
+final case class Added(
+  status: AddStatus,
   file: URI,
   hash: SHA256Hash,
   name: Option[String],
   contentType: String,
   length: Long)
 
-object Posted {
-  def apply(post: Post, status: PostStatus): Posted = {
-    val uri  = getURI(post.hostname, post.port, post.hash, post.name)
-    Posted(status, uri, post.hash, post.name, post.contentType, post.length)
+object Added {
+  def apply(a: Add, s: AddStatus): Added = {
+    val uri  = getURI(a.hostname, a.port, a.hash, a.name)
+    Added(s, uri, a.hash, a.name, a.contentType, a.length)
   }
 }
 

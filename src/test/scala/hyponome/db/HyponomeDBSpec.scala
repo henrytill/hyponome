@@ -184,7 +184,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           r.addFile(add)
             .flatMap { _ => r.removeFile(remove) }
             .flatMap { _ => r.addFile(add) }
-        val tmp02: PostStatus = Await.result(addRemoveFuture02, 5.seconds)
+        val tmp02: AddStatus = Await.result(addRemoveFuture02, 5.seconds)
         r.close()
         // re-re-open initial db
         val s: HyponomeDB = (for {

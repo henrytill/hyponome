@@ -70,13 +70,13 @@ object JsonProtocol {
       tagged("Add", c, implicitly[DecodeJson[Unit]].map(_ => Add)) |||
         tagged("Remove", c, implicitly[DecodeJson[Unit]].map(_ => Remove)))
 
-  implicit def postStatusEncodeJson: EncodeJson[PostStatus] =
+  implicit def addStatusEncodeJson: EncodeJson[AddStatus] =
     EncodeJson(_ match {
       case Created => Json("Created" := (()))
       case Exists  => Json("Exists" := (()))
     })
 
-  implicit def postStatusDecodeJson: DecodeJson[PostStatus] =
+  implicit def addStatusDecodeJson: DecodeJson[AddStatus] =
     DecodeJson(c =>
       tagged("Created", c, implicitly[DecodeJson[Unit]].map(_ => Created)) |||
         tagged("Exists", c, implicitly[DecodeJson[Unit]].map(_ => Exists)))
@@ -89,8 +89,8 @@ object JsonProtocol {
 
   // TODO: deleteStatusDecodeJson
 
-  implicit def PostCodecJson: CodecJson[Post] =
-    casecodec8(Post.apply, Post.unapply)(
+  implicit def AddCodecJson: CodecJson[Add] =
+    casecodec8(Add.apply, Add.unapply)(
       "hostname",
       "port",
       "file",
@@ -100,8 +100,8 @@ object JsonProtocol {
       "length",
       "remoteAddress")
 
-  implicit def PostedCodecJson: CodecJson[Posted] =
-    casecodec6(Posted.apply, Posted.unapply)(
+  implicit def AddedCodecJson: CodecJson[Added] =
+    casecodec6(Added.apply, Added.unapply)(
       "status",
       "file",
       "hash",
