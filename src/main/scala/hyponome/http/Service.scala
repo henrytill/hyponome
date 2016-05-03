@@ -143,7 +143,7 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
           case Deleted      => store.deleteFromStore(h)
           case m @ NotFound => Task.now(m)
         }
-      } yield ds1
+      } yield ds2
       Ok(response.map(_.asJson.spaces2))
 
     case req @ POST -> Root / "objects" =>
