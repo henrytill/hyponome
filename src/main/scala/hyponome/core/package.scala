@@ -41,6 +41,6 @@ package object core {
       case Some(n) => s"$hash/$n"
       case None    => s"$hash"
     }
-    new URI("http", s"//$hostname:$port/objects/$end", null)
+    new URI("https", s"//$hostname:$port/objects/$end", null)
   }
 }

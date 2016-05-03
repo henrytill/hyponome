@@ -16,8 +16,10 @@
 
 package hyponome
 
-import org.http4s.server.blaze._
-import org.http4s.server.{Server, ServerApp}
+import org.http4s.HttpService
+import org.http4s.server.SSLSupport.StoreInfo
+import org.http4s.server.blaze.BlazeBuilder
+import org.http4s.server.{Server, ServerApp, ServerBuilder, SSLSupport}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scalaz.concurrent.Task
 import hyponome.config._
@@ -28,6 +30,16 @@ import hyponome.util._
 
 object Main extends ServerApp {
 
+  val keypath: String = fs.getPath("src/main/resources/keystore.jks").toFile.toString
+
+  def builder: ServerBuilder with SSLSupport = BlazeBuilder
+
+  def serverTask(cfg: ServiceConfig, svc: HttpService): Task[Server] =
+    builder.withSSL(StoreInfo(keypath, "password"), keyManagerPassword = "password")
+      .mountService(svc)
+      .bindHttp(cfg.port)
+      .start
+
   def makeServer(cfg: ServiceConfig): Task[Server] =
     for {
       db  <- Task.now(new HyponomeDB(cfg.db))
@@ -35,7 +47,7 @@ object Main extends ServerApp {
       st  <- Task.now(new LocalFileStore(cfg.store))
       _   <- st.init()
       svc <- Task.now(new Service(cfg, db, st))
-      srv <- BlazeBuilder.mountService(svc.root).start
+      srv <- serverTask(cfg, svc.root)
     } yield srv
 
   override def server(args: List[String]): Task[Server] = makeServer(defaultConfig)

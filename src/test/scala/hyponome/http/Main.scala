@@ -16,13 +16,13 @@
 
 package hyponome.http
 
-import org.http4s.server.blaze._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.StdIn
 import scalaz.concurrent.{Task, TaskApp}
 import hyponome.config._
 import hyponome.db.HyponomeDB
 import hyponome.file.LocalFileStore
+import hyponome.test._
 import hyponome.util._
 
 object Main extends TaskApp {
@@ -34,7 +34,7 @@ object Main extends TaskApp {
       st  <- Task.now(new LocalFileStore(cfg.store))
       _   <- st.init()
       svc <- Task.now(new Service(cfg, db, st))
-      srv <- BlazeBuilder.mountService(svc.root).start
+      srv <- testServer(cfg, svc.root)
       _   <- Task.now(StdIn.readLine())
       _   <- srv.shutdown
     } yield ()

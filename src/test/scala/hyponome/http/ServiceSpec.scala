@@ -29,7 +29,6 @@ import org.http4s.argonaut._
 import org.http4s.client.blaze._
 import org.http4s.headers._
 import org.http4s.multipart._
-import org.http4s.server.blaze._
 import org.http4s.util._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.nonEmptyContainerOf
@@ -58,12 +57,14 @@ class ServiceSpec extends WordSpecLike
   def createTmpDir(): JPath = JFiles.createTempDirectory("hyponome-test-downloads-")
   val tmpDir: JPath         = createTmpDir()
 
-  val client = PooledHttp1Client()
+  val clientConfig: BlazeClientConfig =
+    BlazeClientConfig.defaultConfig.copy(sslContext = Some(clientContext))
+
+  val client = PooledHttp1Client(config = clientConfig)
 
   val url = Uri(
-    scheme = Some(CaseInsensitiveString("http")),
-    authority = Some(Authority(host = RegName("localhost"),
-                               port = Some(8080))),
+    scheme = Some(CaseInsensitiveString("https")),
+    authority = Some(Authority(host = RegName(testHostname), port = Some(testPort))),
     path = "/objects")
 
   private def fileToEntity(f: JFile): Entity = {
@@ -110,15 +111,14 @@ class ServiceSpec extends WordSpecLike
     upAndDown(createRequest(ps))
 
   def withService(testCode: Task[Unit]): Task[Unit] = {
-    val testConfig: ServiceConfig =
-      ServiceConfig(makeTestDB, testStorePath, "localhost", 8080, "file")
+    val testConfig: ServiceConfig = ServiceConfig(makeTestDB, testStorePath, testHostname, testPort, "file")
     for {
       db  <- Task.now(new HyponomeDB(testConfig.db))
       _   <- futureToTask(db.init())
       st  <- Task.now(new LocalFileStore(testConfig.store))
       _   <- st.init()
       svc <- Task.now(new Service(testConfig, db, st))
-      srv <- BlazeBuilder.mountService(svc.root).start
+      srv <- testServer(testConfig, svc.root)
       _   <- testCode
       _   <- srv.shutdown
     } yield ()

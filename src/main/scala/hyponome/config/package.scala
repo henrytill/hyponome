@@ -27,10 +27,10 @@ package object config {
     Map(
       "file-store.path" -> "store",
       "server.hostname" -> "localhost",
-      "server.port"     -> "8080",
+      "server.port"     -> "4000",
       "upload.key"      -> "file")
 
-  private val fs: FileSystem           = FileSystems.getDefault
+  val fs: FileSystem                   = FileSystems.getDefault
   private val configFile: java.io.File = fs.getPath("hyponome.conf").toFile
   private val configDefault: Config    = ConfigFactory.parseMap(defaults.asJava)
   val config: Config                   = ConfigFactory.parseFile(configFile).withFallback(configDefault)
