@@ -21,7 +21,6 @@ import Argonaut._
 import java.net.{InetAddress, URI}
 import java.nio.file.{FileSystems, Path}
 import java.sql.Timestamp
-
 import hyponome.core._
 
 object JsonProtocol {
@@ -69,8 +68,7 @@ object JsonProtocol {
   implicit def operationDecodeJson: DecodeJson[Operation] =
     DecodeJson(c =>
       tagged("Add", c, implicitly[DecodeJson[Unit]].map(_ => Add)) |||
-        tagged("Remove", c, implicitly[DecodeJson[Unit]].map(_ => Remove))
-    )
+        tagged("Remove", c, implicitly[DecodeJson[Unit]].map(_ => Remove)))
 
   implicit def postStatusEncodeJson: EncodeJson[PostStatus] =
     EncodeJson(_ match {
@@ -100,8 +98,7 @@ object JsonProtocol {
       "name",
       "contentType",
       "length",
-      "remoteAddress"
-    )
+      "remoteAddress")
 
   implicit def PostedCodecJson: CodecJson[Posted] =
     casecodec6(Posted.apply, Posted.unapply)(
@@ -110,8 +107,7 @@ object JsonProtocol {
       "hash",
       "name",
       "contentType",
-      "length"
-    )
+      "length")
 
   implicit def DBQueryResponseCodecJson: CodecJson[DBQueryResponse] =
     casecodec8(DBQueryResponse.apply, DBQueryResponse.unapply)(
@@ -122,8 +118,7 @@ object JsonProtocol {
       "hash",
       "name",
       "contentType",
-      "length"
-    )
+      "length")
 
   implicit def seqDBQueryResponseEncodeJson[T]: EncodeJson[Seq[DBQueryResponse]] =
     EncodeJson((ds: Seq[DBQueryResponse]) =>

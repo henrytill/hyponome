@@ -25,14 +25,12 @@ final class LocalFileStore(storePath: Path) extends FileStore[Path] {
 
   val logger: Logger = LoggerFactory.getLogger(classOf[LocalFileStore])
 
-  def exists(): Task[Boolean] = Task { Files.exists(storePath) }
+  def exists(): Task[Boolean] = Task(Files.exists(storePath))
 
   def create(): Task[Unit] =
-    Task {
-      Files.createDirectories(storePath)
-    }.map((_: Path) => ())
+    Task(Files.createDirectories(storePath)).map((_: Path) => ())
 
-  def existsInStore(p: Path): Task[Boolean] = Task { Files.exists(p) }
+  def existsInStore(p: Path): Task[Boolean] = Task(Files.exists(p))
 
   def getFileLocation(h: SHA256Hash): Path = {
     val (dir, file) = h.value.splitAt(2)

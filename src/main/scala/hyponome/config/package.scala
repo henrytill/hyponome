@@ -37,7 +37,7 @@ package object config {
 
   val defaultConfig =
     ServiceConfig(
-      { () => Database.forConfig("h2") },
+      () => Database.forConfig("h2"),
       fs.getPath(config.getString("file-store.path")),
       config.getString("server.hostname"),
       config.getInt("server.port"),

@@ -43,8 +43,7 @@ package object test {
   }
 
   val testPDFHash = SHA256Hash(
-    "eba205fb9114750b2ce83db62f9c2a15dd068bcba31a2de32d8df7f7c8d85441"
-  )
+    "eba205fb9114750b2ce83db62f9c2a15dd068bcba31a2de32d8df7f7c8d85441")
 
   val ip: Option[InetAddress] = Some(InetAddress.getByName("192.168.1.253"))
 
@@ -56,8 +55,7 @@ package object test {
     Some(testPDF.toFile.getName),
     "application/octet-stream",
     testPDF.toFile.length,
-    ip
-  )
+    ip)
 
   val added = Posted(
     Created,
@@ -65,8 +63,7 @@ package object test {
     add.hash,
     add.name,
     add.contentType,
-    add.length
-  )
+    add.length)
 
   val existed = Posted(
     Exists,
@@ -74,8 +71,7 @@ package object test {
     add.hash,
     add.name,
     add.contentType,
-    add.length
-  )
+    add.length)
 
   val remove = Delete(add.hash, add.remoteAddress)
 
@@ -91,8 +87,7 @@ package object test {
       user = "hyponome",
       password = "hyponome hyponome", // password = "filepwd userpwd"
       driver = "org.h2.Driver",
-      keepAliveConnection = true
-    )
+      keepAliveConnection = true)
   }
 
   def makePersistentDBConfig(location: Path): Function0[DatabaseDef] = { () =>
@@ -102,8 +97,7 @@ package object test {
       user = "hyponome",
       password = "hyponome hyponome", // password = "filepwd userpwd"
       driver = "org.h2.Driver",
-      keepAliveConnection = true
-    )
+      keepAliveConnection = true)
   }
 
   /**

@@ -12,12 +12,10 @@ val commonOptions = Seq(
   "-deprecation",
   "-encoding", "UTF-8",
   "-feature",
-  "-unchecked"
-)
+  "-unchecked")
 
 val consoleOptions = commonOptions diff Seq(
-  "-Ywarn-unused-import"
-)
+  "-Ywarn-unused-import")
 
 lazy val up = taskKey[Unit]("Convenience task to run hyponome from sbt's interactive mode.")
 
@@ -44,10 +42,8 @@ lazy val commonSettings = Seq(
     Wart.ExplicitImplicitTypes,
     Wart.NonUnitStatements,
     Wart.Nothing,
-    Wart.Throw
-  )
-)
     Wart.Null,
+    Wart.Throw))
 
 lazy val root = (project in file("."))
   .settings(commonSettings: _*)

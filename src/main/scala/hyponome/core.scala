@@ -32,8 +32,7 @@ object SHA256Hash {
   implicit val SHA256HashColumnType: BaseColumnType[SHA256Hash] =
     MappedColumnType.base[SHA256Hash, String](
       { case SHA256Hash(v: String) => v   },
-      { case (v: String) => SHA256Hash(v) }
-    )
+      { case (v: String) => SHA256Hash(v) })
 }
 
 sealed trait Operation extends Product with Serializable
@@ -44,24 +43,21 @@ object Operation {
   implicit val operationColumnType: BaseColumnType[Operation] =
     MappedColumnType.base[Operation, String](
       { case Add => "Add"; case Remove => "Remove" },
-      { case "Add" => Add; case "Remove" => Remove }
-    )
+      { case "Add" => Add; case "Remove" => Remove })
 }
 
 final case class File(
   hash: SHA256Hash,
   name: Option[String],
   contentType: String,
-  length: Long
-)
+  length: Long)
 
 final case class Event(
   tx: Long,
   timestamp: java.sql.Timestamp,
   operation: Operation,
   hash: SHA256Hash,
-  remoteAddress: Option[InetAddress]
-)
+  remoteAddress: Option[InetAddress])
 
 // POST
 final case class Post(
@@ -72,8 +68,8 @@ final case class Post(
   name: Option[String],
   contentType: String,
   length: Long,
-  remoteAddress: Option[InetAddress]
-) {
+  remoteAddress: Option[InetAddress]) {
+
   def mergeWithFile(f: File): Post = {
     Post(hostname, port, file, f.hash, f.name, f.contentType, f.length, remoteAddress)
   }
@@ -89,8 +85,7 @@ final case class Posted(
   hash: SHA256Hash,
   name: Option[String],
   contentType: String,
-  length: Long
-)
+  length: Long)
 
 object Posted {
   def apply(post: Post, status: PostStatus): Posted = {
@@ -102,8 +97,7 @@ object Posted {
 // DELETE
 final case class Delete(
   hash: SHA256Hash,
-  remoteAddress: Option[InetAddress]
-)
+  remoteAddress: Option[InetAddress])
 
 sealed trait DeleteStatus extends Product with Serializable
 case object Deleted extends DeleteStatus
@@ -137,8 +131,7 @@ final case class DBQuery(
   timeLo: Option[Timestamp] = None,
   timeHi: Option[Timestamp] = None,
   sortBy: SortBy = Tx,
-  sortOrder: SortOrder = Ascending
-)
+  sortOrder: SortOrder = Ascending)
 
 final case class DBQueryResponse(
   tx: Long,
@@ -148,5 +141,4 @@ final case class DBQueryResponse(
   hash: SHA256Hash,
   name: Option[String],
   contentType: String,
-  length: Long
-)
+  length: Long)

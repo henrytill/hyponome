@@ -16,17 +16,17 @@
 
 package hyponome.db
 
-import hyponome.core._
 import java.net.InetAddress
 import java.sql.Timestamp
 import slick.driver.H2Driver.api._
+import hyponome.core._
 
 class Files(tag: Tag) extends Table[File](tag, "FILES") {
-  def hash = column[SHA256Hash]("HASH", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
-  def name = column[Option[String]]("NAME")
+  def hash        = column[SHA256Hash]("HASH", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
+  def name        = column[Option[String]]("NAME")
   def contentType = column[String]("CONTENT_TYPE")
-  def length = column[Long]("LENGTH")
-  def * = (hash, name, contentType, length) <> (File.tupled, File.unapply)
+  def length      = column[Long]("LENGTH")
+  def *           = (hash, name, contentType, length) <> (File.tupled, File.unapply)
 }
 
 object Events {
@@ -46,17 +46,16 @@ object Events {
   implicit val inetAddressColumnType: BaseColumnType[Option[InetAddress]] =
     MappedColumnType.base[Option[InetAddress], String](
       opInetAddressToString,
-      stringToOpInetAddress
-    )
+      stringToOpInetAddress)
 }
 
 class Events(tag: Tag) extends Table[Event](tag, "EVENTS") {
   import Events._
-  def tx = column[Long]("TX", O.PrimaryKey)
-  def timestamp = column[Timestamp]("TIMESTAMP", O.SqlType("TIMESTAMP AS CURRENT_TIMESTAMP"))
-  def operation = column[Operation]("OPERATION")
-  def hash = column[SHA256Hash]("HASH", O.SqlType("CHARACTER(64)"))
+  def tx            = column[Long]("TX", O.PrimaryKey)
+  def timestamp     = column[Timestamp]("TIMESTAMP", O.SqlType("TIMESTAMP AS CURRENT_TIMESTAMP"))
+  def operation     = column[Operation]("OPERATION")
+  def hash          = column[SHA256Hash]("HASH", O.SqlType("CHARACTER(64)"))
   def remoteAddress = column[Option[InetAddress]]("REMOTE_ADDRESS")
-  def * = (tx, timestamp, operation, hash, remoteAddress) <> (Event.tupled, Event.unapply)
-  def file = foreignKey("HASH_FK", hash, TableQuery[Files])(_.hash)
+  def *             = (tx, timestamp, operation, hash, remoteAddress) <> (Event.tupled, Event.unapply)
+  def file          = foreignKey("HASH_FK", hash, TableQuery[Files])(_.hash)
 }
