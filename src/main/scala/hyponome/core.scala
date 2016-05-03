@@ -23,7 +23,6 @@ import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
 
 // DB Types
-
 final case class SHA256Hash(value: String) {
   override def toString: String = value
 }
@@ -103,15 +102,7 @@ sealed trait DeleteStatus extends Product with Serializable
 case object Deleted extends DeleteStatus
 case object NotFound extends DeleteStatus
 
-// GET File
-final case class Result(file: Option[Path], name: Option[String])
-
-final case class Redirect(uri: URI) {
-  override def toString: String = uri.toString
-}
-
 // GET Query
-
 sealed trait SortBy extends Product with Serializable
 case object Tx extends SortBy
 case object Time extends SortBy
