@@ -68,18 +68,18 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
           Task.now {
             Add(cfg.hostname, cfg.port, file, hash, filename, contentType, file.toFile.length, inetAddress)
           }
-        def addToDB(p: Add): Task[AddStatus] =
+        def addToDB(a: Add): Task[AddStatus] =
           futureToTask {
-            db.addFile(p)
+            db.addFile(a)
           }
-        def addToFileStore(p: Add): PartialFunction[AddStatus, Task[Added]] = {
-          case Exists => futureToTask(db.findFile(p.hash)).flatMap {
-            case Some(f) => Task.now(Added(p.mergeWithFile(f), Exists))
+        def addToFileStore(a: Add): PartialFunction[AddStatus, Task[Added]] = {
+          case Exists => futureToTask(db.findFile(a.hash)).flatMap {
+            case Some(f) => Task.now(Added(a.mergeWithFile(f), Exists))
             case None    => Task.fail(new RuntimeException)
           }
-          case Created => store.copyToStore(p).map {
-            case Exists  => Added(p, Exists)
-            case Created => Added(p, Created)
+          case Created => store.copyToStore(a).map {
+            case Exists  => Added(a, Exists)
+            case Created => Added(a, Created)
           }
         }
         // add the file to the store and yield a Task[Option[Added]]
@@ -137,13 +137,14 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
       val h: SHA256Hash = SHA256Hash(hash)
       val i: Option[InetAddress] = req.remote.map(_.getAddress())
       val d: Delete = Delete(h, i)
-      val response: Task[DeleteStatus] = for {
-        ds1 <- futureToTask(db.removeFile(d))
-        ds2 <- ds1 match {
-          case Deleted      => store.deleteFromStore(h)
-          case m @ NotFound => Task.now(m)
-        }
-      } yield ds2
+      val response: Task[DeleteStatus] =
+        for {
+          ds1 <- futureToTask(db.removeFile(d))
+          ds2 <- ds1 match {
+            case Deleted      => store.deleteFromStore(h)
+            case m @ NotFound => Task.now(m)
+          }
+        } yield ds2
       Ok(response.map(_.asJson.spaces2))
 
     case req @ POST -> Root / "objects" =>
