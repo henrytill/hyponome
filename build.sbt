@@ -32,7 +32,7 @@ lazy val commonSettings = Seq(
   mainClass in (Compile, run) := Some("hyponome.Main"),
   fork in Test := true,
   initialCommands in console := """
-    import hyponome._, core._, db._, file._, http._
+    import hyponome._, config._, db._, file._, http._, util._
     import java.nio.file._
     val fs: FileSystem  = FileSystems.getDefault
   """,
