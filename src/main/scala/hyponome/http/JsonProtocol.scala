@@ -109,8 +109,8 @@ object JsonProtocol {
       "contentType",
       "length")
 
-  implicit def DBQueryResponseCodecJson: CodecJson[DBQueryResponse] =
-    casecodec8(DBQueryResponse.apply, DBQueryResponse.unapply)(
+  implicit def StoreQueryResponseCodecJson: CodecJson[StoreQueryResponse] =
+    casecodec8(StoreQueryResponse.apply, StoreQueryResponse.unapply)(
       "tx",
       "timestamp",
       "operation",
@@ -120,7 +120,7 @@ object JsonProtocol {
       "contentType",
       "length")
 
-  implicit def seqDBQueryResponseEncodeJson[T]: EncodeJson[Seq[DBQueryResponse]] =
-    EncodeJson((ds: Seq[DBQueryResponse]) =>
+  implicit def seqStoreQueryResponseEncodeJson[T]: EncodeJson[Seq[StoreQueryResponse]] =
+    EncodeJson((ds: Seq[StoreQueryResponse]) =>
       jArray(ds.map(_.asJson).toList))
 }

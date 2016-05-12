@@ -158,8 +158,8 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
         :? Qhash(hash) +& Qname(name) +& QremoteAddress(remoteAddress)
         +& QtxLo(txLo) +& QtxHi(txHi) +& QtimeLo(timeLo) +& QtimeHi(timeHi)
         +& QsortBy(sortBy) +& QsortOrder(sortOrder) =>
-      val query: DBQuery =
-        DBQuery(
+      val query: StoreQuery =
+        StoreQuery(
           hash.map(SHA256Hash(_)),
           name,
           remoteAddress.map(InetAddress.getByName _),
@@ -177,7 +177,7 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
             case Some("desc") => Descending
             case _            => Ascending
           })
-      val response: Task[Seq[DBQueryResponse]] = futureToTask(db.runQuery(query))
+      val response: Task[Seq[StoreQueryResponse]] = futureToTask(db.runQuery(query))
       Ok(response.map(_.asJson.spaces2))
   }
 }

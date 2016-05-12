@@ -19,12 +19,23 @@ package hyponome
 import java.net.InetAddress
 import java.sql.Timestamp
 
-final case class DBQueryResponse(
-  tx: Long,
-  timestamp: Timestamp,
-  operation: Operation,
-  remoteAddress: Option[InetAddress],
-  hash: SHA256Hash,
-  name: Option[String],
-  contentType: String,
-  length: Long)
+sealed trait SortBy extends Product with Serializable
+case object Tx extends SortBy
+case object Time extends SortBy
+case object Name extends SortBy
+case object Address extends SortBy
+
+sealed trait SortOrder extends Product with Serializable
+case object Ascending extends SortOrder
+case object Descending extends SortOrder
+
+final case class StoreQuery(
+  hash: Option[SHA256Hash] = None,
+  name: Option[String] = None,
+  remoteAddress: Option[InetAddress] = None,
+  txLo: Option[Long] = None,
+  txHi: Option[Long] = None,
+  timeLo: Option[Timestamp] = None,
+  timeHi: Option[Timestamp] = None,
+  sortBy: SortBy = Tx,
+  sortOrder: SortOrder = Ascending)

@@ -117,10 +117,10 @@ final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionC
     } yield (f, e)
   }
 
-  def runQuery(q: DBQuery)(implicit ec: ExecutionContext): Future[Seq[DBQueryResponse]] = q match {
-    case DBQuery(None, None, None, None, None, None, None, _, _) =>
+  def runQuery(q: StoreQuery)(implicit ec: ExecutionContext): Future[Seq[StoreQueryResponse]] = q match {
+    case StoreQuery(None, None, None, None, None, None, None, _, _) =>
       Future(Seq())
-    case DBQuery(hash, name, address, txLo, txHi, timeLo, timeHi, sortBy, sortOrder) =>
+    case StoreQuery(hash, name, address, txLo, txHi, timeLo, timeHi, sortBy, sortOrder) =>
       type Q = Query[(Files, Events), (File, Event), Seq]
       def filterByHash: Q => Q = (in: Q) =>
         hash match {
@@ -184,7 +184,7 @@ final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionC
       val composedQuery = filterAndSort(notRemovedQuery)
       db.run(composedQuery.result).map { r =>
         r.map { case (f: File, e: Event) =>
-          DBQueryResponse(e.tx, e.timestamp, e.operation, e.remoteAddress, f.hash, f.name, f.contentType, f.length)
+          StoreQueryResponse(e.tx, e.timestamp, e.operation, e.remoteAddress, f.hash, f.name, f.contentType, f.length)
         }
       }
   }
