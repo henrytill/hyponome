@@ -22,10 +22,8 @@ import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.server.{Server, ServerApp, ServerBuilder, SSLSupport}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scalaz.concurrent.Task
+import hyponome.LocalStore
 import hyponome.config._
-import hyponome.db.HyponomeDB
-import hyponome.file.LocalFileStore
-import hyponome.util._
 
 object Main extends ServerApp {
 
@@ -41,11 +39,8 @@ object Main extends ServerApp {
 
   def makeServer(cfg: ServiceConfig): Task[Server] =
     for {
-      db  <- Task.now(new HyponomeDB(cfg.db))
-      _   <- futureToTask(db.init())
-      st  <- Task.now(new LocalFileStore(cfg.store))
-      _   <- st.init()
-      svc <- Task.now(new Service(cfg, db, st))
+      st  <- LocalStore(cfg)
+      svc <- Task.now(new Service(cfg, st))
       srv <- serverTask(cfg, svc.root)
     } yield srv
 

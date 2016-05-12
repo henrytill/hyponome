@@ -42,8 +42,6 @@ import scalaz.stream.io.fileChunkW
 import scodec.bits._
 import hyponome._
 import hyponome.config._
-import hyponome.file.LocalFileStore
-import hyponome.db.HyponomeDB
 import hyponome.http.JsonProtocol._
 import hyponome.test._
 import hyponome.util._
@@ -113,11 +111,8 @@ class ServiceSpec extends WordSpecLike
   def withService(testCode: Task[Unit]): Task[Unit] = {
     val testConfig: ServiceConfig = ServiceConfig(makeTestDB, testStorePath, testHostname, testPort, "file")
     for {
-      db  <- Task.now(new HyponomeDB(testConfig.db))
-      _   <- futureToTask(db.init())
-      st  <- Task.now(new LocalFileStore(testConfig.store))
-      _   <- st.init()
-      svc <- Task.now(new Service(testConfig, db, st))
+      st  <- LocalStore(testConfig)
+      svc <- Task.now(new Service(testConfig, st))
       srv <- testServer(testConfig, svc.root)
       _   <- testCode
       _   <- srv.shutdown

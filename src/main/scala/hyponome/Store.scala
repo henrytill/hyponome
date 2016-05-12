@@ -14,25 +14,30 @@
  * limitations under the License.
  */
 
-package hyponome.http
+package hyponome
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.io.StdIn
-import scalaz.concurrent.{Task, TaskApp}
-import hyponome.LocalStore
-import hyponome.config._
-import hyponome.test._
+import java.io.{File => JFile}
+import scalaz.concurrent.Task
+import hyponome.db._
+import hyponome.file._
 
-object Main extends TaskApp {
+trait Store[F] {
 
-  def server(cfg: ServiceConfig): Task[Unit] =
-    for {
-      st  <- LocalStore(cfg)
-      svc <- Task.now(new Service(cfg, st))
-      srv <- testServer(cfg, svc.root)
-      _   <- Task.now(StdIn.readLine())
-      _   <- srv.shutdown
-    } yield ()
+  val fileStore: FileStore[F]
 
-  override def runc: Task[Unit] = server(defaultConfig)
+  val db: HyponomeDB
+
+  def info(h: SHA256Hash): Task[Option[File]]
+
+  def count: Task[Long]
+
+  def query(q: StoreQuery): Task[Seq[StoreQueryResponse]]
+
+  def put(a: Add): Task[Added]
+
+  def exists(h: SHA256Hash): Task[Boolean]
+
+  def get(h: SHA256Hash): Task[Option[JFile]]
+
+  def delete(d: Delete): Task[DeleteStatus]
 }

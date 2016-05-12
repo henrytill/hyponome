@@ -30,12 +30,10 @@ import scalaz.stream.io.fileChunkW
 import scalaz.concurrent.Task
 import hyponome._
 import hyponome.config.ServiceConfig
-import hyponome.db.HyponomeDB
-import hyponome.file._
 import hyponome.util._
 import JsonProtocol._
 
-final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(implicit ec: ExecutionContext) {
+final class Service[A](cfg: ServiceConfig, store: Store[A])(implicit ec: ExecutionContext) {
 
   def createTmpDir(): JPath = JFiles.createTempDirectory("hyponome")
   val tmpDir: JPath         = createTmpDir()
@@ -68,27 +66,12 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
           Task.now {
             Add(cfg.hostname, cfg.port, file, hash, filename, contentType, file.toFile.length, inetAddress)
           }
-        def addToDB(a: Add): Task[AddStatus] =
-          futureToTask {
-            db.addFile(a)
-          }
-        def addToFileStore(a: Add): PartialFunction[AddStatus, Task[Added]] = {
-          case Exists => futureToTask(db.findFile(a.hash)).flatMap {
-            case Some(f) => Task.now(Added(a.mergeWithFile(f), Exists))
-            case None    => Task.fail(new RuntimeException)
-          }
-          case Created => store.copyToStore(a).map {
-            case Exists  => Added(a, Exists)
-            case Created => Added(a, Created)
-          }
-        }
         // add the file to the store and yield a Task[Option[Added]]
         for {
           p <- bodyToFile(body, tempFilePath)
           h <- getSHA256Hash(p)
           x <- createAdd(h, p, filename)
-          y <- addToDB(x)
-          z <- addToFileStore(x)(y)
+          z <- store.put(x)
         } yield Some(z)
       case _ =>
         // otherwise, return a Task[None]
@@ -97,10 +80,9 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
   }
 
   def getFileInStore(r: Request, h: SHA256Hash): Task[Response] = {
-    val p: JPath = store.getFileLocation(h)
-    store.existsInStore(p).flatMap {
-      case false => HNotFound()
-      case true  => StaticFile.fromFile(p.toFile, Some(r)).fold(HNotFound())(Task.now)
+    store.get(h).flatMap {
+      case Some(f) => StaticFile.fromFile(f, Some(r)).fold(HNotFound())(Task.now)
+      case None    => HNotFound()
     }
   }
 
@@ -118,7 +100,7 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
 
     case req @ GET -> Root / "objects" / hash =>
       val h: SHA256Hash = SHA256Hash(hash)
-      futureToTask(db.findFile(h)).flatMap {
+      store.info(h).flatMap {
         case None    => HNotFound()
         case Some(f) => f.name match {
           case None       => getFileInStore(req, h)
@@ -128,7 +110,7 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
 
     case req @ GET -> Root / "objects" / hash / filename =>
       val h: SHA256Hash = SHA256Hash(hash)
-      futureToTask(db.findFile(h)).flatMap {
+      store.info(h).flatMap {
         case Some(f) if f.name.getOrElse("") == filename => getFileInStore(req, h)
         case _                                           => HNotFound()
       }
@@ -137,14 +119,7 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
       val h: SHA256Hash = SHA256Hash(hash)
       val i: Option[InetAddress] = req.remote.map(_.getAddress())
       val d: Delete = Delete(h, i)
-      val response: Task[DeleteStatus] =
-        for {
-          ds1 <- futureToTask(db.removeFile(d))
-          ds2 <- ds1 match {
-            case Deleted      => store.deleteFromStore(h)
-            case m @ NotFound => Task.now(m)
-          }
-        } yield ds2
+      val response: Task[DeleteStatus] = store.delete(d)
       Ok(response.map(_.asJson.spaces2))
 
     case req @ POST -> Root / "objects" =>
@@ -177,7 +152,7 @@ final class Service(cfg: ServiceConfig, db: HyponomeDB, store: LocalFileStore)(i
             case Some("desc") => Descending
             case _            => Ascending
           })
-      val response: Task[Seq[StoreQueryResponse]] = futureToTask(db.runQuery(query))
+      val response: Task[Seq[StoreQueryResponse]] = store.query(query)
       Ok(response.map(_.asJson.spaces2))
   }
 }
