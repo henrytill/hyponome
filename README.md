@@ -11,7 +11,7 @@ hyponome started life as a simple paste server, with the premise that URLs of up
 
 ## Status
 
-In its current state, hyponome should be considered experimental and unstable.  Discussion of ongoing development can be found in the [issue tracker](https://github.com/henrytill/hyponome-scala/issues).
+In its current state, hyponome should be considered experimental and unstable.  Discussion of ongoing development can be found in the [issue tracker](https://github.com/henrytill/hyponome-scala/issues) and the [wiki](https://github.com/henrytill/hyponome-scala/wiki).
 
 ## Usage
 
