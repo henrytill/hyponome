@@ -21,7 +21,7 @@ import Argonaut._
 import java.net.{InetAddress, URI}
 import java.nio.file.{FileSystems, Path}
 import java.sql.Timestamp
-import hyponome.core._
+import hyponome._
 
 object JsonProtocol {
 
@@ -61,14 +61,14 @@ object JsonProtocol {
 
   implicit def operationEncodeJson: EncodeJson[Operation] =
     EncodeJson(_ match {
-      case Add    => Json("Add" := (()))
-      case Remove => Json("Remove" := (()))
+      case AddToStore      => Json("AddToStore" := (()))
+      case RemoveFromStore => Json("RemoveFromStore" := (()))
     })
 
   implicit def operationDecodeJson: DecodeJson[Operation] =
     DecodeJson(c =>
-      tagged("Add", c, implicitly[DecodeJson[Unit]].map(_ => Add)) |||
-        tagged("Remove", c, implicitly[DecodeJson[Unit]].map(_ => Remove)))
+      tagged("AddToStore", c, implicitly[DecodeJson[Unit]].map(_ => AddToStore)) |||
+        tagged("RemoveFromStore", c, implicitly[DecodeJson[Unit]].map(_ => RemoveFromStore)))
 
   implicit def addStatusEncodeJson: EncodeJson[AddStatus] =
     EncodeJson(_ match {

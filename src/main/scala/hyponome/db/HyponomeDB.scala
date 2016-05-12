@@ -25,7 +25,7 @@ import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
 import slick.lifted.Query
 import slick.jdbc.meta.MTable
-import hyponome.core._
+import hyponome._
 import hyponome.db.Events._
 
 final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionContext) {
@@ -58,16 +58,16 @@ final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionC
   def added(hash: SHA256Hash)(implicit ec: ExecutionContext): Future[Boolean] = {
     val q = events.filter(_.hash === hash).sortBy(_.tx.desc)
     db.run(q.result.headOption).map {
-      case Some(Event(_, _, Add, _, _)) => true
-      case _                            => false
+      case Some(Event(_, _, AddToStore, _, _)) => true
+      case _                                   => false
     }
   }
 
   def removed(hash: SHA256Hash)(implicit ec: ExecutionContext): Future[Boolean] = {
     val q = events.filter(_.hash === hash).sortBy(_.tx.desc)
     db.run(q.result.headOption).map {
-      case Some(Event(_, _, Remove, _, _)) => true
-      case _                               => false
+      case Some(Event(_, _, RemoveFromStore, _, _)) => true
+      case _                                        => false
     }
   }
 
@@ -78,7 +78,7 @@ final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionC
         case false =>
           val c = counter.incrementAndGet()
           val f = File(hash, name, contentType, length)
-          val e = Event(c, dummyTimestamp, Add, hash, remoteAddress)
+          val e = Event(c, dummyTimestamp, AddToStore, hash, remoteAddress)
           removed(hash).flatMap {
             case true =>
               val s = DBIO.seq(events += e)
@@ -98,7 +98,7 @@ final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionC
           case false => Future(NotFound)
           case true  =>
             val c = counter.incrementAndGet()
-            val e = Event(c, dummyTimestamp, Remove, hash, remoteAddress)
+            val e = Event(c, dummyTimestamp, RemoveFromStore, hash, remoteAddress)
             val s = DBIO.seq(events += e)
             db.run(s).map(_ => Deleted)
         }
@@ -106,10 +106,10 @@ final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionC
   }
 
   def notRemovedQuery: Query[(Files, Events), (File, Event), Seq] = {
-    val removes = events.filter(_.operation === (Remove: Operation))
+    val removes = events.filter(_.operation === (RemoveFromStore: Operation))
     val adds = for {
       r <- removes
-      e <- events if r.hash === e.hash && e.operation === (Add: Operation) && r.timestamp > e.timestamp
+      e <- events if r.hash === e.hash && e.operation === (AddToStore: Operation) && r.timestamp > e.timestamp
     } yield e
     val removedTxs = removes.map(_.tx) union adds.map(_.tx)
     for {

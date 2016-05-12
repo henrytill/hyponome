@@ -32,7 +32,6 @@ import scala.util.{Success, Try}
 import scalaz.concurrent.Task
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
-import hyponome.core._
 import hyponome.config.ServiceConfig
 
 package object test {

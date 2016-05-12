@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package hyponome
+package hyponome.http
 
 import org.http4s.HttpService
 import org.http4s.server.SSLSupport.StoreInfo
@@ -25,7 +25,6 @@ import scalaz.concurrent.Task
 import hyponome.config._
 import hyponome.db.HyponomeDB
 import hyponome.file.LocalFileStore
-import hyponome.http.Service
 import hyponome.util._
 
 object Main extends ServerApp {

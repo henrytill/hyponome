@@ -19,7 +19,7 @@ package hyponome.db
 import java.net.InetAddress
 import java.sql.Timestamp
 import slick.driver.H2Driver.api._
-import hyponome.core._
+import hyponome._
 
 class Files(tag: Tag) extends Table[File](tag, "FILES") {
   def hash        = column[SHA256Hash]("HASH", O.PrimaryKey, O.SqlType("CHARACTER(64)"))

@@ -25,7 +25,7 @@ import scala.concurrent.{Await}
 import scala.concurrent.duration._
 import scalaz.concurrent.Task
 import slick.driver.H2Driver.backend.DatabaseDef
-import hyponome.core._
+import hyponome._
 import hyponome.test._
 import hyponome.util._
 

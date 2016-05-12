@@ -40,7 +40,7 @@ import scalaz.concurrent.Task
 import scalaz.stream.Process
 import scalaz.stream.io.fileChunkW
 import scodec.bits._
-import hyponome.core._
+import hyponome._
 import hyponome.config._
 import hyponome.file.LocalFileStore
 import hyponome.db.HyponomeDB

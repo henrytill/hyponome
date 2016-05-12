@@ -14,22 +14,18 @@
  * limitations under the License.
  */
 
-package hyponome.file
+package hyponome
 
-import scalaz.concurrent.Task
-import hyponome.{DeleteStatus, Add, AddStatus, SHA256Hash}
+import slick.driver.H2Driver.api._
+import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
 
-trait FileStore[T] {
+final case class SHA256Hash(value: String) {
+  override def toString: String = value
+}
 
-  def exists(): Task[Boolean]
-
-  def create(): Task[Unit]
-
-  def getFileLocation(hash: SHA256Hash): T
-
-  def existsInStore(p: T): Task[Boolean]
-
-  def copyToStore(a: Add): Task[AddStatus]
-
-  def deleteFromStore(hash: SHA256Hash): Task[DeleteStatus]
+object SHA256Hash {
+  implicit val SHA256HashColumnType: BaseColumnType[SHA256Hash] =
+    MappedColumnType.base[SHA256Hash, String](
+      { case SHA256Hash(v: String) => v   },
+      { case (v: String) => SHA256Hash(v) })
 }

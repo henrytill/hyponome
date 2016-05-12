@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package hyponome
-
 import java.net.URI
 import java.nio.file.{Files, Path}
 import org.apache.commons.codec.digest.DigestUtils.sha256Hex
 import scalaz.concurrent.Task
 
-package object core {
+package object hyponome {
 
   private def withInputStream[T](path: Path)(op: java.io.InputStream => T): T = {
     val fist = Files.newInputStream(path)

@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-package hyponome.file
+package hyponome
 
-import scalaz.concurrent.Task
-import hyponome.{DeleteStatus, Add, AddStatus, SHA256Hash}
+import java.net.URI
 
-trait FileStore[T] {
+final case class Added(
+  status: AddStatus,
+  file: URI,
+  hash: SHA256Hash,
+  name: Option[String],
+  contentType: String,
+  length: Long)
 
-  def exists(): Task[Boolean]
-
-  def create(): Task[Unit]
-
-  def getFileLocation(hash: SHA256Hash): T
-
-  def existsInStore(p: T): Task[Boolean]
-
-  def copyToStore(a: Add): Task[AddStatus]
-
-  def deleteFromStore(hash: SHA256Hash): Task[DeleteStatus]
+object Added {
+  def apply(a: Add, s: AddStatus): Added = {
+    val uri  = getURI(a.hostname, a.port, a.hash, a.name)
+    Added(s, uri, a.hash, a.name, a.contentType, a.length)
+  }
 }

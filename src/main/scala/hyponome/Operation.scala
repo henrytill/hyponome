@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-package hyponome.file
+package hyponome
 
-import scalaz.concurrent.Task
-import hyponome.{DeleteStatus, Add, AddStatus, SHA256Hash}
+import slick.driver.H2Driver.api._
+import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
 
-trait FileStore[T] {
+sealed trait Operation extends Product with Serializable
+case object AddToStore extends Operation
+case object RemoveFromStore extends Operation
 
-  def exists(): Task[Boolean]
-
-  def create(): Task[Unit]
-
-  def getFileLocation(hash: SHA256Hash): T
-
-  def existsInStore(p: T): Task[Boolean]
-
-  def copyToStore(a: Add): Task[AddStatus]
-
-  def deleteFromStore(hash: SHA256Hash): Task[DeleteStatus]
+object Operation {
+  implicit val operationColumnType: BaseColumnType[Operation] =
+    MappedColumnType.base[Operation, String](
+      { case AddToStore      => "AddToStore";
+        case RemoveFromStore => "RemoveFromStore" },
+      { case "AddToStore"      => AddToStore
+        case "RemoveFromStore" => RemoveFromStore })
 }

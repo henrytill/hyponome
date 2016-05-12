@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext
 import scalaz.Nondeterminism
 import scalaz.stream.io.fileChunkW
 import scalaz.concurrent.Task
-import hyponome.core._
+import hyponome._
 import hyponome.config.ServiceConfig
 import hyponome.db.HyponomeDB
 import hyponome.file._
