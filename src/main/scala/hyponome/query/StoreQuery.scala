@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package hyponome
+package hyponome.query
 
 import java.net.InetAddress
 import java.sql.Timestamp
+import hyponome._
 
 sealed trait SortBy extends Product with Serializable
 case object Tx extends SortBy

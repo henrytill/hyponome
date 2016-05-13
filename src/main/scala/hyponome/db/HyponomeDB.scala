@@ -27,6 +27,7 @@ import slick.lifted.Query
 import slick.jdbc.meta.MTable
 import hyponome._
 import hyponome.db.Events._
+import hyponome.query._
 import hyponome.event._
 
 final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionContext) {

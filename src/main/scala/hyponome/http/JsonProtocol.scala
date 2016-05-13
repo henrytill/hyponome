@@ -23,6 +23,7 @@ import java.nio.file.{FileSystems, Path}
 import java.sql.Timestamp
 import hyponome._
 import hyponome.event._
+import hyponome.query._
 
 object JsonProtocol {
 

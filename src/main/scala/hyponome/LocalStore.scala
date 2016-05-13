@@ -24,6 +24,7 @@ import hyponome.config._
 import hyponome.db._
 import hyponome.event._
 import hyponome.file._
+import hyponome.query._
 import hyponome.util._
 
 class LocalStore(dbInst: HyponomeDB, fileStoreInst: FileStore[Path])

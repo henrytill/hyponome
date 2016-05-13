@@ -21,6 +21,7 @@ import scalaz.concurrent.Task
 import hyponome.db._
 import hyponome.event._
 import hyponome.file._
+import hyponome.query._
 
 trait Store[F] {
 
