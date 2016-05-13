@@ -35,7 +35,7 @@ class LocalStore(dbInst: HyponomeDB, fileStoreInst: FileStore[Path])
 
   val fileStore: FileStore[Path] = fileStoreInst
 
-  def info(h: SHA256Hash): Task[Option[File]]             = futureToTask(db.findFile(h))
+  def info(h: SHA256Hash): Task[Option[File]]             = futureToTask(db.find(h))
   def count: Task[Long]                                   = futureToTask(db.countFiles)
   def query(q: StoreQuery): Task[Seq[StoreQueryResponse]] = futureToTask(db.runQuery(q))
 

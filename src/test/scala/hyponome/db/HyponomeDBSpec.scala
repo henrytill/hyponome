@@ -53,19 +53,6 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
 
   "An instance of a class that extends HyponomeDB" must {
 
-    "have a create method" which {
-      """|returns a Future value of Failure(JdbcSQLException) when attempting to
-         |create a db if one already exists""".stripMargin in withDBInstance { t =>
-        t.create().failed.futureValue shouldBe a [org.h2.jdbc.JdbcSQLException]
-      }
-    }
-
-    "have an exists method" which {
-      "returns a Future value of true if the db specified by `db` exists" in withDBInstance { t =>
-        t.exists.futureValue should equal(true)
-      }
-    }
-
     "have an addFile method" which {
       "returns a Future value of Success(Created) when adding a file" in withDBInstance { t =>
         t.addFile(add).futureValue should equal(Created)
@@ -106,15 +93,15 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       }
     }
 
-    "have a findFile method" which {
+    "have a find method" which {
       """|returns a Future value of a given File when called with an argument of a
          |file's hash that has never been added""".stripMargin in withDBInstance { t =>
-        t.findFile(add.hash).futureValue should equal (None)
+        t.find(add.hash).futureValue should equal (None)
       }
       """|returns a Future value of a given File when called with an argument of that
          |file's hash""".stripMargin in withDBInstance { t =>
         t.addFile(add).flatMap { _ =>
-          t.findFile(add.hash)
+          t.find(add.hash)
         }.futureValue should equal (Some(expected))
       }
       """|returns a Future value of Failure(IllegalArgumentException) when called with
@@ -122,21 +109,8 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
         t.addFile(add).flatMap { _ =>
           t.removeFile(remove)
         }.flatMap { _ =>
-          t.findFile(add.hash)
+          t.find(add.hash)
         }.futureValue should equal (None)
-      }
-    }
-
-    "have a maxTx method" which {
-      "returns a Future value of a None when called with an empty Events table" in withDBInstance { t =>
-        t.maxTx.futureValue should equal(None)
-      }
-      "returns a Future value which corresponds to the number of items in the Events table" in withDBInstance { t =>
-        t.addFile(add).flatMap { _ =>
-          t.removeFile(remove)
-        }.flatMap { _ =>
-          t.maxTx
-        }.futureValue should equal (Some(2))
       }
     }
 
@@ -159,7 +133,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           db <- Task.now(new HyponomeDB(c))
           _  <- futureToTask(db.init())
         } yield db).unsafePerformSync
-        r.counter.get should equal (4)
+        r.tx.get should equal (4)
         deleteFolder(p.getParent)
       }
       "returns a Future value of Unit and syncs the counter (2)" in withPersistentDBConfig { (c, p) =>
@@ -191,7 +165,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           db <- Task.now(new HyponomeDB(c))
           _  <- futureToTask(db.init())
         } yield db).unsafePerformSync
-        s.counter.get should equal (7)
+        s.tx.get should equal (7)
         deleteFolder(p.getParent)
       }
     }

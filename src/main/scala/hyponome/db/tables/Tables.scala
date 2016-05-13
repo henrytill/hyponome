@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package hyponome.db
+package hyponome.db.tables
 
 import java.net.InetAddress
 import java.sql.Timestamp
