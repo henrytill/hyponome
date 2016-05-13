@@ -22,6 +22,7 @@ import scala.concurrent.ExecutionContext
 import scalaz.concurrent.Task
 import hyponome.config._
 import hyponome.db._
+import hyponome.event._
 import hyponome.file._
 import hyponome.util._
 

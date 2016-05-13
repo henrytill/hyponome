@@ -18,6 +18,7 @@ package hyponome
 
 import java.net.InetAddress
 import java.sql.Timestamp
+import hyponome.event._
 
 final case class StoreQueryResponse(
   tx: Long,

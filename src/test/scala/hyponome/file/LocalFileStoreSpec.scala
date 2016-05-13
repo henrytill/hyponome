@@ -19,6 +19,7 @@ package hyponome.file
 import java.nio.file.Path
 import org.scalatest.{Matchers, WordSpecLike}
 import hyponome._
+import hyponome.event._
 import hyponome.test._
 
 class LocalFileStoreSpec extends WordSpecLike with Matchers {

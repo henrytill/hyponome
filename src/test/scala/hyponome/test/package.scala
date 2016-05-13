@@ -33,6 +33,7 @@ import scalaz.concurrent.Task
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
 import hyponome.config.ServiceConfig
+import hyponome.event._
 
 package object test {
 

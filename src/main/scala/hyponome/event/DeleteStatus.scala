@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package hyponome
+package hyponome.event
 
 sealed trait DeleteStatus extends Product with Serializable
 case object Deleted extends DeleteStatus

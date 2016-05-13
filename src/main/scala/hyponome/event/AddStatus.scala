@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package hyponome
+package hyponome.event
 
 sealed trait AddStatus extends Product with Serializable
 case object Created extends AddStatus

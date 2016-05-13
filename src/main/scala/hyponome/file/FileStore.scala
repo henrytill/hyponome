@@ -17,7 +17,8 @@
 package hyponome.file
 
 import scalaz.concurrent.Task
-import hyponome.{DeleteStatus, Add, AddStatus, SHA256Hash}
+import hyponome.{Add, SHA256Hash}
+import hyponome.event._
 
 trait FileStore[F] {
 

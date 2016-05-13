@@ -30,6 +30,7 @@ import scalaz.stream.io.fileChunkW
 import scalaz.concurrent.Task
 import hyponome._
 import hyponome.config.ServiceConfig
+import hyponome.event._
 import hyponome.util._
 import JsonProtocol._
 

@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package hyponome
+package hyponome.event
 
 import java.net.InetAddress
 import java.sql.Timestamp
+import hyponome.SHA256Hash
 
 final case class Event(
   tx: Long,

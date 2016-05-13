@@ -17,6 +17,7 @@
 package hyponome
 
 import java.net.URI
+import hyponome.event._
 
 final case class Added(
   status: AddStatus,
