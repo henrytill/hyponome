@@ -27,17 +27,17 @@ import hyponome.config._
 
 object Main extends ServerApp {
 
-  val keypath: String = fs.getPath("src/main/resources/keystore.jks").toFile.toString
+  private val keypath: String = fs.getPath("src/main/resources/keystore.jks").toFile.toString
 
-  def builder: ServerBuilder with SSLSupport = BlazeBuilder
+  private def builder: ServerBuilder with SSLSupport = BlazeBuilder
 
-  def serverTask(cfg: ServiceConfig, svc: HttpService): Task[Server] =
+  private def serverTask(cfg: ServiceConfig, svc: HttpService): Task[Server] =
     builder.withSSL(StoreInfo(keypath, "password"), keyManagerPassword = "password")
       .mountService(svc)
       .bindHttp(cfg.port)
       .start
 
-  def makeServer(cfg: ServiceConfig): Task[Server] =
+  private def makeServer(cfg: ServiceConfig): Task[Server] =
     for {
       st  <- LocalStore(cfg)
       svc <- Task.now(new Service(cfg, st))
