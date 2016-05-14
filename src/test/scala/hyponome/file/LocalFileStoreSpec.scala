@@ -44,7 +44,7 @@ class LocalFileStoreSpec extends WordSpecLike with Matchers {
 
     "have an existsInStore method" which {
       "completes with true if a file exists at the specified path in the file store" in withLocalFileStore { t =>
-        t.copyToStore(add).flatMap { p =>
+        t.add(add).flatMap { p =>
           val destination: Path = t.getFileLocation(testPDFHash)
           t.existsInStore(destination)
         }.unsafePerformSync should equal (true)
@@ -55,38 +55,38 @@ class LocalFileStoreSpec extends WordSpecLike with Matchers {
       }
     }
 
-    "have a copyToStore method" which {
+    "have an add method" which {
       "copies a file to the correct file store Path" in withLocalFileStore { t =>
-        t.copyToStore(add).flatMap { p =>
+        t.add(add).flatMap { p =>
           val destination: Path = t.getFileLocation(testPDFHash)
           getSHA256Hash(destination)
         }.unsafePerformSync should equal (testPDFHash)
       }
       "completes with Added after successfully copying a file to the file store" in withLocalFileStore { t =>
-        t.copyToStore(add).unsafePerformSync should equal (Added)
+        t.add(add).unsafePerformSync should equal (Added)
       }
       "completes with Exists when trying to copy a file to a path where one already exists" in withLocalFileStore { t =>
-        t.copyToStore(add).flatMap { _ =>
-          t.copyToStore(add)
+        t.add(add).flatMap { _ =>
+          t.add(add)
         }.unsafePerformSync should equal (Exists)
       }
     }
 
-    "have a deleteFromStore method" which {
-      "deletes a file with the specified hash from the file store" in withLocalFileStore { t =>
-        t.copyToStore(add).flatMap { _ =>
-          t.deleteFromStore(testPDFHash)
+    "have a remove method" which {
+      "removes a file with the specified hash from the file store" in withLocalFileStore { t =>
+        t.add(add).flatMap { _ =>
+          t.remove(testPDFHash)
         }.flatMap { _ =>
           t.existsInStore(t.getFileLocation(testPDFHash))
         }.unsafePerformSync should equal (false)
       }
-      "completes with Deleted after successfully deleting a file from the file store" in withLocalFileStore { t =>
-        t.copyToStore(add).flatMap { _ =>
-          t.deleteFromStore(testPDFHash)
-        }.unsafePerformSync should equal (Deleted)
+      "completes with Removed after successfully deleting a file from the file store" in withLocalFileStore { t =>
+        t.add(add).flatMap { _ =>
+          t.remove(testPDFHash)
+        }.unsafePerformSync should equal (Removed)
       }
-      "completes with NotFound when attempting to delete a file which doesn't exist in the file store" in withLocalFileStore { t =>
-        t.deleteFromStore(testPDFHash).unsafePerformSync should equal (NotFound)
+      "completes with NotFound when attempting to remove a file which doesn't exist in the file store" in withLocalFileStore { t =>
+        t.remove(testPDFHash).unsafePerformSync should equal (NotFound)
       }
     }
   }

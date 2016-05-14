@@ -40,5 +40,5 @@ trait Store[A] {
 
   def get(h: SHA256Hash): Task[Option[JFile]]
 
-  def delete(d: Delete): Task[DeleteResponse]
+  def remove(d: Remove): Task[RemoveResponse]
 }

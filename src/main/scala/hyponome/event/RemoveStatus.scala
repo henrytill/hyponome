@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package hyponome
+package hyponome.event
 
-import hyponome.event._
-
-final case class DeleteResponse(
-  status: DeleteStatus,
-  hash: SHA256Hash)
+sealed trait RemoveStatus extends Product with Serializable
+case object Removed extends RemoveStatus
+case object NotFound extends RemoveStatus

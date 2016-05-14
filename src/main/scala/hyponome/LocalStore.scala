@@ -39,14 +39,14 @@ class LocalStore(dbInst: HyponomeDB, fileStoreInst: FileStore[Path])
   def count: Task[Long]                                   = futureToTask(db.countFiles)
   def query(q: StoreQuery): Task[Seq[StoreQueryResponse]] = futureToTask(db.runQuery(q))
 
-  private def addToDB(a: Add): Task[AddStatus] = futureToTask(db.addFile(a))
+  private def addToDB(a: Add): Task[AddStatus] = futureToTask(db.add(a))
 
   private def addToFileStore(a: Add): PartialFunction[AddStatus, Task[AddResponse]] = {
     case Exists => info(a.hash).flatMap {
       case Some(f) => Task.now(AddResponse(a.mergeWithFile(f), Exists))
       case None    => Task.fail(new RuntimeException)
     }
-    case Added => fileStore.copyToStore(a).map {
+    case Added => fileStore.add(a).map {
       case Exists  => AddResponse(a, Exists)
       case Added => AddResponse(a, Added)
     }
@@ -72,14 +72,14 @@ class LocalStore(dbInst: HyponomeDB, fileStoreInst: FileStore[Path])
       case false => None
     }
 
-  def delete(d: Delete): Task[DeleteResponse] =
+  def remove(d: Remove): Task[RemoveResponse] =
     for {
-      ds1 <- futureToTask(db.removeFile(d))
+      ds1 <- futureToTask(db.remove(d))
       ds2 <- ds1 match {
-        case Deleted      => fileStore.deleteFromStore(d.hash)
+        case Removed      => fileStore.remove(d.hash)
         case m @ NotFound => Task.now(m)
       }
-    } yield DeleteResponse(ds2, d.hash)
+    } yield RemoveResponse(ds2, d.hash)
 }
 
 object LocalStore {

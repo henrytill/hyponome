@@ -101,7 +101,7 @@ final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionC
 
   // Main API methods
 
-  def addFile(a: Add): Future[AddStatus] = a match {
+  def add(a: Add): Future[AddStatus] = a match {
     case Add(_, _, _, hash, name, contentType, length, remoteAddress) =>
       added(hash) flatMap {
         case true  => Future(Exists)
@@ -120,8 +120,8 @@ final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionC
       }
   }
 
-  def removeFile(r: Delete): Future[DeleteStatus] = r match {
-    case Delete(hash, remoteAddress) =>
+  def remove(r: Remove): Future[RemoveStatus] = r match {
+    case Remove(hash, remoteAddress) =>
       removed(hash).flatMap {
         case true  => Future(NotFound)
         case false => added(hash).flatMap {
@@ -130,7 +130,7 @@ final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionC
             val c = tx.incrementAndGet()
             val e = Event(c, dummyTimestamp, RemoveFromStore, hash, remoteAddress)
             val s = DBIO.seq(events += e)
-            db.run(s).map(_ => Deleted)
+            db.run(s).map(_ => Removed)
         }
       }
   }

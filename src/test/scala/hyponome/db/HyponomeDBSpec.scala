@@ -53,42 +53,42 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
 
   "An instance of a class that extends HyponomeDB" must {
 
-    "have an addFile method" which {
+    "have an add method" which {
       "returns a Future value of Success(Added) when adding a file" in withDBInstance { t =>
-        t.addFile(add).futureValue should equal(Added)
+        t.add(add).futureValue should equal(Added)
       }
       """|returns a Future value of Success(Added) when adding a file that has
          |already been removed""".stripMargin in withDBInstance { t =>
-        t.addFile(add).flatMap { _ =>
-          t.removeFile(remove)
+        t.add(add).flatMap { _ =>
+          t.remove(remove)
         }.flatMap { _ =>
-          t.addFile(add)
+          t.add(add)
         }.futureValue should equal (Added)
       }
       """|returns a Future value of Success(Exists) when adding a file that has
          |already been added""".stripMargin in withDBInstance { t =>
-        t.addFile(add).flatMap { _ =>
-          t.addFile(add)
+        t.add(add).flatMap { _ =>
+          t.add(add)
         }.futureValue should equal (Exists)
       }
     }
 
-    "have a removeFile method" which {
+    "have a remove method" which {
       "returns a Future value of Success(Removed) when removing a file" in withDBInstance { t =>
-        t.addFile(add).flatMap { _ =>
-          t.removeFile(remove)
-        }.futureValue should equal (Deleted)
+        t.add(add).flatMap { _ =>
+          t.remove(remove)
+        }.futureValue should equal (Removed)
       }
       """|returns a Future value of Success(NotFound) when removing a file that has
          |never been added""".stripMargin in withDBInstance { t =>
-        t.removeFile(remove).futureValue should equal (NotFound)
+        t.remove(remove).futureValue should equal (NotFound)
       }
       """|returns a Future value of Success(NotFound) when removing a file that has
          |already been removed""".stripMargin in withDBInstance { t =>
-        t.addFile(add).flatMap { _ =>
-          t.removeFile(remove)
+        t.add(add).flatMap { _ =>
+          t.remove(remove)
         }.flatMap { _ =>
-          t.removeFile(remove)
+          t.remove(remove)
         }.futureValue should equal (NotFound)
       }
     }
@@ -100,14 +100,14 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       }
       """|returns a Future value of a given File when called with an argument of that
          |file's hash""".stripMargin in withDBInstance { t =>
-        t.addFile(add).flatMap { _ =>
+        t.add(add).flatMap { _ =>
           t.find(add.hash)
         }.futureValue should equal (Some(expected))
       }
       """|returns a Future value of Failure(IllegalArgumentException) when called with
          |an argument of the hash of a file that has been removed""".stripMargin in withDBInstance { t =>
-        t.addFile(add).flatMap { _ =>
-          t.removeFile(remove)
+        t.add(add).flatMap { _ =>
+          t.remove(remove)
         }.flatMap { _ =>
           t.find(add.hash)
         }.futureValue should equal (None)
@@ -122,11 +122,11 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           _  <- futureToTask(db.init())
         } yield db).unsafePerformSync
         val addRemoveFuture01 =
-          q.addFile(add)
-            .flatMap { _ => q.removeFile(remove) }
-            .flatMap { _ => q.addFile(add) }
-            .flatMap { _ => q.removeFile(remove) }
-        val tmp01: DeleteStatus = Await.result(addRemoveFuture01, 5.seconds)
+          q.add(add)
+            .flatMap { _ => q.remove(remove) }
+            .flatMap { _ => q.add(add) }
+            .flatMap { _ => q.remove(remove) }
+        val tmp01: RemoveStatus = Await.result(addRemoveFuture01, 5.seconds)
         q.close()
         // re-open initial db
         val r: HyponomeDB = (for {
@@ -143,11 +143,11 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           _  <- futureToTask(db.init())
         } yield db).unsafePerformSync
         val addRemoveFuture01 =
-          q.addFile(add)
-            .flatMap { _ => q.removeFile(remove) }
-            .flatMap { _ => q.addFile(add) }
-            .flatMap { _ => q.removeFile(remove) }
-        val tmp01: DeleteStatus = Await.result(addRemoveFuture01, 5.seconds)
+          q.add(add)
+            .flatMap { _ => q.remove(remove) }
+            .flatMap { _ => q.add(add) }
+            .flatMap { _ => q.remove(remove) }
+        val tmp01: RemoveStatus = Await.result(addRemoveFuture01, 5.seconds)
         q.close()
         // re-open initial db
         val r: HyponomeDB = (for {
@@ -155,9 +155,9 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           _  <- futureToTask(db.init())
         } yield db).unsafePerformSync
         val addRemoveFuture02 =
-          r.addFile(add)
-            .flatMap { _ => r.removeFile(remove) }
-            .flatMap { _ => r.addFile(add) }
+          r.add(add)
+            .flatMap { _ => r.remove(remove) }
+            .flatMap { _ => r.add(add) }
         val tmp02: AddStatus = Await.result(addRemoveFuture02, 5.seconds)
         r.close()
         // re-re-open initial db

@@ -92,7 +92,7 @@ package object test {
     add.contentType,
     add.length)
 
-  val remove = Delete(add.hash, add.remoteAddress)
+  val remove = Remove(add.hash, add.remoteAddress)
 
   val expected = File(add.hash, add.name, add.contentType, add.length)
 

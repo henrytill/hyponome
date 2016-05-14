@@ -30,7 +30,7 @@ trait FileStore[A] {
 
   def existsInStore(p: A): Task[Boolean]
 
-  def copyToStore(a: Add): Task[AddStatus]
+  def add(a: Add): Task[AddStatus]
 
-  def deleteFromStore(hash: SHA256Hash): Task[DeleteStatus]
+  def remove(hash: SHA256Hash): Task[RemoveStatus]
 }

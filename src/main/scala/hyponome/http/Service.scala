@@ -119,8 +119,8 @@ final class Service[A](cfg: ServiceConfig, store: Store[A])(implicit ec: Executi
     case req @ DELETE -> Root / "objects" / hash =>
       val h: SHA256Hash = SHA256Hash(hash)
       val i: Option[InetAddress] = req.remote.map(_.getAddress())
-      val d: Delete = Delete(h, i)
-      val response: Task[DeleteResponse] = store.delete(d)
+      val d: Remove = Remove(h, i)
+      val response: Task[RemoveResponse] = store.remove(d)
       Ok(response.map(_.asJson.spaces2))
 
     case req @ POST -> Root / "objects" =>

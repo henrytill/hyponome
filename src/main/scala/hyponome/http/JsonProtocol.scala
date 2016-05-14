@@ -83,15 +83,15 @@ object JsonProtocol {
       tagged("Added", c, implicitly[DecodeJson[Unit]].map(_ => Added)) |||
         tagged("Exists", c, implicitly[DecodeJson[Unit]].map(_ => Exists)))
 
-  implicit def deleteStatusEncodeJson: EncodeJson[DeleteStatus] =
+  implicit def removeStatusEncodeJson: EncodeJson[RemoveStatus] =
     EncodeJson(_ match {
-                 case Deleted  => Json("Deleted" -> jBool(true))
-                 case NotFound => Json("Deleted" -> jBool(false))
+                 case Removed  => Json("Removed" -> jBool(true))
+                 case NotFound => Json("Removed" -> jBool(false))
                })
 
-  implicit def deleteStatusDecodeJson: DecodeJson[DeleteStatus] =
+  implicit def removeStatusDecodeJson: DecodeJson[RemoveStatus] =
     DecodeJson(c =>
-      tagged("Deleted", c, implicitly[DecodeJson[Unit]].map(_ => Deleted)) |||
+      tagged("Removed", c, implicitly[DecodeJson[Unit]].map(_ => Removed)) |||
         tagged("NotFound", c, implicitly[DecodeJson[Unit]].map(_ => NotFound)))
 
   implicit def AddCodecJson: CodecJson[Add] =
@@ -114,8 +114,8 @@ object JsonProtocol {
       "contentType",
       "length")
 
-  implicit def DeleteResponseCodecJson: CodecJson[DeleteResponse] =
-    casecodec2(DeleteResponse.apply, DeleteResponse.unapply)("status", "hash")
+  implicit def RemoveResponseCodecJson: CodecJson[RemoveResponse] =
+    casecodec2(RemoveResponse.apply, RemoveResponse.unapply)("status", "hash")
 
   implicit def StoreQueryResponseCodecJson: CodecJson[StoreQueryResponse] =
     casecodec8(StoreQueryResponse.apply, StoreQueryResponse.unapply)(

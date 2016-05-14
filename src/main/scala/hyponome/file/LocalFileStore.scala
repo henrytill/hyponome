@@ -38,7 +38,7 @@ final class LocalFileStore(storePath: Path) extends FileStore[Path] {
     storePath.resolve(dir).resolve(file).toAbsolutePath
   }
 
-  def copyToStore(a: Add): Task[AddStatus] =
+  def add(a: Add): Task[AddStatus] =
     Task {
       val destination: Path = getFileLocation(a.hash)
       val parent: Path = Files.createDirectories(destination.getParent)
@@ -49,12 +49,12 @@ final class LocalFileStore(storePath: Path) extends FileStore[Path] {
       case _: java.nio.file.FileAlreadyExistsException => Exists
     }
 
-  def deleteFromStore(hash: SHA256Hash): Task[DeleteStatus] =
+  def remove(hash: SHA256Hash): Task[RemoveStatus] =
     Task {
       val p: Path = getFileLocation(hash)
       Files.delete(p)
     }.map { (_: Unit) =>
-      Deleted
+      Removed
     }.handle {
       case _: java.nio.file.NoSuchFileException => NotFound
     }
