@@ -46,9 +46,9 @@ class LocalStore(dbInst: HyponomeDB, fileStoreInst: FileStore[Path])
       case Some(f) => Task.now(AddResponse(a.mergeWithFile(f), Exists))
       case None    => Task.fail(new RuntimeException)
     }
-    case Created => fileStore.copyToStore(a).map {
+    case Added => fileStore.copyToStore(a).map {
       case Exists  => AddResponse(a, Exists)
-      case Created => AddResponse(a, Created)
+      case Added => AddResponse(a, Added)
     }
   }
 

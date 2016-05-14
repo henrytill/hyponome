@@ -62,8 +62,8 @@ class LocalFileStoreSpec extends WordSpecLike with Matchers {
           getSHA256Hash(destination)
         }.unsafePerformSync should equal (testPDFHash)
       }
-      "completes with Created after successfully copying a file to the file store" in withLocalFileStore { t =>
-        t.copyToStore(add).unsafePerformSync should equal (Created)
+      "completes with Added after successfully copying a file to the file store" in withLocalFileStore { t =>
+        t.copyToStore(add).unsafePerformSync should equal (Added)
       }
       "completes with Exists when trying to copy a file to a path where one already exists" in withLocalFileStore { t =>
         t.copyToStore(add).flatMap { _ =>

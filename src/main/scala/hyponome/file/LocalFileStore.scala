@@ -44,7 +44,7 @@ final class LocalFileStore(storePath: Path) extends FileStore[Path] {
       val parent: Path = Files.createDirectories(destination.getParent)
       Files.copy(a.file, destination)
     }.map { (_: Path) =>
-      Created
+      Added
     }.handle {
       case _: java.nio.file.FileAlreadyExistsException => Exists
     }

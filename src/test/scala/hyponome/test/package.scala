@@ -77,7 +77,7 @@ package object test {
     ip)
 
   val added = AddResponse(
-    Created,
+    Added,
     getURI(add.hostname, add.port, add.hash, add.name),
     add.hash,
     add.name,

@@ -19,7 +19,7 @@ package hyponome.http
 import argonaut._
 import Argonaut._
 import org.http4s._
-import org.http4s.dsl.{Created => _, NotFound => HNotFound, _}
+import org.http4s.dsl.{NotFound => HNotFound, _}
 import org.http4s.multipart._
 import java.net.InetAddress
 import java.nio.file.{Files => JFiles, Path => JPath}

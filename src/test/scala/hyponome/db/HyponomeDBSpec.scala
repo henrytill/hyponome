@@ -54,16 +54,16 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
   "An instance of a class that extends HyponomeDB" must {
 
     "have an addFile method" which {
-      "returns a Future value of Success(Created) when adding a file" in withDBInstance { t =>
-        t.addFile(add).futureValue should equal(Created)
+      "returns a Future value of Success(Added) when adding a file" in withDBInstance { t =>
+        t.addFile(add).futureValue should equal(Added)
       }
-      """|returns a Future value of Success(Created) when adding a file that has
+      """|returns a Future value of Success(Added) when adding a file that has
          |already been removed""".stripMargin in withDBInstance { t =>
         t.addFile(add).flatMap { _ =>
           t.removeFile(remove)
         }.flatMap { _ =>
           t.addFile(add)
-        }.futureValue should equal (Created)
+        }.futureValue should equal (Added)
       }
       """|returns a Future value of Success(Exists) when adding a file that has
          |already been added""".stripMargin in withDBInstance { t =>

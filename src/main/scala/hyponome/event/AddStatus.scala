@@ -17,5 +17,5 @@
 package hyponome.event
 
 sealed trait AddStatus extends Product with Serializable
-case object Created extends AddStatus
+case object Added extends AddStatus
 case object Exists extends AddStatus

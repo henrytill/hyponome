@@ -74,13 +74,13 @@ object JsonProtocol {
 
   implicit def addStatusEncodeJson: EncodeJson[AddStatus] =
     EncodeJson(_ match {
-      case Created => Json("Created" := (()))
+      case Added => Json("Added" := (()))
       case Exists  => Json("Exists" := (()))
     })
 
   implicit def addStatusDecodeJson: DecodeJson[AddStatus] =
     DecodeJson(c =>
-      tagged("Created", c, implicitly[DecodeJson[Unit]].map(_ => Created)) |||
+      tagged("Added", c, implicitly[DecodeJson[Unit]].map(_ => Added)) |||
         tagged("Exists", c, implicitly[DecodeJson[Unit]].map(_ => Exists)))
 
   implicit def deleteStatusEncodeJson: EncodeJson[DeleteStatus] =

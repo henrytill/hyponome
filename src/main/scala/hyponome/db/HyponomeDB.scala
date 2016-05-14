@@ -116,7 +116,7 @@ final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionC
             case false =>
               val s = DBIO.seq(files += f, events += e)
               db.run(s)
-          }.map(_ => Created)
+          }.map(_ => Added)
       }
   }
 
