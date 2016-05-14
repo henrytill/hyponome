@@ -14,31 +14,28 @@
  * limitations under the License.
  */
 
-package hyponome
+package hyponome.db
 
-import java.io.{File => JFile}
-import scalaz.concurrent.Task
-import hyponome.db._
-import hyponome.file._
+import java.util.concurrent.atomic.AtomicLong
+import hyponome._
+import hyponome.event._
 import hyponome.query._
 
-trait Store[A, F[_]] {
+trait FileDB[F[_]] {
 
-  val fileStore: FileStore[A]
+  val tx: AtomicLong
 
-  val db: FileDB[F]
+  def init(): F[Unit]
 
-  def info(h: SHA256Hash): Task[Option[File]]
+  def close(): Unit
 
-  def count: Task[Long]
+  def add(a: Add): F[AddStatus]
 
-  def query(q: StoreQuery): Task[Seq[StoreQueryResponse]]
+  def remove(r: Remove): F[RemoveStatus]
 
-  def add(a: Add): Task[AddResponse]
+  def find(hash: SHA256Hash): F[Option[File]]
 
-  def exists(h: SHA256Hash): Task[Boolean]
+  def countFiles: F[Long]
 
-  def get(h: SHA256Hash): Task[Option[JFile]]
-
-  def remove(d: Remove): Task[RemoveResponse]
+  def runQuery(q: StoreQuery): F[Seq[StoreQueryResponse]]
 }

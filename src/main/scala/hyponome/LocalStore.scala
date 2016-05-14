@@ -18,7 +18,7 @@ package hyponome
 
 import java.io.{File => JFile}
 import java.nio.file.Path
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scalaz.concurrent.Task
 import hyponome.config._
 import hyponome.db._
@@ -27,11 +27,11 @@ import hyponome.file._
 import hyponome.query._
 import hyponome.util._
 
-class LocalStore(dbInst: HyponomeDB, fileStoreInst: FileStore[Path])
+class LocalStore(dbInst: FileDB[Future], fileStoreInst: FileStore[Path])
                 (implicit ec: ExecutionContext)
-    extends Store[Path] {
+    extends Store[Path, Future] {
 
-  val db: HyponomeDB = dbInst
+  val db: FileDB[Future] = dbInst
 
   val fileStore: FileStore[Path] = fileStoreInst
 
@@ -85,7 +85,7 @@ class LocalStore(dbInst: HyponomeDB, fileStoreInst: FileStore[Path])
 object LocalStore {
   def apply(cfg: ServiceConfig)(implicit ec: ExecutionContext): Task[LocalStore] =
     for {
-      db <- Task.now(new HyponomeDB(cfg.db))
+      db <- Task.now(new SQLFileDB(cfg.db))
       _  <- futureToTask(db.init())
       st <- Task.now(new LocalFileStore(cfg.store))
       _  <- st.init()

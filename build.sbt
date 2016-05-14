@@ -1,6 +1,7 @@
 import Dependencies._
 
 val commonOptions = Seq(
+  "-language:higherKinds",
   "-Xfatal-warnings",
   "-Xfuture",
   "-Xlint",

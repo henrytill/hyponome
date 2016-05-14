@@ -31,12 +31,12 @@ import hyponome.db.tables.Events._
 import hyponome.query._
 import hyponome.event._
 
-final class HyponomeDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionContext) {
+final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionContext) extends FileDB[Future] {
 
   type Q = Query[(Files, Events), (File, Event), Seq]
 
   val tx: AtomicLong                     = new AtomicLong()
-  private val logger: Logger             = LoggerFactory.getLogger(classOf[HyponomeDB])
+  private val logger: Logger             = LoggerFactory.getLogger(classOf[SQLFileDB])
   private val db: DatabaseDef            = dbConfig()
   private val files: TableQuery[Files]   = TableQuery[Files]
   private val events: TableQuery[Events] = TableQuery[Events]

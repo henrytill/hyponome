@@ -29,11 +29,11 @@ import hyponome.test._
 import hyponome.event._
 import hyponome.util._
 
-class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
+class SQLFileDBSpec extends WordSpecLike with Matchers with ScalaFutures {
 
-  def withDBInstance(testCode: HyponomeDB => Any): Unit = {
-    val t: HyponomeDB = (for {
-      db <- Task.now(new HyponomeDB(makeTestDB))
+  def withDBInstance(testCode: SQLFileDB => Any): Unit = {
+    val t: SQLFileDB = (for {
+      db <- Task.now(new SQLFileDB(makeTestDB))
       _  <- futureToTask(db.init())
     } yield db).unsafePerformSync
     try { testCode(t); () }
@@ -51,7 +51,7 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
     Span(15, Millis)
   )
 
-  "An instance of a class that extends HyponomeDB" must {
+  "An instance of a class that extends SQLFileDB" must {
 
     "have an add method" which {
       "returns a Future value of Success(Added) when adding a file" in withDBInstance { t =>
@@ -117,8 +117,8 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
     "have a syncCounter method" which {
       "returns a Future value of Unit and syncs the counter (1)" in withPersistentDBConfig { (c, p) =>
         // initial db
-        val q: HyponomeDB = (for {
-          db <- Task.now(new HyponomeDB(c))
+        val q: SQLFileDB = (for {
+          db <- Task.now(new SQLFileDB(c))
           _  <- futureToTask(db.init())
         } yield db).unsafePerformSync
         val addRemoveFuture01 =
@@ -129,8 +129,8 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
         val tmp01: RemoveStatus = Await.result(addRemoveFuture01, 5.seconds)
         q.close()
         // re-open initial db
-        val r: HyponomeDB = (for {
-          db <- Task.now(new HyponomeDB(c))
+        val r: SQLFileDB = (for {
+          db <- Task.now(new SQLFileDB(c))
           _  <- futureToTask(db.init())
         } yield db).unsafePerformSync
         r.tx.get should equal (4)
@@ -138,8 +138,8 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       }
       "returns a Future value of Unit and syncs the counter (2)" in withPersistentDBConfig { (c, p) =>
         // initial db
-        val q: HyponomeDB = (for {
-          db <- Task.now(new HyponomeDB(c))
+        val q: SQLFileDB = (for {
+          db <- Task.now(new SQLFileDB(c))
           _  <- futureToTask(db.init())
         } yield db).unsafePerformSync
         val addRemoveFuture01 =
@@ -150,8 +150,8 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
         val tmp01: RemoveStatus = Await.result(addRemoveFuture01, 5.seconds)
         q.close()
         // re-open initial db
-        val r: HyponomeDB = (for {
-          db <- Task.now(new HyponomeDB(c))
+        val r: SQLFileDB = (for {
+          db <- Task.now(new SQLFileDB(c))
           _  <- futureToTask(db.init())
         } yield db).unsafePerformSync
         val addRemoveFuture02 =
@@ -161,8 +161,8 @@ class HyponomeDBSpec extends WordSpecLike with Matchers with ScalaFutures {
         val tmp02: AddStatus = Await.result(addRemoveFuture02, 5.seconds)
         r.close()
         // re-re-open initial db
-        val s: HyponomeDB = (for {
-          db <- Task.now(new HyponomeDB(c))
+        val s: SQLFileDB = (for {
+          db <- Task.now(new SQLFileDB(c))
           _  <- futureToTask(db.init())
         } yield db).unsafePerformSync
         s.tx.get should equal (7)
