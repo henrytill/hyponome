@@ -22,9 +22,9 @@ import hyponome.db._
 import hyponome.file._
 import hyponome.query._
 
-trait Store[F] {
+trait Store[A] {
 
-  val fileStore: FileStore[F]
+  val fileStore: FileStore[A]
 
   val db: HyponomeDB
 

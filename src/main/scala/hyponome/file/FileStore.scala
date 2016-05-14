@@ -20,15 +20,15 @@ import scalaz.concurrent.Task
 import hyponome.{Add, SHA256Hash}
 import hyponome.event._
 
-trait FileStore[F] {
+trait FileStore[A] {
 
   def exists(): Task[Boolean]
 
   def create(): Task[Unit]
 
-  def getFileLocation(hash: SHA256Hash): F
+  def getFileLocation(hash: SHA256Hash): A
 
-  def existsInStore(p: F): Task[Boolean]
+  def existsInStore(p: A): Task[Boolean]
 
   def copyToStore(a: Add): Task[AddStatus]
 
