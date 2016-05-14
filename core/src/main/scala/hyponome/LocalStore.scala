@@ -26,13 +26,13 @@ import hyponome.file._
 import hyponome.query._
 import hyponome.util._
 
-class LocalStore(dbInst: FileDB[Future], fileStoreInst: FileStore[Path])
+class LocalStore(dbInst: FileDB[Future], fileStoreInst: FileStore[Task, Path])
                 (implicit ec: ExecutionContext)
-    extends Store[Path, Future] {
+    extends Store[Task, Future, Path] {
 
   val db: FileDB[Future] = dbInst
 
-  val fileStore: FileStore[Path] = fileStoreInst
+  val fileStore: FileStore[Task, Path] = fileStoreInst
 
   def info(h: SHA256Hash): Task[Option[File]]             = futureToTask(db.find(h))
   def count: Task[Long]                                   = futureToTask(db.countFiles)

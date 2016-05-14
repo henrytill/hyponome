@@ -22,7 +22,7 @@ import scalaz.concurrent.Task
 import hyponome._
 import hyponome.event._
 
-final class LocalFileStore(storePath: Path) extends FileStore[Path] {
+final class LocalFileStore(storePath: Path) extends FileStore[Task, Path] {
 
   val logger: Logger = LoggerFactory.getLogger(classOf[LocalFileStore])
 

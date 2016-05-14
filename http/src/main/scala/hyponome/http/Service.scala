@@ -34,7 +34,7 @@ import hyponome.query._
 import hyponome.util._
 import JsonProtocol._
 
-final class Service[A, F[_]](cfg: ServiceConfig, store: Store[A, F])(implicit ec: ExecutionContext) {
+final class Service[F[_], G[_], A](cfg: ServiceConfig, store: Store[F, G, A])(implicit ec: ExecutionContext) {
 
   def createTmpDir(): JPath = JFiles.createTempDirectory("hyponome")
   val tmpDir: JPath         = createTmpDir()
