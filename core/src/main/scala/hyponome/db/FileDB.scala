@@ -21,21 +21,21 @@ import hyponome._
 import hyponome.event._
 import hyponome.query._
 
-trait FileDB[F[_]] {
+trait FileDB[FileDBIO[_]] {
 
   val tx: AtomicLong
 
-  def init(): F[Unit]
+  def init(): FileDBIO[Unit]
 
   def close(): Unit
 
-  def add(a: Add): F[AddStatus]
+  def add(a: Add): FileDBIO[AddStatus]
 
-  def remove(r: Remove): F[RemoveStatus]
+  def remove(r: Remove): FileDBIO[RemoveStatus]
 
-  def find(hash: SHA256Hash): F[Option[File]]
+  def find(hash: SHA256Hash): FileDBIO[Option[File]]
 
-  def countFiles: F[Long]
+  def countFiles: FileDBIO[Long]
 
-  def runQuery(q: StoreQuery): F[Seq[StoreQueryResponse]]
+  def runQuery(q: StoreQuery): FileDBIO[Seq[StoreQueryResponse]]
 }

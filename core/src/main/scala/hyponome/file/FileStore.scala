@@ -19,17 +19,17 @@ package hyponome.file
 import hyponome.{Add, SHA256Hash}
 import hyponome.event._
 
-trait FileStore[F[_], A] {
+trait FileStore[FileStoreIO[_], FileLocation] {
 
-  def exists(): F[Boolean]
+  def exists(): FileStoreIO[Boolean]
 
-  def create(): F[Unit]
+  def create(): FileStoreIO[Unit]
 
-  def getFileLocation(hash: SHA256Hash): A
+  def getFileLocation(hash: SHA256Hash): FileLocation
 
-  def existsInStore(p: A): F[Boolean]
+  def existsInStore(p: FileLocation): FileStoreIO[Boolean]
 
-  def add(a: Add): F[AddStatus]
+  def add(a: Add): FileStoreIO[AddStatus]
 
-  def remove(hash: SHA256Hash): F[RemoveStatus]
+  def remove(hash: SHA256Hash): FileStoreIO[RemoveStatus]
 }

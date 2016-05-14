@@ -22,11 +22,11 @@ import hyponome.db._
 import hyponome.file._
 import hyponome.query._
 
-trait Store[F[_], G[_], A] {
+trait Store[FileStoreIO[_], FileDBIO[_], FileLocation] {
 
-  val fileStore: FileStore[F, A]
+  val fileStore: FileStore[FileStoreIO, FileLocation]
 
-  val db: FileDB[G]
+  val db: FileDB[FileDBIO]
 
   def info(h: SHA256Hash): Task[Option[File]]
 
