@@ -58,14 +58,14 @@ object JsonProtocol {
     jdecode1L(Timestamp.valueOf(_: String))("Timestamp")
 
   // https://gist.github.com/markhibberd/8231912
-  def tagged[A](tag: String, c: HCursor, decoder: DecodeJson[A]): DecodeResult[A] =
+  private def tagged[A](tag: String, c: HCursor, decoder: DecodeJson[A]): DecodeResult[A] =
     (c --\ tag).hcursor.fold(DecodeResult.fail[A]("Invalid tagged type", c.history))(decoder.decode)
 
   implicit def operationEncodeJson: EncodeJson[Operation] =
     EncodeJson(_ match {
-      case AddToStore      => Json("AddToStore" := (()))
-      case RemoveFromStore => Json("RemoveFromStore" := (()))
-    })
+                 case AddToStore      => Json("AddToStore" := (()))
+                 case RemoveFromStore => Json("RemoveFromStore" := (()))
+               })
 
   implicit def operationDecodeJson: DecodeJson[Operation] =
     DecodeJson(c =>
@@ -74,9 +74,9 @@ object JsonProtocol {
 
   implicit def addStatusEncodeJson: EncodeJson[AddStatus] =
     EncodeJson(_ match {
-      case Added => Json("Added" := (()))
-      case Exists  => Json("Exists" := (()))
-    })
+                 case Added  => Json("Added" := (()))
+                 case Exists => Json("Exists" := (()))
+               })
 
   implicit def addStatusDecodeJson: DecodeJson[AddStatus] =
     DecodeJson(c =>
@@ -85,9 +85,9 @@ object JsonProtocol {
 
   implicit def deleteStatusEncodeJson: EncodeJson[DeleteStatus] =
     EncodeJson(_ match {
-      case Deleted  => Json("Deleted" -> jBool(true))
-      case NotFound => Json("Deleted" -> jBool(false))
-    })
+                 case Deleted  => Json("Deleted" -> jBool(true))
+                 case NotFound => Json("Deleted" -> jBool(false))
+               })
 
   implicit def deleteStatusDecodeJson: DecodeJson[DeleteStatus] =
     DecodeJson(c =>
