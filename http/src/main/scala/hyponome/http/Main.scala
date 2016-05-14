@@ -20,14 +20,19 @@ import org.http4s.HttpService
 import org.http4s.server.SSLSupport.StoreInfo
 import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.server.{Server, ServerApp, ServerBuilder, SSLSupport}
+import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scalaz.concurrent.Task
 import hyponome.LocalStore
+import hyponome.db.SQLFileDB
+import hyponome.file.LocalFileStore
 import hyponome.http.config._
+import hyponome.util._
 
 object Main extends ServerApp {
 
-  private val keypath: String = fs.getPath("src/main/resources/keystore.jks").toFile.toString
+  private val keypath: String =
+    getClass.getClassLoader.getResource("keystore.jks").getPath()
 
   private def builder: ServerBuilder with SSLSupport = BlazeBuilder
 
@@ -37,10 +42,14 @@ object Main extends ServerApp {
       .bindHttp(cfg.port)
       .start
 
-  private def makeServer(cfg: ServiceConfig): Task[Server] =
+  private def makeServer(cfg: ServiceConfig)(implicit ec: ExecutionContext): Task[Server] =
     for {
-      st  <- LocalStore(cfg)
-      svc <- Task.now(new Service(cfg, st))
+      db  <- Task.now(new SQLFileDB(cfg.db))
+      _   <- futureToTask(db.init())
+      st  <- Task.now(new LocalFileStore(cfg.store))
+      _   <- st.init()
+      ls  <- Task.now(new LocalStore(db, st))
+      svc <- Task.now(new Service(cfg, ls))
       srv <- serverTask(cfg, svc.root)
     } yield srv
 

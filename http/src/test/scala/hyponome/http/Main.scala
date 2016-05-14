@@ -20,15 +20,21 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.StdIn
 import scalaz.concurrent.{Task, TaskApp}
 import hyponome.LocalStore
+import hyponome.db.SQLFileDB
+import hyponome.file.LocalFileStore
 import hyponome.http.config._
-import hyponome.test._
+import hyponome.util._
 
 object Main extends TaskApp {
 
   def server(cfg: ServiceConfig): Task[Unit] =
     for {
-      st  <- LocalStore(cfg)
-      svc <- Task.now(new Service(cfg, st))
+      db  <- Task.now(new SQLFileDB(cfg.db))
+      _   <- futureToTask(db.init())
+      st  <- Task.now(new LocalFileStore(cfg.store))
+      _   <- st.init()
+      ls  <- Task.now(new LocalStore(db, st))
+      svc <- Task.now(new Service(cfg, ls))
       srv <- testServer(cfg, svc.root)
       _   <- Task.now(StdIn.readLine())
       _   <- srv.shutdown

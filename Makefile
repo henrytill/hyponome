@@ -1,21 +1,21 @@
-all: src/main/resources/keystore.jks src/test/resources/hyponome.pem
+all: http/src/main/resources/keystore.jks http/src/test/resources/hyponome.pem
 
-src/main/resources/keystore.jks:
+http/src/main/resources/keystore.jks:
 	keytool -genkey \
 		-alias domain \
 		-keyalg RSA \
 		-validity 365 \
-		-keystore src/main/resources/keystore.jks \
+		-keystore http/src/main/resources/keystore.jks \
 		-keypass password \
 		-storepass password \
 		-dname "CN=localhost, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown"
 
-src/test/resources/hyponome.pem: src/main/resources/keystore.jks
+http/src/test/resources/hyponome.pem: http/src/main/resources/keystore.jks
 	keytool -exportcert \
 		-rfc \
 		-alias domain \
-		-keystore src/main/resources/keystore.jks \
-		-file src/test/resources/hyponome.pem \
+		-keystore http/src/main/resources/keystore.jks \
+		-file http/src/test/resources/hyponome.pem \
 		-storepass password \
 
 clean:
@@ -23,7 +23,7 @@ clean:
 	rm -f *.db
 
 distclean: clean
-	rm -f src/main/resources/keystore.jks
-	rm -f src/test/resources/hyponome.pem
+	rm -f http/src/main/resources/keystore.jks
+	rm -f http/src/test/resources/hyponome.pem
 
 .PHONY: all clean distclean

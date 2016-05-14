@@ -24,16 +24,16 @@ $ cd hyponome-scala
 
 $ make
 
-$ sbt run
+$ sbt http/run
 ```
 
 You can also build and run a standalone jar:
 ```
 $ make
 
-$ sbt assembly
+$ sbt http/assembly
 
-$ java -cp target/scala-2.11/hyponome-assembly-0.1.0-SNAPSHOT.jar hyponome.Main
+$ java -cp http/target/scala-2.11/hyponome-assembly-0.1.0-SNAPSHOT.jar hyponome.http.Main
 ```
 
 Once the server is running:

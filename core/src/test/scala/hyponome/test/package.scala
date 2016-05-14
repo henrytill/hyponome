@@ -16,23 +16,13 @@
 
 package hyponome
 
-import java.io.InputStream
 import java.net.InetAddress
 import java.nio.file._
-import java.security.cert.{CertificateFactory, Certificate}
-import java.security.{SecureRandom, KeyStore}
 import java.util.UUID.randomUUID
 import java.util.concurrent.atomic.AtomicLong
-import javax.net.ssl.{SSLContext, KeyManagerFactory, TrustManagerFactory}
-import org.http4s.HttpService
-import org.http4s.server.SSLSupport.StoreInfo
-import org.http4s.server.blaze.BlazeBuilder
-import org.http4s.server.{Server, ServerBuilder, SSLSupport}
 import scala.util.{Success, Try}
-import scalaz.concurrent.Task
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
-import hyponome.http.config.ServiceConfig
 import hyponome.event._
 
 package object test {
@@ -43,16 +33,6 @@ package object test {
   val testPort: Int = 4000
 
   val fs: FileSystem = FileSystems.getDefault
-
-  val keypath: String = fs.getPath("src/main/resources/keystore.jks").toFile.toString
-
-  def builder: ServerBuilder with SSLSupport = BlazeBuilder
-
-  def testServer(cfg: ServiceConfig, svc: HttpService): Task[Server] =
-    builder.withSSL(StoreInfo(keypath, "password"), keyManagerPassword = "password")
-      .mountService(svc)
-      .bindHttp(cfg.port)
-      .start
 
   val testStorePath: Path = fs.getPath("/tmp/hyponome/store")
 
@@ -143,26 +123,4 @@ package object test {
   def deleteFolder(p: Path): Try[Path] =
     if (Files.exists(p)) Try(recursiveDeletePath(p))
     else Success(p)
-
-  private def resourceStream(resourceName: String): InputStream = {
-    val is = getClass.getClassLoader.getResourceAsStream(resourceName)
-    require(is ne null, s"Resource $resourceName not found")
-    is
-  }
-
-  private def loadX509Certificate(resourceName: String): Certificate =
-    CertificateFactory.getInstance("X.509").generateCertificate(resourceStream(resourceName))
-
-  val clientContext: SSLContext = {
-    val keystore: KeyStore                       = KeyStore.getInstance("JKS")
-    val keyManagerFactory: KeyManagerFactory     = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm)
-    val trustManagerFactory: TrustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
-    val context: SSLContext                      = SSLContext.getInstance("TLS")
-    keystore.load(null, null)
-    keystore.setCertificateEntry("ca", loadX509Certificate("hyponome.pem"))
-    keyManagerFactory.init(keystore, "password".toCharArray)
-    trustManagerFactory.init(keystore)
-    context.init(keyManagerFactory.getKeyManagers, trustManagerFactory.getTrustManagers, new SecureRandom)
-    context
-  }
 }

@@ -20,7 +20,6 @@ import java.io.{File => JFile}
 import java.nio.file.Path
 import scala.concurrent.{ExecutionContext, Future}
 import scalaz.concurrent.Task
-import hyponome.http.config._
 import hyponome.db._
 import hyponome.event._
 import hyponome.file._
@@ -80,14 +79,4 @@ class LocalStore(dbInst: FileDB[Future], fileStoreInst: FileStore[Path])
         case m @ NotFound => Task.now(m)
       }
     } yield RemoveResponse(ds2, d.hash)
-}
-
-object LocalStore {
-  def apply(cfg: ServiceConfig)(implicit ec: ExecutionContext): Task[LocalStore] =
-    for {
-      db <- Task.now(new SQLFileDB(cfg.db))
-      _  <- futureToTask(db.init())
-      st <- Task.now(new LocalFileStore(cfg.store))
-      _  <- st.init()
-    } yield (new LocalStore(db, st))
 }
