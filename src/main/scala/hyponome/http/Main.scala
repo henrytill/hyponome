@@ -23,7 +23,7 @@ import org.http4s.server.{Server, ServerApp, ServerBuilder, SSLSupport}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scalaz.concurrent.Task
 import hyponome.LocalStore
-import hyponome.config._
+import hyponome.http.config._
 
 object Main extends ServerApp {
 

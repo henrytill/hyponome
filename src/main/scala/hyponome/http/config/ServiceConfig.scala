@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package hyponome.config
+package hyponome.http.config
 
 import java.nio.file.Path
 import slick.driver.H2Driver.backend.DatabaseDef

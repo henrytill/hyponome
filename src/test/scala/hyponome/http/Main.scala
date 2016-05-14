@@ -20,7 +20,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.StdIn
 import scalaz.concurrent.{Task, TaskApp}
 import hyponome.LocalStore
-import hyponome.config._
+import hyponome.http.config._
 import hyponome.test._
 
 object Main extends TaskApp {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package hyponome
+package hyponome.http
 
 import com.typesafe.config.{Config, ConfigFactory}
 import java.nio.file.{FileSystem, FileSystems}

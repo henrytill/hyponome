@@ -41,7 +41,7 @@ import scalaz.stream.Process
 import scalaz.stream.io.fileChunkW
 import scodec.bits._
 import hyponome._
-import hyponome.config._
+import hyponome.http.config._
 import hyponome.http.JsonProtocol._
 import hyponome.test._
 import hyponome.util._
