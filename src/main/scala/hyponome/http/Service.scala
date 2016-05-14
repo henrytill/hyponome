@@ -30,7 +30,6 @@ import scalaz.stream.io.fileChunkW
 import scalaz.concurrent.Task
 import hyponome._
 import hyponome.config.ServiceConfig
-import hyponome.event._
 import hyponome.query._
 import hyponome.util._
 import JsonProtocol._
@@ -121,7 +120,7 @@ final class Service[A](cfg: ServiceConfig, store: Store[A])(implicit ec: Executi
       val h: SHA256Hash = SHA256Hash(hash)
       val i: Option[InetAddress] = req.remote.map(_.getAddress())
       val d: Delete = Delete(h, i)
-      val response: Task[DeleteStatus] = store.delete(d)
+      val response: Task[DeleteResponse] = store.delete(d)
       Ok(response.map(_.asJson.spaces2))
 
     case req @ POST -> Root / "objects" =>

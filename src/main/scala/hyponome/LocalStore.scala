@@ -72,14 +72,14 @@ class LocalStore(dbInst: HyponomeDB, fileStoreInst: FileStore[Path])
       case false => None
     }
 
-  def delete(d: Delete): Task[DeleteStatus] =
+  def delete(d: Delete): Task[DeleteResponse] =
     for {
       ds1 <- futureToTask(db.removeFile(d))
       ds2 <- ds1 match {
         case Deleted      => fileStore.deleteFromStore(d.hash)
         case m @ NotFound => Task.now(m)
       }
-    } yield ds2
+    } yield DeleteResponse(ds2, d.hash)
 }
 
 object LocalStore {

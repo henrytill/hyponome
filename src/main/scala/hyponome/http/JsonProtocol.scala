@@ -89,7 +89,10 @@ object JsonProtocol {
       case NotFound => Json("Deleted" -> jBool(false))
     })
 
-  // TODO: deleteStatusDecodeJson
+  implicit def deleteStatusDecodeJson: DecodeJson[DeleteStatus] =
+    DecodeJson(c =>
+      tagged("Deleted", c, implicitly[DecodeJson[Unit]].map(_ => Deleted)) |||
+        tagged("NotFound", c, implicitly[DecodeJson[Unit]].map(_ => NotFound)))
 
   implicit def AddCodecJson: CodecJson[Add] =
     casecodec8(Add.apply, Add.unapply)(
@@ -110,6 +113,9 @@ object JsonProtocol {
       "name",
       "contentType",
       "length")
+
+  implicit def DeleteResponseCodecJson: CodecJson[DeleteResponse] =
+    casecodec2(DeleteResponse.apply, DeleteResponse.unapply)("status", "hash")
 
   implicit def StoreQueryResponseCodecJson: CodecJson[StoreQueryResponse] =
     casecodec8(StoreQueryResponse.apply, StoreQueryResponse.unapply)(

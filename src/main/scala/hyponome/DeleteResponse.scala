@@ -16,29 +16,8 @@
 
 package hyponome
 
-import java.io.{File => JFile}
-import scalaz.concurrent.Task
-import hyponome.db._
-import hyponome.file._
-import hyponome.query._
+import hyponome.event._
 
-trait Store[F] {
-
-  val fileStore: FileStore[F]
-
-  val db: HyponomeDB
-
-  def info(h: SHA256Hash): Task[Option[File]]
-
-  def count: Task[Long]
-
-  def query(q: StoreQuery): Task[Seq[StoreQueryResponse]]
-
-  def put(a: Add): Task[AddResponse]
-
-  def exists(h: SHA256Hash): Task[Boolean]
-
-  def get(h: SHA256Hash): Task[Option[JFile]]
-
-  def delete(d: Delete): Task[DeleteResponse]
-}
+final case class DeleteResponse(
+  status: DeleteStatus,
+  hash: SHA256Hash)
