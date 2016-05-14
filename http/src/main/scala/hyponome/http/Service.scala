@@ -36,10 +36,10 @@ import JsonProtocol._
 
 final class Service[F[_], G[_], A](cfg: ServiceConfig, store: Store[F, G, A])(implicit ec: ExecutionContext) {
 
-  def createTmpDir(): JPath = JFiles.createTempDirectory("hyponome")
-  val tmpDir: JPath         = createTmpDir()
+  private def createTmpDir(): JPath = JFiles.createTempDirectory("hyponome")
+  private val tmpDir: JPath         = createTmpDir()
 
-  def handlePart(r: Request, p: Part)(implicit ec: ExecutionContext): Task[Option[AddResponse]] = {
+  private def handlePart(r: Request, p: Part)(implicit ec: ExecutionContext): Task[Option[AddResponse]] = {
     val Part(hs, body) = p
     val parameters: Option[Map[String, String]] = hs.get(headers.`Content-Disposition`).map(_.parameters)
     // get the "name" parameter
@@ -80,22 +80,22 @@ final class Service[F[_], G[_], A](cfg: ServiceConfig, store: Store[F, G, A])(im
     }
   }
 
-  def getFileInStore(r: Request, h: SHA256Hash): Task[Response] = {
+  private def getFileInStore(r: Request, h: SHA256Hash): Task[Response] = {
     store.get(h).flatMap {
       case Some(f) => StaticFile.fromFile(f, Some(r)).fold(NotFound())(Task.now)
       case None    => NotFound()
     }
   }
 
-  object Qhash          extends OptionalQueryParamDecoderMatcher[String]("hash")
-  object Qname          extends OptionalQueryParamDecoderMatcher[String]("name")
-  object QremoteAddress extends OptionalQueryParamDecoderMatcher[String]("remoteAddress")
-  object QtxLo          extends OptionalQueryParamDecoderMatcher[Long]("txLo")
-  object QtxHi          extends OptionalQueryParamDecoderMatcher[Long]("txHi")
-  object QtimeLo        extends OptionalQueryParamDecoderMatcher[String]("timeLo")
-  object QtimeHi        extends OptionalQueryParamDecoderMatcher[String]("timeHi")
-  object QsortBy        extends OptionalQueryParamDecoderMatcher[String]("sortBy")
-  object QsortOrder     extends OptionalQueryParamDecoderMatcher[String]("sortOrder")
+  private object Qhash          extends OptionalQueryParamDecoderMatcher[String]("hash")
+  private object Qname          extends OptionalQueryParamDecoderMatcher[String]("name")
+  private object QremoteAddress extends OptionalQueryParamDecoderMatcher[String]("remoteAddress")
+  private object QtxLo          extends OptionalQueryParamDecoderMatcher[Long]("txLo")
+  private object QtxHi          extends OptionalQueryParamDecoderMatcher[Long]("txHi")
+  private object QtimeLo        extends OptionalQueryParamDecoderMatcher[String]("timeLo")
+  private object QtimeHi        extends OptionalQueryParamDecoderMatcher[String]("timeHi")
+  private object QsortBy        extends OptionalQueryParamDecoderMatcher[String]("sortBy")
+  private object QsortOrder     extends OptionalQueryParamDecoderMatcher[String]("sortOrder")
 
   val root = HttpService {
 
