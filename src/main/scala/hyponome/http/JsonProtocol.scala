@@ -102,8 +102,8 @@ object JsonProtocol {
       "length",
       "remoteAddress")
 
-  implicit def AddedCodecJson: CodecJson[Added] =
-    casecodec6(Added.apply, Added.unapply)(
+  implicit def AddResponseCodecJson: CodecJson[AddResponse] =
+    casecodec6(AddResponse.apply, AddResponse.unapply)(
       "status",
       "file",
       "hash",

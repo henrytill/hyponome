@@ -41,18 +41,18 @@ class LocalStore(dbInst: HyponomeDB, fileStoreInst: FileStore[Path])
 
   private def addToDB(a: Add): Task[AddStatus] = futureToTask(db.addFile(a))
 
-  private def addToFileStore(a: Add): PartialFunction[AddStatus, Task[Added]] = {
+  private def addToFileStore(a: Add): PartialFunction[AddStatus, Task[AddResponse]] = {
     case Exists => info(a.hash).flatMap {
-      case Some(f) => Task.now(Added(a.mergeWithFile(f), Exists))
+      case Some(f) => Task.now(AddResponse(a.mergeWithFile(f), Exists))
       case None    => Task.fail(new RuntimeException)
     }
     case Created => fileStore.copyToStore(a).map {
-      case Exists  => Added(a, Exists)
-      case Created => Added(a, Created)
+      case Exists  => AddResponse(a, Exists)
+      case Created => AddResponse(a, Created)
     }
   }
 
-  def put(a: Add): Task[Added] =
+  def put(a: Add): Task[AddResponse] =
     for {
       x <- addToDB(a)
       y <- addToFileStore(a)(x)

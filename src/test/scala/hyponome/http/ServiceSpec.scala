@@ -100,7 +100,7 @@ class ServiceSpec extends WordSpecLike
 
   def upAndDown(r: Request): Task[List[SHA256Hash]] =
     client.fetchAs(r)(EntityDecoder[Json])
-      .map(_.as[Vector[Added]].toOption)
+      .map(_.as[Vector[AddResponse]].toOption)
       .map(_.getOrElse(Vector.empty))
       .map(_.map(_.file.toString))
       .flatMap(fetchAndHash(_))

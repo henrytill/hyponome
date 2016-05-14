@@ -40,7 +40,7 @@ final class Service[A](cfg: ServiceConfig, store: Store[A])(implicit ec: Executi
   def createTmpDir(): JPath = JFiles.createTempDirectory("hyponome")
   val tmpDir: JPath         = createTmpDir()
 
-  def handlePart(r: Request, p: Part)(implicit ec: ExecutionContext): Task[Option[Added]] = {
+  def handlePart(r: Request, p: Part)(implicit ec: ExecutionContext): Task[Option[AddResponse]] = {
     val Part(hs, body) = p
     val parameters: Option[Map[String, String]] = hs.get(headers.`Content-Disposition`).map(_.parameters)
     // get the "name" parameter
@@ -68,7 +68,7 @@ final class Service[A](cfg: ServiceConfig, store: Store[A])(implicit ec: Executi
           Task.now {
             Add(cfg.hostname, cfg.port, file, hash, filename, contentType, file.toFile.length, inetAddress)
           }
-        // add the file to the store and yield a Task[Option[Added]]
+        // add the file to the store and yield a Task[Option[AddResponse]]
         for {
           p <- bodyToFile(body, tempFilePath)
           h <- getSHA256Hash(p)
@@ -126,8 +126,8 @@ final class Service[A](cfg: ServiceConfig, store: Store[A])(implicit ec: Executi
 
     case req @ POST -> Root / "objects" =>
       req.decode[Multipart] { mp =>
-        val tasks: Seq[Task[Option[Added]]]     = mp.parts.map((p: Part) => handlePart(req, p))
-        val response: Task[List[Option[Added]]] = Nondeterminism[Task].gather(tasks)
+        val tasks: Seq[Task[Option[AddResponse]]]     = mp.parts.map((p: Part) => handlePart(req, p))
+        val response: Task[List[Option[AddResponse]]] = Nondeterminism[Task].gather(tasks)
         Ok(response.map(_.asJson.spaces2))
       }
 

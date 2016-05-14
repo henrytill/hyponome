@@ -19,7 +19,7 @@ package hyponome
 import java.net.URI
 import hyponome.event._
 
-final case class Added(
+final case class AddResponse(
   status: AddStatus,
   file: URI,
   hash: SHA256Hash,
@@ -27,9 +27,9 @@ final case class Added(
   contentType: String,
   length: Long)
 
-object Added {
-  def apply(a: Add, s: AddStatus): Added = {
+object AddResponse {
+  def apply(a: Add, s: AddStatus): AddResponse = {
     val uri  = getURI(a.hostname, a.port, a.hash, a.name)
-    Added(s, uri, a.hash, a.name, a.contentType, a.length)
+    AddResponse(s, uri, a.hash, a.name, a.contentType, a.length)
   }
 }

@@ -76,7 +76,7 @@ package object test {
     testPDF.toFile.length,
     ip)
 
-  val added = Added(
+  val added = AddResponse(
     Created,
     getURI(add.hostname, add.port, add.hash, add.name),
     add.hash,
@@ -84,7 +84,7 @@ package object test {
     add.contentType,
     add.length)
 
-  val existed = Added(
+  val existed = AddResponse(
     Exists,
     getURI(add.hostname, add.port, add.hash, add.name),
     add.hash,
