@@ -19,7 +19,7 @@ package hyponome.http
 import argonaut._
 import Argonaut._
 import org.http4s._
-import org.http4s.dsl.{NotFound => HNotFound, _}
+import org.http4s.dsl._
 import org.http4s.multipart._
 import java.net.InetAddress
 import java.nio.file.{Files => JFiles, Path => JPath}
@@ -82,8 +82,8 @@ final class Service[F[_], G[_], A](cfg: ServiceConfig, store: Store[F, G, A])(im
 
   def getFileInStore(r: Request, h: SHA256Hash): Task[Response] = {
     store.get(h).flatMap {
-      case Some(f) => StaticFile.fromFile(f, Some(r)).fold(HNotFound())(Task.now)
-      case None    => HNotFound()
+      case Some(f) => StaticFile.fromFile(f, Some(r)).fold(NotFound())(Task.now)
+      case None    => NotFound()
     }
   }
 
@@ -102,7 +102,7 @@ final class Service[F[_], G[_], A](cfg: ServiceConfig, store: Store[F, G, A])(im
     case req @ GET -> Root / "objects" / hash =>
       val h: SHA256Hash = SHA256Hash(hash)
       store.info(h).flatMap {
-        case None    => HNotFound()
+        case None    => NotFound()
         case Some(f) => f.name match {
           case None       => getFileInStore(req, h)
           case Some(name) => PermanentRedirect(Uri(path = s"/objects/$hash/$name"))
@@ -113,7 +113,7 @@ final class Service[F[_], G[_], A](cfg: ServiceConfig, store: Store[F, G, A])(im
       val h: SHA256Hash = SHA256Hash(hash)
       store.info(h).flatMap {
         case Some(f) if f.name.getOrElse("") == filename => getFileInStore(req, h)
-        case _                                           => HNotFound()
+        case _                                           => NotFound()
       }
 
     case req @ DELETE -> Root / "objects" / hash =>
