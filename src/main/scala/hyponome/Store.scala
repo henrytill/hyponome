@@ -34,7 +34,7 @@ trait Store[A] {
 
   def query(q: StoreQuery): Task[Seq[StoreQueryResponse]]
 
-  def put(a: Add): Task[AddResponse]
+  def add(a: Add): Task[AddResponse]
 
   def exists(h: SHA256Hash): Task[Boolean]
 

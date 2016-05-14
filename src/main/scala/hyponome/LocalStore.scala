@@ -52,7 +52,7 @@ class LocalStore(dbInst: HyponomeDB, fileStoreInst: FileStore[Path])
     }
   }
 
-  def put(a: Add): Task[AddResponse] =
+  def add(a: Add): Task[AddResponse] =
     for {
       x <- addToDB(a)
       y <- addToFileStore(a)(x)

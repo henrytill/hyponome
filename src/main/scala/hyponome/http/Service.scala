@@ -72,7 +72,7 @@ final class Service[A](cfg: ServiceConfig, store: Store[A])(implicit ec: Executi
           p <- bodyToFile(body, tempFilePath)
           h <- getSHA256Hash(p)
           x <- createAdd(h, p, filename)
-          z <- store.put(x)
+          z <- store.add(x)
         } yield Some(z)
       case _ =>
         // otherwise, return a Task[None]
