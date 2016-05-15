@@ -17,7 +17,10 @@
 package hyponome
 
 import java.net.URI
-import hyponome.event._
+
+sealed trait AddStatus extends Product with Serializable
+case object Added extends AddStatus
+case object Exists extends AddStatus
 
 final case class AddResponse(
   status: AddStatus,

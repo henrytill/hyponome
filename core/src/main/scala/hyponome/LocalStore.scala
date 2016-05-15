@@ -21,7 +21,6 @@ import java.nio.file.Path
 import scala.concurrent.{ExecutionContext, Future}
 import scalaz.concurrent.Task
 import hyponome.db._
-import hyponome.event._
 import hyponome.file._
 import hyponome.query._
 import hyponome.util._

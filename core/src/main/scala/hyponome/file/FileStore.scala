@@ -17,7 +17,7 @@
 package hyponome.file
 
 import hyponome.{Add, SHA256Hash}
-import hyponome.event._
+import hyponome.{AddStatus, RemoveStatus}
 
 trait FileStore[FileStoreIO[_], FileLocation] {
 

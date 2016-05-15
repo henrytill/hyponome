@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext
 import scalaz.Nondeterminism
 import scalaz.stream.io.fileChunkW
 import scalaz.concurrent.Task
-import hyponome._
+import hyponome.{NotFound => _, _}
 import hyponome.http.config.ServiceConfig
 import hyponome.query._
 import hyponome.util._

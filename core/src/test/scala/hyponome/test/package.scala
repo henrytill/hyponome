@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicLong
 import scala.util.{Success, Try}
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
-import hyponome.event._
 
 package object test {
 

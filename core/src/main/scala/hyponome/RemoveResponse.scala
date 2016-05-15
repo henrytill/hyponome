@@ -16,7 +16,9 @@
 
 package hyponome
 
-import hyponome.event._
+sealed trait RemoveStatus extends Product with Serializable
+case object Removed extends RemoveStatus
+case object NotFound extends RemoveStatus
 
 final case class RemoveResponse(
   status: RemoveStatus,

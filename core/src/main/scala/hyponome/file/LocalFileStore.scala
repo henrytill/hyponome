@@ -20,7 +20,6 @@ import java.nio.file.{Files, Path}
 import org.slf4j.{Logger, LoggerFactory}
 import scalaz.concurrent.Task
 import hyponome._
-import hyponome.event._
 
 final class LocalFileStore(storePath: Path) extends FileStore[Task, Path] {
 
