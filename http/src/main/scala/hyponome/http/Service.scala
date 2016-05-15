@@ -30,7 +30,7 @@ import scalaz.stream.io.fileChunkW
 import scalaz.concurrent.Task
 import hyponome.{NotFound => _, _}
 import hyponome.http.config.ServiceConfig
-import hyponome.query._
+import hyponome.db.query._
 import hyponome.util._
 import JsonProtocol._
 

@@ -22,7 +22,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scalaz.concurrent.Task
 import hyponome.db._
 import hyponome.file._
-import hyponome.query._
+import hyponome.db.query._
 import hyponome.util._
 
 class LocalStore(dbInst: FileDB[Future], fileStoreInst: FileStore[Task, Path])

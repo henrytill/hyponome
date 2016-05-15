@@ -20,7 +20,7 @@ import java.io.{File => JFile}
 import scalaz.concurrent.Task
 import hyponome.db._
 import hyponome.file._
-import hyponome.query._
+import hyponome.db.query._
 
 trait Store[FileStoreIO[_], FileDBIO[_], FileLocation] {
 

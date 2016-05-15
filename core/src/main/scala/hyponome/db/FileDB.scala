@@ -18,7 +18,7 @@ package hyponome.db
 
 import java.util.concurrent.atomic.AtomicLong
 import hyponome._
-import hyponome.query._
+import hyponome.db.query._
 
 trait FileDB[FileDBIO[_]] {
 

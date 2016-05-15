@@ -28,8 +28,8 @@ import slick.lifted.Query
 import hyponome._
 import hyponome.db.tables._
 import hyponome.db.tables.Events._
-import hyponome.query._
-import hyponome.event._
+import hyponome.db.query._
+import hyponome.db.event._
 
 final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionContext) extends FileDB[Future] {
 

@@ -22,8 +22,8 @@ import java.net.{InetAddress, URI}
 import java.nio.file.{FileSystems, Path}
 import java.sql.Timestamp
 import hyponome._
-import hyponome.event._
-import hyponome.query._
+import hyponome.db.event._
+import hyponome.db.query._
 
 object JsonProtocol {
 

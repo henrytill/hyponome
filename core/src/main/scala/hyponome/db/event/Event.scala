@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package hyponome.query
+package hyponome.db.event
 
 import java.net.InetAddress
 import java.sql.Timestamp
-import hyponome._
-import hyponome.event._
+import hyponome.SHA256Hash
 
-final case class StoreQueryResponse(
+final case class Event(
   tx: Long,
   timestamp: Timestamp,
   operation: Operation,
-  remoteAddress: Option[InetAddress],
   hash: SHA256Hash,
-  name: Option[String],
-  contentType: String,
-  length: Long)
+  remoteAddress: Option[InetAddress])

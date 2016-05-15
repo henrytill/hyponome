@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package hyponome.event
+package hyponome.db.event
 
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
