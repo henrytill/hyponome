@@ -88,7 +88,6 @@ class ServiceSpec extends WordSpecLike
 
   def handleGet(r: Response): Task[SHA256Hash] = {
     val tempFilePath: JPath = tmpDir.resolve(s"${randomUUID}")
-    logger.info(s"Writing download to $tempFilePath")
     r.body.to(fileChunkW(tempFilePath.toFile.toString)).run.flatMap { (_: Unit) =>
       getSHA256Hash(tempFilePath)
     }
@@ -129,13 +128,13 @@ class ServiceSpec extends WordSpecLike
 
   "An instance of Service" must {
 
-    "do this" in withService {
+    "successfully round-trip a test file" in withService {
       roundTrip(List(testPDF)).flatMap { (xs: List[SHA256Hash]) =>
         Task.now(xs shouldEqual List(testPDFHash))
       }
     }.unsafePerformSync
 
-    "do that" in withService {
+    "successfully round-trip 100 randomly-generated test files" in withService {
       Task.delay {
         forAll(genNonEmptyByteArray) { (ba: Array[Byte]) =>
           (for {
