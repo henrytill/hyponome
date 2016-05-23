@@ -25,8 +25,7 @@ package object hyponome {
     val fist = Files.newInputStream(path)
     try {
       op(fist)
-    }
-    finally fist.close()
+    } finally fist.close()
   }
 
   def getSHA256Hash(p: Path): Task[SHA256Hash] = Task {

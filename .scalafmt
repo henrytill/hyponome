@@ -1,0 +1,4 @@
+--style defaultWithAlign
+--maxColumn 100
+--continuationIndentDefnSite 2
+--continuationIndentCallSite 2

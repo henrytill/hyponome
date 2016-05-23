@@ -31,13 +31,13 @@ import hyponome.util._
 
 object Main extends ServerApp {
 
-  private val keypath: String =
-    getClass.getClassLoader.getResource("keystore.jks").getPath()
+  private val keypath: String = getClass.getClassLoader.getResource("keystore.jks").getPath()
 
   private def builder: ServerBuilder with SSLSupport = BlazeBuilder
 
   private def serverTask(cfg: ServiceConfig, svc: HttpService): Task[Server] =
-    builder.withSSL(StoreInfo(keypath, "password"), keyManagerPassword = "password")
+    builder
+      .withSSL(StoreInfo(keypath, "password"), keyManagerPassword = "password")
       .mountService(svc)
       .bindHttp(cfg.port)
       .start

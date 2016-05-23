@@ -31,7 +31,8 @@ import hyponome.db.tables.Events._
 import hyponome.db.query._
 import hyponome.db.event._
 
-final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionContext) extends FileDB[Future] {
+final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionContext)
+    extends FileDB[Future] {
 
   type Q = Query[(Files, Events), (File, Event), Seq]
 
@@ -51,7 +52,9 @@ final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionCo
 
   private def exists: Future[Boolean] = {
     val q = MTable.getTables
-    db.run(q).map { ts => ts.nonEmpty }
+    db.run(q).map { ts =>
+      ts.nonEmpty
+    }
   }
 
   private def maxTx: Future[Option[Long]] = {
@@ -104,7 +107,7 @@ final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionCo
   def add(a: Add): Future[AddStatus] = a match {
     case Add(_, _, _, hash, name, contentType, length, remoteAddress) =>
       added(hash) flatMap {
-        case true  => Future(Exists)
+        case true => Future(Exists)
         case false =>
           val c = tx.incrementAndGet()
           val f = File(hash, name, contentType, length)
@@ -123,21 +126,22 @@ final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionCo
   def remove(r: Remove): Future[RemoveStatus] = r match {
     case Remove(hash, remoteAddress) =>
       removed(hash).flatMap {
-        case true  => Future(NotFound)
-        case false => added(hash).flatMap {
-          case false => Future(NotFound)
-          case true  =>
-            val c = tx.incrementAndGet()
-            val e = Event(c, dummyTimestamp, RemoveFromStore, hash, remoteAddress)
-            val s = DBIO.seq(events += e)
-            db.run(s).map(_ => Removed)
-        }
+        case true => Future(NotFound)
+        case false =>
+          added(hash).flatMap {
+            case false => Future(NotFound)
+            case true =>
+              val c = tx.incrementAndGet()
+              val e = Event(c, dummyTimestamp, RemoveFromStore, hash, remoteAddress)
+              val s = DBIO.seq(events += e)
+              db.run(s).map(_ => Removed)
+          }
       }
   }
 
   def find(hash: SHA256Hash): Future[Option[File]] =
     removed(hash).flatMap {
-      case true  => Future(None)
+      case true => Future(None)
       case false =>
         val q = files.filter(_.hash === hash)
         db.run(q.result.headOption)
@@ -156,35 +160,37 @@ final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionCo
         val removes = events.filter(_.operation === (RemoveFromStore: Operation))
         val adds = for {
           r <- removes
-          e <- events if r.hash === e.hash && e.operation === (AddToStore: Operation) && r.timestamp > e.timestamp
+          e <- events if r.hash === e.hash && e.operation === (AddToStore: Operation) &&
+          r.timestamp > e.timestamp
         } yield e
         val removedTxs = removes.map(_.tx) union adds.map(_.tx)
         for {
-          (f, e) <- files join events on (_.hash === _.hash) if !removedTxs.filter(_ === e.tx).exists
+          (f, e) <- files join events on (_.hash === _.hash)
+          if !removedTxs.filter(_ === e.tx).exists
         } yield (f, e)
       }
-      def filterByHash: Q => Q = {
-        (in: Q) => hash match {
+      def filterByHash: Q => Q = { (in: Q) =>
+        hash match {
           case Some(h) => in.filter(_._1.hash === h)
           case None    => in
         }
       }
-      def filterByName: Q => Q = {
-        (in: Q) => name match {
+      def filterByName: Q => Q = { (in: Q) =>
+        name match {
           case Some(n) => in.filter(_._1.name like s"%$n%")
           case None    => in
         }
       }
-      def filterByAddress: Q => Q = {
-        (in: Q) => address match {
+      def filterByAddress: Q => Q = { (in: Q) =>
+        address match {
           case Some(address: InetAddress) =>
             val criteriaAddress: Option[InetAddress] = Option(address)
             in.filter(r => r._2.remoteAddress === criteriaAddress)
-          case None              => in
+          case None => in
         }
       }
-      def filterByTx: Q => Q = {
-        (in: Q) => (txLo, txHi) match {
+      def filterByTx: Q => Q = { (in: Q) =>
+        (txLo, txHi) match {
           case (Some(lo), Some(hi)) =>
             in.filter(_._2.tx >= txLo).filter(_._2.tx <= txHi)
           case (Some(lo), None) =>
@@ -195,8 +201,8 @@ final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionCo
             in
         }
       }
-      def filterByTimestamp: Q => Q = {
-        (in: Q) => (timeLo, timeHi) match {
+      def filterByTimestamp: Q => Q = { (in: Q) =>
+        (timeLo, timeHi) match {
           case (Some(lo), Some(hi)) =>
             in.filter(_._2.timestamp >= timeLo).filter(_._2.timestamp <= timeHi)
           case (Some(lo), None) =>
@@ -207,8 +213,8 @@ final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionCo
             in
         }
       }
-      def sort: Q => Q = {
-        (in: Q) => (sortBy, sortOrder) match {
+      def sort: Q => Q = { (in: Q) =>
+        (sortBy, sortOrder) match {
           case (Tx, Ascending) =>
             in.sortBy(_._2.tx.asc)
           case (Tx, Descending) =>
@@ -227,11 +233,20 @@ final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionCo
             in.sortBy(_._2.remoteAddress.desc)
         }
       }
-      val filterAndSort = filterByHash andThen filterByName andThen filterByAddress andThen filterByTx andThen filterByTimestamp andThen sort
+      val filterAndSort =
+        filterByHash andThen filterByName andThen filterByAddress andThen filterByTx andThen filterByTimestamp andThen sort
       val composedQuery = filterAndSort(notRemoved)
       db.run(composedQuery.result).map { r =>
-        r.map { case (f: File, e: Event) =>
-          StoreQueryResponse(e.tx, e.timestamp, e.operation, e.remoteAddress, f.hash, f.name, f.contentType, f.length)
+        r.map {
+          case (f: File, e: Event) =>
+            StoreQueryResponse(e.tx,
+                               e.timestamp,
+                               e.operation,
+                               e.remoteAddress,
+                               f.hash,
+                               f.name,
+                               f.contentType,
+                               f.length)
         }
       }
   }

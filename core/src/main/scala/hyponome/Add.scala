@@ -19,15 +19,14 @@ package hyponome
 import java.net.InetAddress
 import java.nio.file.Path
 
-final case class Add(
-  hostname: String,
-  port: Int,
-  file: Path,
-  hash: SHA256Hash,
-  name: Option[String],
-  contentType: String,
-  length: Long,
-  remoteAddress: Option[InetAddress]) {
+final case class Add(hostname: String,
+                     port: Int,
+                     file: Path,
+                     hash: SHA256Hash,
+                     name: Option[String],
+                     contentType: String,
+                     length: Long,
+                     remoteAddress: Option[InetAddress]) {
 
   def mergeWithFile(f: File): Add = {
     Add(hostname, port, file, f.hash, f.name, f.contentType, f.length, remoteAddress)

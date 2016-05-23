@@ -48,24 +48,21 @@ import hyponome.http.JsonProtocol._
 import hyponome.test._
 import hyponome.util._
 
-class ServiceSpec extends WordSpecLike
-    with Matchers
-    with PropertyChecks {
+class ServiceSpec extends WordSpecLike with Matchers with PropertyChecks {
 
   val logger: Logger = LoggerFactory.getLogger(classOf[ServiceSpec])
 
   def createTmpDir(): JPath = JFiles.createTempDirectory("hyponome-test-downloads-")
-  val tmpDir: JPath         = createTmpDir()
+  val tmpDir: JPath = createTmpDir()
 
   val clientConfig: BlazeClientConfig =
     BlazeClientConfig.defaultConfig.copy(sslContext = Some(clientContext))
 
   val client = PooledHttp1Client(config = clientConfig)
 
-  val url = Uri(
-    scheme = Some(CaseInsensitiveString("https")),
-    authority = Some(Authority(host = RegName(testHostname), port = Some(testPort))),
-    path = "/objects")
+  val url = Uri(scheme = Some(CaseInsensitiveString("https")),
+                authority = Some(Authority(host = RegName(testHostname), port = Some(testPort))),
+                path = "/objects")
 
   private def fileToEntity(f: JFile): Entity = {
     val bitVector = BitVector.fromMmap(new java.io.FileInputStream(f).getChannel)
@@ -79,11 +76,10 @@ class ServiceSpec extends WordSpecLike
     val multipart = Multipart(parts)
     val entity    = EntityEncoder[Multipart].toEntity(multipart)
     val body      = entity.unsafePerformSync.body
-    Request(
-      method  = Method.POST,
-      uri     = url,
-      body    = body,
-      headers = multipart.headers)
+    Request(method = Method.POST,
+            uri = url,
+            body = body,
+            headers = multipart.headers)
   }
 
   def handleGet(r: Response): Task[SHA256Hash] = {
@@ -94,13 +90,13 @@ class ServiceSpec extends WordSpecLike
   }
 
   def fetchAndHash(ss: Vector[String]): Task[List[SHA256Hash]] =
-    Task.gatherUnordered(
-      ss.map { (s: String) =>
-        client.get(s)(handleGet)
-      })
+    Task.gatherUnordered(ss.map { (s: String) =>
+    client.get(s)(handleGet)
+  })
 
   def upAndDown(r: Request): Task[List[SHA256Hash]] =
-    client.fetchAs(r)(EntityDecoder[Json])
+    client
+      .fetchAs(r)(EntityDecoder[Json])
       .map(_.as[Vector[AddResponse]].toOption)
       .map(_.getOrElse(Vector.empty))
       .map(_.map(_.file.toString))
@@ -110,7 +106,8 @@ class ServiceSpec extends WordSpecLike
     upAndDown(createRequest(ps))
 
   def withService(testCode: Task[Unit]): Task[Unit] = {
-    val testConfig: ServiceConfig = ServiceConfig(makeTestDB, testStorePath, testHostname, testPort, "file")
+    val testConfig: ServiceConfig = ServiceConfig(
+      makeTestDB, testStorePath, testHostname, testPort, "file")
     for {
       db  <- Task.now(new SQLFileDB(testConfig.db))
       _   <- futureToTask(db.init())
@@ -138,13 +135,13 @@ class ServiceSpec extends WordSpecLike
       Task.delay {
         forAll(genNonEmptyByteArray) { (ba: Array[Byte]) =>
           (for {
-             t <- Task.now(JFiles.createTempDirectory("hyponome-test-uploads-"))
-             h <- Task.now(sha256Hex(ba))
-             p <- Task.now(t.resolve(h))
-             _ <- Task.now(JFiles.write(p, ba))
-             _ <- Task.now(logger.info(s"Round-tripping $p"))
-             r <- roundTrip(List(p))
-           } yield (r shouldEqual List(SHA256Hash(h)))).unsafePerformSync
+            t <- Task.now(JFiles.createTempDirectory("hyponome-test-uploads-"))
+            h <- Task.now(sha256Hex(ba))
+            p <- Task.now(t.resolve(h))
+            _ <- Task.now(JFiles.write(p, ba))
+            _ <- Task.now(logger.info(s"Round-tripping $p"))
+            r <- roundTrip(List(p))
+          } yield (r shouldEqual List(SHA256Hash(h)))).unsafePerformSync
         }
       }
     }.unsafePerformSync

@@ -20,14 +20,16 @@ import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
 
 sealed trait Operation extends Product with Serializable
-case object AddToStore extends Operation
+case object AddToStore      extends Operation
 case object RemoveFromStore extends Operation
 
 object Operation {
   implicit val operationColumnType: BaseColumnType[Operation] =
-    MappedColumnType.base[Operation, String](
-      { case AddToStore      => "AddToStore";
-        case RemoveFromStore => "RemoveFromStore" },
-      { case "AddToStore"      => AddToStore
-        case "RemoveFromStore" => RemoveFromStore })
+    MappedColumnType.base[Operation, String]({
+      case AddToStore      => "AddToStore";
+      case RemoveFromStore => "RemoveFromStore"
+    }, {
+      case "AddToStore"      => AddToStore
+      case "RemoveFromStore" => RemoveFromStore
+    })
 }

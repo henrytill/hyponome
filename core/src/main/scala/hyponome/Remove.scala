@@ -18,6 +18,4 @@ package hyponome
 
 import java.net.InetAddress
 
-final case class Remove(
-  hash: SHA256Hash,
-  remoteAddress: Option[InetAddress])
+final case class Remove(hash: SHA256Hash, remoteAddress: Option[InetAddress])

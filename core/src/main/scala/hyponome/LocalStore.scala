@@ -25,8 +25,8 @@ import hyponome.file._
 import hyponome.db.query._
 import hyponome.util._
 
-class LocalStore(dbInst: FileDB[Future], fileStoreInst: FileStore[Task, Path])
-                (implicit ec: ExecutionContext)
+class LocalStore(
+  dbInst: FileDB[Future], fileStoreInst: FileStore[Task, Path])(implicit ec: ExecutionContext)
     extends Store[Task, Future, Path] {
 
   val db: FileDB[Future] = dbInst
@@ -37,28 +37,47 @@ class LocalStore(dbInst: FileDB[Future], fileStoreInst: FileStore[Task, Path])
   def count: Task[Long]                                   = futureToTask(db.countFiles)
   def query(q: StoreQuery): Task[Seq[StoreQueryResponse]] = futureToTask(db.runQuery(q))
 
-  private def addToDB(a: Add): Task[AddStatus] = futureToTask(db.add(a))
+  private def addToFileDB(a: Add): Task[AddStatus] = futureToTask(db.add(a))
 
   private def addToFileStore(a: Add): PartialFunction[AddStatus, Task[AddResponse]] = {
-    case Exists => info(a.hash).flatMap {
-      case Some(f) => Task.now(AddResponse(a.mergeWithFile(f), Exists))
-      case None    => Task.fail(new RuntimeException)
-    }
-    case Added => fileStore.add(a).map {
-      case Exists  => AddResponse(a, Exists)
-      case Added => AddResponse(a, Added)
-    }
+    case Exists =>
+      info(a.hash).flatMap {
+        case Some(f) => Task.now(AddResponse(a.mergeWithFile(f), Exists))
+        case None    => Task.fail(new RuntimeException)
+      }
+    case Added =>
+      fileStore.add(a).map {
+        case Exists => AddResponse(a, Exists)
+        case Added  => AddResponse(a, Added)
+      }
+  }
+
+  private def removeFromFileDB(r: Remove): Task[RemoveStatus] = futureToTask(db.remove(r))
+
+  private def removeFromFileStore(r: Remove): PartialFunction[RemoveStatus, Task[RemoveResponse]] = {
+    case Removed =>
+      fileStore.remove(r.hash).flatMap {
+        case Removed  => Task.now(RemoveResponse(Removed, r.hash))
+        case NotFound => Task.now(RemoveResponse(NotFound, r.hash))
+      }
+    case NotFound => Task.now(RemoveResponse(NotFound, r.hash))
   }
 
   def add(a: Add): Task[AddResponse] =
     for {
-      x <- addToDB(a)
-      y <- addToFileStore(a)(x)
-    } yield y
+      as1 <- addToFileDB(a)
+      as2 <- addToFileStore(a)(as1)
+    } yield as2
+
+  def remove(r: Remove): Task[RemoveResponse] =
+    for {
+      rs1 <- removeFromFileDB(r)
+      rs2 <- removeFromFileStore(r)(rs1)
+    } yield rs2
 
   def exists(h: SHA256Hash): Task[Boolean] =
     info(h).flatMap {
-      case None    => Task.now(false)
+      case None => Task.now(false)
       case Some(_) =>
         val p: Path = fileStore.getFileLocation(h)
         fileStore.existsInStore(p)
@@ -69,13 +88,4 @@ class LocalStore(dbInst: FileDB[Future], fileStoreInst: FileStore[Task, Path])
       case true  => Some(fileStore.getFileLocation(h).toFile)
       case false => None
     }
-
-  def remove(d: Remove): Task[RemoveResponse] =
-    for {
-      ds1 <- futureToTask(db.remove(d))
-      ds2 <- ds1 match {
-        case Removed      => fileStore.remove(d.hash)
-        case m @ NotFound => Task.now(m)
-      }
-    } yield RemoveResponse(ds2, d.hash)
 }

@@ -44,10 +44,8 @@ object Events {
       case null      => None
     }
 
-  implicit val inetAddressColumnType: BaseColumnType[Option[InetAddress]] =
-    MappedColumnType.base[Option[InetAddress], String](
-      opInetAddressToString,
-      stringToOpInetAddress)
+  implicit val inetAddressColumnType: BaseColumnType[Option[InetAddress]] = MappedColumnType
+    .base[Option[InetAddress], String](opInetAddressToString, stringToOpInetAddress)
 }
 
 class Events(tag: Tag) extends Table[Event](tag, "EVENTS") {

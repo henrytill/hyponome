@@ -35,6 +35,7 @@ lazy val commonSettings = Seq(
   scalacOptions in (Compile, console) := consoleOptions,
   scalacOptions in (Test, console) := consoleOptions,
   fork in Test := true,
+  scalafmtConfig := Some(file(".scalafmt")),
   wartremoverErrors in (Compile, compile) ++= Warts.allBut(
     Wart.Any,
     Wart.DefaultArguments,

@@ -40,36 +40,32 @@ package object test {
     fs.getPath(s)
   }
 
-  val testPDFHash = SHA256Hash(
-    "eba205fb9114750b2ce83db62f9c2a15dd068bcba31a2de32d8df7f7c8d85441")
+  val testPDFHash = SHA256Hash("eba205fb9114750b2ce83db62f9c2a15dd068bcba31a2de32d8df7f7c8d85441")
 
   val ip: Option[InetAddress] = Some(InetAddress.getByName("192.168.1.253"))
 
-  val add = Add(
-    testHostname,
-    testPort,
-    testPDF,
-    testPDFHash,
-    Some(testPDF.toFile.getName),
-    "application/octet-stream",
-    testPDF.toFile.length,
-    ip)
+  val add = Add(testHostname,
+                testPort,
+                testPDF,
+                testPDFHash,
+                Some(testPDF.toFile.getName),
+                "application/octet-stream",
+                testPDF.toFile.length,
+                ip)
 
-  val added = AddResponse(
-    Added,
-    getURI(add.hostname, add.port, add.hash, add.name),
-    add.hash,
-    add.name,
-    add.contentType,
-    add.length)
+  val added = AddResponse(Added,
+                          getURI(add.hostname, add.port, add.hash, add.name),
+                          add.hash,
+                          add.name,
+                          add.contentType,
+                          add.length)
 
-  val existed = AddResponse(
-    Exists,
-    getURI(add.hostname, add.port, add.hash, add.name),
-    add.hash,
-    add.name,
-    add.contentType,
-    add.length)
+  val existed = AddResponse(Exists,
+                            getURI(add.hostname, add.port, add.hash, add.name),
+                            add.hash,
+                            add.name,
+                            add.contentType,
+                            add.length)
 
   val remove = Remove(add.hash, add.remoteAddress)
 
@@ -80,22 +76,20 @@ package object test {
   def makeDbName(): String = randomUUID.toString()
 
   def makeTestDB: Function0[DatabaseDef] = { () =>
-    Database.forURL(
-      url = s"jdbc:h2:mem:${makeDbName()};CIPHER=AES",
-      user = "hyponome",
-      password = "hyponome hyponome", // password = "filepwd userpwd"
-      driver = "org.h2.Driver",
-      keepAliveConnection = true)
+    Database.forURL(url = s"jdbc:h2:mem:${makeDbName()};CIPHER=AES",
+                    user = "hyponome",
+                    password = "hyponome hyponome", // password = "filepwd userpwd"
+                    driver = "org.h2.Driver",
+                    keepAliveConnection = true)
   }
 
   def makePersistentDBConfig(location: Path): Function0[DatabaseDef] = { () =>
     val p: String = location.toString
-    Database.forURL(
-      url = s"jdbc:h2:$p;CIPHER=AES",
-      user = "hyponome",
-      password = "hyponome hyponome", // password = "filepwd userpwd"
-      driver = "org.h2.Driver",
-      keepAliveConnection = true)
+    Database.forURL(url = s"jdbc:h2:$p;CIPHER=AES",
+                    user = "hyponome",
+                    password = "hyponome hyponome", // password = "filepwd userpwd"
+                    driver = "org.h2.Driver",
+                    keepAliveConnection = true)
   }
 
   /**

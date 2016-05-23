@@ -16,8 +16,4 @@
 
 package hyponome
 
-final case class File(
-  hash: SHA256Hash,
-  name: Option[String],
-  contentType: String,
-  length: Long)
+final case class File(hash: SHA256Hash, name: Option[String], contentType: String, length: Long)

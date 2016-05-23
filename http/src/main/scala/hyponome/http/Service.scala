@@ -35,30 +35,29 @@ import hyponome.util._
 import JsonProtocol._
 
 final class Service[FileStoreIO[_], FileDBIO[_], FileLocation](
-  cfg: ServiceConfig,
-  store: Store[FileStoreIO, FileDBIO, FileLocation])(
+  cfg: ServiceConfig, store: Store[FileStoreIO, FileDBIO, FileLocation])(
   implicit ec: ExecutionContext) {
 
   private def createTmpDir(): JPath = JFiles.createTempDirectory("hyponome")
-  private val tmpDir: JPath         = createTmpDir()
+  private val tmpDir: JPath = createTmpDir()
 
-  private def handlePart(r: Request, p: Part)(implicit ec: ExecutionContext): Task[Option[AddResponse]] = {
+  private def handlePart(r: Request, p: Part): Task[Option[AddResponse]] = {
     val Part(hs, body) = p
-    val parameters: Option[Map[String, String]] = hs.get(headers.`Content-Disposition`).map(_.parameters)
+    val parameters: Option[Map[String, String]] =
+      hs.get(headers.`Content-Disposition`).map(_.parameters)
     // get the "name" parameter
     parameters.flatMap(_.get("name")) match {
       // check if it matches the uploadKey specified in the config
       case Some(x) if x == cfg.uploadKey =>
         // if it does, get the filename, content-type, and address from request/headers
-        val filename: Option[String] =
-          parameters
-            .flatMap(_.get("filename"))
-            .flatMap((x: String) => if (x != "-") Some(x) else None)
-        val contentType: String =
-          hs.get(headers.`Content-Type`)
-            .map(_.mediaType)
-            .map((m: MediaType) => s"${m.mainType}/${m.subType}")
-            .getOrElse("application/octet-stream")
+        val filename: Option[String] = parameters
+          .flatMap(_.get("filename"))
+          .flatMap((x: String) => if (x != "-") Some(x) else None)
+        val contentType: String = hs
+          .get(headers.`Content-Type`)
+          .map(_.mediaType)
+          .map((m: MediaType) => s"${m.mainType}/${m.subType}")
+          .getOrElse("application/octet-stream")
         val inetAddress: Option[InetAddress] = r.remote.map(_.getAddress())
         // create a path where the upload will be temporarily copied
         val tempFilePath: JPath = tmpDir.resolve(s"${randomUUID}.tmp")
@@ -67,9 +66,15 @@ final class Service[FileStoreIO[_], FileDBIO[_], FileLocation](
           b.to(fileChunkW(p.toFile.toString)).run.map((_: Unit) => p)
         }
         def createAdd(hash: SHA256Hash, file: JPath, filename: Option[String]): Task[Add] =
-          Task.now {
-            Add(cfg.hostname, cfg.port, file, hash, filename, contentType, file.toFile.length, inetAddress)
-          }
+          Task.now(
+            Add(cfg.hostname,
+                cfg.port,
+                file,
+                hash,
+                filename,
+                contentType,
+                file.toFile.length,
+                inetAddress))
         // add the file to the store and yield a Task[Option[AddResponse]]
         for {
           p <- bodyToFile(body, tempFilePath)
@@ -90,6 +95,7 @@ final class Service[FileStoreIO[_], FileDBIO[_], FileLocation](
     }
   }
 
+  // format: off
   private object Qhash          extends OptionalQueryParamDecoderMatcher[String]("hash")
   private object Qname          extends OptionalQueryParamDecoderMatcher[String]("name")
   private object QremoteAddress extends OptionalQueryParamDecoderMatcher[String]("remoteAddress")
@@ -99,17 +105,19 @@ final class Service[FileStoreIO[_], FileDBIO[_], FileLocation](
   private object QtimeHi        extends OptionalQueryParamDecoderMatcher[String]("timeHi")
   private object QsortBy        extends OptionalQueryParamDecoderMatcher[String]("sortBy")
   private object QsortOrder     extends OptionalQueryParamDecoderMatcher[String]("sortOrder")
+  // format: on
 
   val root = HttpService {
 
     case req @ GET -> Root / "objects" / hash =>
       val h: SHA256Hash = SHA256Hash(hash)
       store.info(h).flatMap {
-        case None    => NotFound()
-        case Some(f) => f.name match {
-          case None       => getFileInStore(req, h)
-          case Some(name) => PermanentRedirect(Uri(path = s"/objects/$hash/$name"))
-        }
+        case None => NotFound()
+        case Some(f) =>
+          f.name match {
+            case None       => getFileInStore(req, h)
+            case Some(name) => PermanentRedirect(Uri(path = s"/objects/$hash/$name"))
+          }
       }
 
     case req @ GET -> Root / "objects" / hash / filename =>
@@ -120,9 +128,9 @@ final class Service[FileStoreIO[_], FileDBIO[_], FileLocation](
       }
 
     case req @ DELETE -> Root / "objects" / hash =>
-      val h: SHA256Hash = SHA256Hash(hash)
-      val i: Option[InetAddress] = req.remote.map(_.getAddress())
-      val d: Remove = Remove(h, i)
+      val h: SHA256Hash                  = SHA256Hash(hash)
+      val i: Option[InetAddress]         = req.remote.map(_.getAddress())
+      val d: Remove                      = Remove(h, i)
       val response: Task[RemoveResponse] = store.remove(d)
       Ok(response.map(_.asJson.spaces2))
 
@@ -133,30 +141,31 @@ final class Service[FileStoreIO[_], FileDBIO[_], FileLocation](
         Ok(response.map(_.asJson.spaces2))
       }
 
-    case req @ GET -> Root / "objects"
-        :? Qhash(hash) +& Qname(name) +& QremoteAddress(remoteAddress)
-        +& QtxLo(txLo) +& QtxHi(txHi) +& QtimeLo(timeLo) +& QtimeHi(timeHi)
+    // format: off
+    case req @ GET -> Root / "objects" :? Qhash(hash)
+        +& Qname(name)     +& QremoteAddress(remoteAddress)
+        +& QtxLo(txLo)     +& QtxHi(txHi)
+        +& QtimeLo(timeLo) +& QtimeHi(timeHi)
         +& QsortBy(sortBy) +& QsortOrder(sortOrder) =>
-      val query: StoreQuery =
-        StoreQuery(
-          hash.map(SHA256Hash(_)),
-          name,
-          remoteAddress.map(InetAddress.getByName _),
-          txLo,
-          txHi,
-          timeLo.map(Timestamp.valueOf(_)),
-          timeHi.map(Timestamp.valueOf(_)),
-          sortBy match {
-            case Some("address") => Address
-            case Some("name")    => Name
-            case Some("time")    => Time
-            case _               => Tx
-          },
-          sortOrder match {
-            case Some("desc") => Descending
-            case _            => Ascending
-          })
+      val query: StoreQuery = StoreQuery(hash.map(SHA256Hash(_)),
+                                         name,
+                                         remoteAddress.map(InetAddress.getByName _),
+                                         txLo,
+                                         txHi,
+                                         timeLo.map(Timestamp.valueOf(_)),
+                                         timeHi.map(Timestamp.valueOf(_)),
+                                         sortBy match {
+                                           case Some("address") => Address
+                                           case Some("name")    => Name
+                                           case Some("time")    => Time
+                                           case _               => Tx
+                                         },
+                                         sortOrder match {
+                                           case Some("desc") => Descending
+                                           case _            => Ascending
+                                         })
       val response: Task[Seq[StoreQueryResponse]] = store.query(query)
       Ok(response.map(_.asJson.spaces2))
+      // format: on
   }
 }

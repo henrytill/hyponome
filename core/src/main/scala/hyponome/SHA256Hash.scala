@@ -25,7 +25,5 @@ final case class SHA256Hash(value: String) {
 
 object SHA256Hash {
   implicit val SHA256HashColumnType: BaseColumnType[SHA256Hash] =
-    MappedColumnType.base[SHA256Hash, String](
-      { case SHA256Hash(v: String) => v   },
-      { case (v: String) => SHA256Hash(v) })
+    MappedColumnType.base[SHA256Hash, String](_.toString, SHA256Hash(_))
 }

@@ -20,9 +20,8 @@ import java.net.InetAddress
 import java.sql.Timestamp
 import hyponome.SHA256Hash
 
-final case class Event(
-  tx: Long,
-  timestamp: Timestamp,
-  operation: Operation,
-  hash: SHA256Hash,
-  remoteAddress: Option[InetAddress])
+final case class Event(tx: Long,
+                       timestamp: Timestamp,
+                       operation: Operation,
+                       hash: SHA256Hash,
+                       remoteAddress: Option[InetAddress])

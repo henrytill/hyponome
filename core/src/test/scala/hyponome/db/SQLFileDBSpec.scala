@@ -36,8 +36,7 @@ class SQLFileDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       db <- Task.now(new SQLFileDB(makeTestDB))
       _  <- futureToTask(db.init())
     } yield db).unsafePerformSync
-    try { testCode(t); () }
-    finally t.close()
+    try { testCode(t); () } finally t.close()
   }
 
   def withPersistentDBConfig(testCode: (Function0[DatabaseDef], Path) => Any): Unit = {
@@ -59,114 +58,100 @@ class SQLFileDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       }
       """|returns a Future value of Success(Added) when adding a file that has
          |already been removed""".stripMargin in withDBInstance { t =>
-        t.add(add).flatMap { _ =>
-          t.remove(remove)
-        }.flatMap { _ =>
-          t.add(add)
-        }.futureValue should equal (Added)
+        t.add(add).flatMap(_ => t.remove(remove)).flatMap(_ => t.add(add)).futureValue should equal(
+          Added)
       }
       """|returns a Future value of Success(Exists) when adding a file that has
          |already been added""".stripMargin in withDBInstance { t =>
-        t.add(add).flatMap { _ =>
-          t.add(add)
-        }.futureValue should equal (Exists)
+        t.add(add).flatMap(_ => t.add(add)).futureValue should equal(Exists)
       }
     }
 
     "have a remove method" which {
       "returns a Future value of Success(Removed) when removing a file" in withDBInstance { t =>
-        t.add(add).flatMap { _ =>
-          t.remove(remove)
-        }.futureValue should equal (Removed)
+        t.add(add).flatMap(_ => t.remove(remove)).futureValue should equal(Removed)
       }
       """|returns a Future value of Success(NotFound) when removing a file that has
          |never been added""".stripMargin in withDBInstance { t =>
-        t.remove(remove).futureValue should equal (NotFound)
+        t.remove(remove).futureValue should equal(NotFound)
       }
       """|returns a Future value of Success(NotFound) when removing a file that has
          |already been removed""".stripMargin in withDBInstance { t =>
-        t.add(add).flatMap { _ =>
-          t.remove(remove)
-        }.flatMap { _ =>
-          t.remove(remove)
-        }.futureValue should equal (NotFound)
+        t.add(add).flatMap(_ => t.remove(remove)).flatMap(_ => t.remove(remove)).futureValue should equal(
+          NotFound)
       }
     }
 
     "have a find method" which {
       """|returns a Future value of a given File when called with an argument of a
          |file's hash that has never been added""".stripMargin in withDBInstance { t =>
-        t.find(add.hash).futureValue should equal (None)
+        t.find(add.hash).futureValue should equal(None)
       }
       """|returns a Future value of a given File when called with an argument of that
          |file's hash""".stripMargin in withDBInstance { t =>
-        t.add(add).flatMap { _ =>
-          t.find(add.hash)
-        }.futureValue should equal (Some(expected))
+        t.add(add).flatMap(_ => t.find(add.hash)).futureValue should equal(Some(expected))
       }
       """|returns a Future value of Failure(IllegalArgumentException) when called with
-         |an argument of the hash of a file that has been removed""".stripMargin in withDBInstance { t =>
-        t.add(add).flatMap { _ =>
-          t.remove(remove)
-        }.flatMap { _ =>
-          t.find(add.hash)
-        }.futureValue should equal (None)
+         |an argument of the hash of a file that has been removed""".stripMargin in withDBInstance {
+        t =>
+          t.add(add).flatMap(_ => t.remove(remove)).flatMap(_ => t.find(add.hash)).futureValue should equal(
+            None)
       }
     }
 
     "have a syncCounter method" which {
-      "returns a Future value of Unit and syncs the counter (1)" in withPersistentDBConfig { (c, p) =>
-        // initial db
-        val q: SQLFileDB = (for {
-          db <- Task.now(new SQLFileDB(c))
-          _  <- futureToTask(db.init())
-        } yield db).unsafePerformSync
-        val addRemoveFuture01 =
-          q.add(add)
-            .flatMap { _ => q.remove(remove) }
-            .flatMap { _ => q.add(add) }
-            .flatMap { _ => q.remove(remove) }
-        val tmp01: RemoveStatus = Await.result(addRemoveFuture01, 5.seconds)
-        q.close()
-        // re-open initial db
-        val r: SQLFileDB = (for {
-          db <- Task.now(new SQLFileDB(c))
-          _  <- futureToTask(db.init())
-        } yield db).unsafePerformSync
-        r.tx.get should equal (4)
-        deleteFolder(p.getParent)
+      "returns a Future value of Unit and syncs the counter (1)" in withPersistentDBConfig {
+        (c, p) =>
+          // initial db
+          val q: SQLFileDB = (for {
+            db <- Task.now(new SQLFileDB(c))
+            _  <- futureToTask(db.init())
+          } yield db).unsafePerformSync
+          val addRemoveFuture01 = q
+            .add(add)
+            .flatMap(_ => q.remove(remove))
+            .flatMap(_ => q.add(add))
+            .flatMap(_ => q.remove(remove))
+          val tmp01: RemoveStatus = Await.result(addRemoveFuture01, 5.seconds)
+          q.close()
+          // re-open initial db
+          val r: SQLFileDB = (for {
+            db <- Task.now(new SQLFileDB(c))
+            _  <- futureToTask(db.init())
+          } yield db).unsafePerformSync
+          r.tx.get should equal(4)
+          deleteFolder(p.getParent)
       }
-      "returns a Future value of Unit and syncs the counter (2)" in withPersistentDBConfig { (c, p) =>
-        // initial db
-        val q: SQLFileDB = (for {
-          db <- Task.now(new SQLFileDB(c))
-          _  <- futureToTask(db.init())
-        } yield db).unsafePerformSync
-        val addRemoveFuture01 =
-          q.add(add)
-            .flatMap { _ => q.remove(remove) }
-            .flatMap { _ => q.add(add) }
-            .flatMap { _ => q.remove(remove) }
-        val tmp01: RemoveStatus = Await.result(addRemoveFuture01, 5.seconds)
-        q.close()
-        // re-open initial db
-        val r: SQLFileDB = (for {
-          db <- Task.now(new SQLFileDB(c))
-          _  <- futureToTask(db.init())
-        } yield db).unsafePerformSync
-        val addRemoveFuture02 =
-          r.add(add)
-            .flatMap { _ => r.remove(remove) }
-            .flatMap { _ => r.add(add) }
-        val tmp02: AddStatus = Await.result(addRemoveFuture02, 5.seconds)
-        r.close()
-        // re-re-open initial db
-        val s: SQLFileDB = (for {
-          db <- Task.now(new SQLFileDB(c))
-          _  <- futureToTask(db.init())
-        } yield db).unsafePerformSync
-        s.tx.get should equal (7)
-        deleteFolder(p.getParent)
+      "returns a Future value of Unit and syncs the counter (2)" in withPersistentDBConfig {
+        (c, p) =>
+          // initial db
+          val q: SQLFileDB = (for {
+            db <- Task.now(new SQLFileDB(c))
+            _  <- futureToTask(db.init())
+          } yield db).unsafePerformSync
+          val addRemoveFuture01 = q
+            .add(add)
+            .flatMap(_ => q.remove(remove))
+            .flatMap(_ => q.add(add))
+            .flatMap(_ => q.remove(remove))
+          val tmp01: RemoveStatus = Await.result(addRemoveFuture01, 5.seconds)
+          q.close()
+          // re-open initial db
+          val r: SQLFileDB = (for {
+            db <- Task.now(new SQLFileDB(c))
+            _  <- futureToTask(db.init())
+          } yield db).unsafePerformSync
+          val addRemoveFuture02 =
+            r.add(add).flatMap(_ => r.remove(remove)).flatMap(_ => r.add(add))
+          val tmp02: AddStatus = Await.result(addRemoveFuture02, 5.seconds)
+          r.close()
+          // re-re-open initial db
+          val s: SQLFileDB = (for {
+            db <- Task.now(new SQLFileDB(c))
+            _  <- futureToTask(db.init())
+          } yield db).unsafePerformSync
+          s.tx.get should equal(7)
+          deleteFolder(p.getParent)
       }
     }
   }

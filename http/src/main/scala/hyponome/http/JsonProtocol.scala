@@ -59,76 +59,80 @@ object JsonProtocol {
 
   // https://gist.github.com/markhibberd/8231912
   private def tagged[A](tag: String, c: HCursor, decoder: DecodeJson[A]): DecodeResult[A] =
-    (c --\ tag).hcursor.fold(DecodeResult.fail[A]("Invalid tagged type", c.history))(decoder.decode)
+    (c --\ tag).hcursor
+      .fold(DecodeResult.fail[A]("Invalid tagged type", c.history))(decoder.decode)
 
   implicit def operationEncodeJson: EncodeJson[Operation] =
-    EncodeJson(_ match {
-                 case AddToStore      => Json("AddToStore" := (()))
-                 case RemoveFromStore => Json("RemoveFromStore" := (()))
-               })
+    EncodeJson { (o: Operation) =>
+      o match {
+        case AddToStore      => Json("AddToStore" := (()))
+        case RemoveFromStore => Json("RemoveFromStore" := (()))
+      }
+    }
 
   implicit def operationDecodeJson: DecodeJson[Operation] =
-    DecodeJson(c =>
+    DecodeJson { c =>
       tagged("AddToStore", c, implicitly[DecodeJson[Unit]].map(_ => AddToStore)) |||
-        tagged("RemoveFromStore", c, implicitly[DecodeJson[Unit]].map(_ => RemoveFromStore)))
+      tagged("RemoveFromStore", c, implicitly[DecodeJson[Unit]].map(_ => RemoveFromStore))
+    }
 
   implicit def addStatusEncodeJson: EncodeJson[AddStatus] =
-    EncodeJson(_ match {
-                 case Added  => Json("Added" := (()))
-                 case Exists => Json("Exists" := (()))
-               })
+    EncodeJson { (as: AddStatus) =>
+      as match {
+        case Added  => Json("Added" := (()))
+        case Exists => Json("Exists" := (()))
+      }
+    }
 
   implicit def addStatusDecodeJson: DecodeJson[AddStatus] =
-    DecodeJson(c =>
+    DecodeJson { c =>
       tagged("Added", c, implicitly[DecodeJson[Unit]].map(_ => Added)) |||
-        tagged("Exists", c, implicitly[DecodeJson[Unit]].map(_ => Exists)))
+      tagged("Exists", c, implicitly[DecodeJson[Unit]].map(_ => Exists))
+    }
 
   implicit def removeStatusEncodeJson: EncodeJson[RemoveStatus] =
-    EncodeJson(_ match {
-                 case Removed  => Json("Removed" -> jBool(true))
-                 case NotFound => Json("Removed" -> jBool(false))
-               })
+    EncodeJson { (rs: RemoveStatus) =>
+      rs match {
+        case Removed  => Json("Removed" -> jBool(true))
+        case NotFound => Json("Removed" -> jBool(false))
+      }
+    }
 
   implicit def removeStatusDecodeJson: DecodeJson[RemoveStatus] =
-    DecodeJson(c =>
+    DecodeJson { c =>
       tagged("Removed", c, implicitly[DecodeJson[Unit]].map(_ => Removed)) |||
-        tagged("NotFound", c, implicitly[DecodeJson[Unit]].map(_ => NotFound)))
+      tagged("NotFound", c, implicitly[DecodeJson[Unit]].map(_ => NotFound))
+    }
 
   implicit def AddCodecJson: CodecJson[Add] =
-    casecodec8(Add.apply, Add.unapply)(
-      "hostname",
-      "port",
-      "file",
-      "hash",
-      "name",
-      "contentType",
-      "length",
-      "remoteAddress")
+    casecodec8(Add.apply, Add.unapply)("hostname",
+                                       "port",
+                                       "file",
+                                       "hash",
+                                       "name",
+                                       "contentType",
+                                       "length",
+                                       "remoteAddress")
 
   implicit def AddResponseCodecJson: CodecJson[AddResponse] =
     casecodec6(AddResponse.apply, AddResponse.unapply)(
-      "status",
-      "file",
-      "hash",
-      "name",
-      "contentType",
-      "length")
+      "status", "file", "hash", "name", "contentType", "length")
 
   implicit def RemoveResponseCodecJson: CodecJson[RemoveResponse] =
     casecodec2(RemoveResponse.apply, RemoveResponse.unapply)("status", "hash")
 
   implicit def StoreQueryResponseCodecJson: CodecJson[StoreQueryResponse] =
-    casecodec8(StoreQueryResponse.apply, StoreQueryResponse.unapply)(
-      "tx",
-      "timestamp",
-      "operation",
-      "remoteAddress",
-      "hash",
-      "name",
-      "contentType",
-      "length")
+    casecodec8(StoreQueryResponse.apply, StoreQueryResponse.unapply)("tx",
+                                                                     "timestamp",
+                                                                     "operation",
+                                                                     "remoteAddress",
+                                                                     "hash",
+                                                                     "name",
+                                                                     "contentType",
+                                                                     "length")
 
   implicit def seqStoreQueryResponseEncodeJson[T]: EncodeJson[Seq[StoreQueryResponse]] =
-    EncodeJson((ds: Seq[StoreQueryResponse]) =>
-      jArray(ds.map(_.asJson).toList))
+    EncodeJson { (ds: Seq[StoreQueryResponse]) =>
+      jArray(ds.map(_.asJson).toList)
+    }
 }

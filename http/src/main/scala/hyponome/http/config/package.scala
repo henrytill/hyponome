@@ -23,23 +23,19 @@ import slick.driver.H2Driver.api.Database
 
 package object config {
 
-  private val defaults: Map[String, String] =
-    Map(
-      "file-store.path" -> "store",
-      "server.hostname" -> "localhost",
-      "server.port"     -> "4000",
-      "upload.key"      -> "file")
+  private val defaults: Map[String, String] = Map("file-store.path" -> "store",
+                                                  "server.hostname" -> "localhost",
+                                                  "server.port"     -> "4000",
+                                                  "upload.key"      -> "file")
 
   val fs: FileSystem                   = FileSystems.getDefault
   private val configFile: java.io.File = fs.getPath("hyponome.conf").toFile
   private val configDefault: Config    = ConfigFactory.parseMap(defaults.asJava)
   val config: Config                   = ConfigFactory.parseFile(configFile).withFallback(configDefault)
 
-  val defaultConfig =
-    ServiceConfig(
-      () => Database.forConfig("h2"),
-      fs.getPath(config.getString("file-store.path")),
-      config.getString("server.hostname"),
-      config.getInt("server.port"),
-      config.getString("upload.key"))
+  val defaultConfig = ServiceConfig(() => Database.forConfig("h2"),
+                                    fs.getPath(config.getString("file-store.path")),
+                                    config.getString("server.hostname"),
+                                    config.getInt("server.port"),
+                                    config.getString("upload.key"))
 }

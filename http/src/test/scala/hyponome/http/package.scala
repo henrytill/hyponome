@@ -32,13 +32,13 @@ package object http {
 
   private val fs: FileSystem = FileSystems.getDefault
 
-  private val keypath: String =
-    getClass.getClassLoader.getResource("keystore.jks").getPath()
+  private val keypath: String = getClass.getClassLoader.getResource("keystore.jks").getPath()
 
   private def builder: ServerBuilder with SSLSupport = BlazeBuilder
 
   def testServer(cfg: ServiceConfig, svc: HttpService): Task[Server] =
-    builder.withSSL(StoreInfo(keypath, "password"), keyManagerPassword = "password")
+    builder
+      .withSSL(StoreInfo(keypath, "password"), keyManagerPassword = "password")
       .mountService(svc)
       .bindHttp(cfg.port)
       .start
@@ -53,15 +53,19 @@ package object http {
     CertificateFactory.getInstance("X.509").generateCertificate(resourceStream(resourceName))
 
   val clientContext: SSLContext = {
-    val keystore: KeyStore                       = KeyStore.getInstance("JKS")
-    val keyManagerFactory: KeyManagerFactory     = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm)
-    val trustManagerFactory: TrustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
-    val context: SSLContext                      = SSLContext.getInstance("TLS")
+    val keystore: KeyStore = KeyStore.getInstance("JKS")
+    val keyManagerFactory: KeyManagerFactory =
+      KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm)
+    val trustManagerFactory: TrustManagerFactory =
+      TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
+    val context: SSLContext = SSLContext.getInstance("TLS")
     keystore.load(null, null)
     keystore.setCertificateEntry("ca", loadX509Certificate("hyponome.pem"))
     keyManagerFactory.init(keystore, "password".toCharArray)
     trustManagerFactory.init(keystore)
-    context.init(keyManagerFactory.getKeyManagers, trustManagerFactory.getTrustManagers, new SecureRandom)
+    context.init(keyManagerFactory.getKeyManagers,
+                 trustManagerFactory.getTrustManagers,
+                 new SecureRandom)
     context
   }
 }

@@ -21,12 +21,11 @@ import java.sql.Timestamp
 import hyponome._
 import hyponome.db.event._
 
-final case class StoreQueryResponse(
-  tx: Long,
-  timestamp: Timestamp,
-  operation: Operation,
-  remoteAddress: Option[InetAddress],
-  hash: SHA256Hash,
-  name: Option[String],
-  contentType: String,
-  length: Long)
+final case class StoreQueryResponse(tx: Long,
+                                    timestamp: Timestamp,
+                                    operation: Operation,
+                                    remoteAddress: Option[InetAddress],
+                                    hash: SHA256Hash,
+                                    name: Option[String],
+                                    contentType: String,
+                                    length: Long)
