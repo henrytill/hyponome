@@ -18,6 +18,7 @@ package hyponome.file
 
 import java.nio.file.Path
 import org.scalatest.{Matchers, WordSpecLike}
+import scalaz.concurrent.Task
 import hyponome._
 import hyponome.test._
 
@@ -27,6 +28,11 @@ class LocalFileStoreSpec extends WordSpecLike with Matchers {
     val t: LocalFileStore = new LocalFileStore(testStorePath)
     val _: Unit           = t.create().unsafePerformSync
     try { testCode(t); () } finally { deleteFolder(testStorePath); () }
+  }
+
+  private def checkExists(h: SHA256Hash, t: LocalFileStore)(a: AddStatus): Task[Boolean] = {
+    val destination: Path = t.getFileLocation(testPDFHash)
+    t.existsInStore(destination)
   }
 
   "An instance of LocalFileStore" must {
@@ -43,12 +49,7 @@ class LocalFileStoreSpec extends WordSpecLike with Matchers {
     "have an existsInStore method" which {
       "completes with true if a file exists at the specified path in the file store" in withLocalFileStore {
         t =>
-          t.add(add)
-            .flatMap { p =>
-              val destination: Path = t.getFileLocation(testPDFHash)
-              t.existsInStore(destination)
-            }
-            .unsafePerformSync should equal(true)
+          t.add(add).flatMap(checkExists(testPDFHash, t)).unsafePerformSync should equal(true)
       }
       "completes with false if a file doesn't exist at the specified path in the file store" in withLocalFileStore {
         t =>
