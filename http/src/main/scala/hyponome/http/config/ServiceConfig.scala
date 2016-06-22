@@ -20,4 +20,4 @@ import java.nio.file.Path
 import slick.driver.H2Driver.backend.DatabaseDef
 
 final case class ServiceConfig(
-  db: Function0[DatabaseDef], store: Path, hostname: String, port: Int, uploadKey: String)
+    db: Function0[DatabaseDef], store: Path, hostname: String, port: Int, uploadKey: String)

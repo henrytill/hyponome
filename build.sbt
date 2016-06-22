@@ -43,7 +43,7 @@ lazy val commonSettings = Seq(
     Wart.NonUnitStatements,
     Wart.Nothing,
     Wart.Null,
-    Wart.Throw))
+    Wart.Throw)) ++ reformatOnCompileSettings
 
 lazy val root = (project in file("."))
   .aggregate(core, http)
