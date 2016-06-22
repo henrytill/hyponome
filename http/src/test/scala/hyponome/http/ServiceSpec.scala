@@ -90,13 +90,11 @@ class ServiceSpec extends WordSpecLike with Matchers with PropertyChecks {
   }
 
   def fetchAndHash(ss: Vector[String]): Task[List[SHA256Hash]] =
-    Task.gatherUnordered(ss.map { (s: String) =>
-    client.get(s)(handleGet)
-  })
+    Task.gatherUnordered(ss.map((s: String) => client.get(s)(handleGet)))
 
   def upAndDown(r: Request): Task[List[SHA256Hash]] =
     client
-      .fetchAs(r)(EntityDecoder[Json])
+      .expect(r)(EntityDecoder[Json])
       .map(_.as[Vector[AddResponse]].toOption)
       .map(_.getOrElse(Vector.empty))
       .map(_.map(_.file.toString))
