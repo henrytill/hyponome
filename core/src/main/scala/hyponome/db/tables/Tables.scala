@@ -22,6 +22,7 @@ import slick.driver.H2Driver.api._
 import hyponome._
 import hyponome.db.event._
 
+@SuppressWarnings(Array("org.wartremover.warts.Nothing"))
 class Files(tag: Tag) extends Table[File](tag, "FILES") {
   def hash        = column[SHA256Hash]("HASH", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
   def name        = column[Option[String]]("NAME")
@@ -32,12 +33,14 @@ class Files(tag: Tag) extends Table[File](tag, "FILES") {
 
 object Events {
 
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
   private def opInetAddressToString(ina: Option[InetAddress]): String =
     ina match {
       case Some(ina: InetAddress) => ina.getHostAddress
       case None                   => null
     }
 
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
   private def stringToOpInetAddress(s: String): Option[InetAddress] =
     s match {
       case x: String => Some(InetAddress.getByName(x))
@@ -48,6 +51,7 @@ object Events {
     .base[Option[InetAddress], String](opInetAddressToString, stringToOpInetAddress)
 }
 
+@SuppressWarnings(Array("org.wartremover.warts.Nothing"))
 class Events(tag: Tag) extends Table[Event](tag, "EVENTS") {
   import Events._
   def tx            = column[Long]("TX", O.PrimaryKey)

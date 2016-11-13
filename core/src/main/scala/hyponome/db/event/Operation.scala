@@ -19,7 +19,7 @@ package hyponome.db.event
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
 
-sealed trait Operation extends Product with Serializable
+sealed trait Operation      extends Product with Serializable
 case object AddToStore      extends Operation
 case object RemoveFromStore extends Operation
 

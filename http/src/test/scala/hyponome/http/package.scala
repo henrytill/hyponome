@@ -32,7 +32,7 @@ package object http {
 
   private val fs: FileSystem = FileSystems.getDefault
 
-  private val keypath: String = getClass.getClassLoader.getResource("keystore.jks").getPath()
+  private val keypath: String = getClass.getClassLoader.getResource("keystore.jks").getPath
 
   private def builder: ServerBuilder with SSLSupport = BlazeBuilder
 
@@ -43,6 +43,7 @@ package object http {
       .bindHttp(cfg.port)
       .start
 
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
   private def resourceStream(resourceName: String): InputStream = {
     val is = getClass.getClassLoader.getResourceAsStream(resourceName)
     require(is ne null, s"Resource $resourceName not found")
@@ -52,6 +53,7 @@ package object http {
   private def loadX509Certificate(resourceName: String): Certificate =
     CertificateFactory.getInstance("X.509").generateCertificate(resourceStream(resourceName))
 
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
   val clientContext: SSLContext = {
     val keystore: KeyStore = KeyStore.getInstance("JKS")
     val keyManagerFactory: KeyManagerFactory =

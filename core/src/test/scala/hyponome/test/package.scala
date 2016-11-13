@@ -73,9 +73,9 @@ package object test {
 
   def makeCounter(): AtomicLong = new AtomicLong()
 
-  def makeDbName(): String = randomUUID.toString()
+  def makeDbName(): String = randomUUID.toString
 
-  def makeTestDB: Function0[DatabaseDef] = { () =>
+  def makeTestDB: () => DatabaseDef = { () =>
     Database.forURL(url = s"jdbc:h2:mem:${makeDbName()};CIPHER=AES",
                     user = "hyponome",
                     password = "hyponome hyponome", // password = "filepwd userpwd"
@@ -83,7 +83,8 @@ package object test {
                     keepAliveConnection = true)
   }
 
-  def makePersistentDBConfig(location: Path): Function0[DatabaseDef] = { () =>
+  @SuppressWarnings(Array("org.wartremover.warts.ToString"))
+  def makePersistentDBConfig(location: Path): () => DatabaseDef = { () =>
     val p: String = location.toString
     Database.forURL(url = s"jdbc:h2:$p;CIPHER=AES",
                     user = "hyponome",

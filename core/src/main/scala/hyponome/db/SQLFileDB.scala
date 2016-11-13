@@ -31,7 +31,7 @@ import hyponome.db.tables.Events._
 import hyponome.db.query._
 import hyponome.db.event._
 
-final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionContext)
+final class SQLFileDB(dbConfig: () => DatabaseDef)(implicit ec: ExecutionContext)
     extends FileDB[Future] {
 
   type Q = Query[(Files, Events), (File, Event), Seq]
@@ -57,6 +57,7 @@ final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionCo
     }
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
   private def maxTx: Future[Option[Long]] = {
     val q = events.map(_.tx).max
     db.run(q.result)
@@ -152,6 +153,7 @@ final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionCo
     db.run(q.result).map(_.longValue)
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
   def runQuery(q: StoreQuery): Future[Seq[StoreQueryResponse]] = q match {
     case StoreQuery(None, None, None, None, None, None, None, _, _) =>
       Future(Seq())
@@ -161,7 +163,7 @@ final class SQLFileDB(dbConfig: Function0[DatabaseDef])(implicit ec: ExecutionCo
         val adds = for {
           r <- removes
           e <- events if r.hash === e.hash && e.operation === (AddToStore: Operation) &&
-          r.timestamp > e.timestamp
+            r.timestamp > e.timestamp
         } yield e
         val removedTxs = removes.map(_.tx) union adds.map(_.tx)
         for {

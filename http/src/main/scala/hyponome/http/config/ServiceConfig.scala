@@ -19,5 +19,8 @@ package hyponome.http.config
 import java.nio.file.Path
 import slick.driver.H2Driver.backend.DatabaseDef
 
-final case class ServiceConfig(
-    db: Function0[DatabaseDef], store: Path, hostname: String, port: Int, uploadKey: String)
+final case class ServiceConfig(db: () => DatabaseDef,
+                               store: Path,
+                               hostname: String,
+                               port: Int,
+                               uploadKey: String)

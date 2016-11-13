@@ -17,7 +17,7 @@
 package hyponome
 
 sealed trait RemoveStatus extends Product with Serializable
-case object Removed  extends RemoveStatus
-case object NotFound extends RemoveStatus
+case object Removed       extends RemoveStatus
+case object NotFound      extends RemoveStatus
 
 final case class RemoveResponse(status: RemoveStatus, hash: SHA256Hash)

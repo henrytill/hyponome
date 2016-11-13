@@ -21,7 +21,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpecLike}
 import org.scalatest.time.{Millis, Span}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await}
+import scala.concurrent.Await
 import scala.concurrent.duration._
 import scalaz.concurrent.Task
 import slick.driver.H2Driver.backend.DatabaseDef
@@ -36,13 +36,15 @@ class SQLFileDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       db <- Task.now(new SQLFileDB(makeTestDB))
       _  <- futureToTask(db.init())
     } yield db).unsafePerformSync
-    try { testCode(t); () } finally t.close()
+    try {
+      val _: Any = testCode(t)
+    } finally t.close()
   }
 
-  def withPersistentDBConfig(testCode: (Function0[DatabaseDef], Path) => Any): Unit = {
-    val p  = fs.getPath("/tmp/hyponome/" + makeDbName())
-    val db = makePersistentDBConfig(p)
-    testCode(db, p); ()
+  def withPersistentDBConfig(testCode: (() => DatabaseDef, Path) => Any): Unit = {
+    val p      = fs.getPath("/tmp/hyponome/" + makeDbName())
+    val db     = makePersistentDBConfig(p)
+    val _: Any = testCode(db, p)
   }
 
   implicit val patience: PatienceConfig = PatienceConfig(
@@ -58,8 +60,10 @@ class SQLFileDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       }
       """|returns a Future value of Success(Added) when adding a file that has
          |already been removed""".stripMargin in withDBInstance { t =>
-        t.add(add).flatMap(_ => t.remove(remove)).flatMap(_ => t.add(add)).futureValue should equal(
-          Added)
+        t.add(add)
+          .flatMap(_ => t.remove(remove))
+          .flatMap(_ => t.add(add))
+          .futureValue should equal(Added)
       }
       """|returns a Future value of Success(Exists) when adding a file that has
          |already been added""".stripMargin in withDBInstance { t =>
@@ -77,8 +81,10 @@ class SQLFileDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       }
       """|returns a Future value of Success(NotFound) when removing a file that has
          |already been removed""".stripMargin in withDBInstance { t =>
-        t.add(add).flatMap(_ => t.remove(remove)).flatMap(_ => t.remove(remove)).futureValue should equal(
-          NotFound)
+        t.add(add)
+          .flatMap(_ => t.remove(remove))
+          .flatMap(_ => t.remove(remove))
+          .futureValue should equal(NotFound)
       }
     }
 
@@ -94,17 +100,19 @@ class SQLFileDBSpec extends WordSpecLike with Matchers with ScalaFutures {
       """|returns a Future value of Failure(IllegalArgumentException) when called with
          |an argument of the hash of a file that has been removed""".stripMargin in withDBInstance {
         t =>
-          t.add(add).flatMap(_ => t.remove(remove)).flatMap(_ => t.find(add.hash)).futureValue should equal(
-            None)
+          t.add(add)
+            .flatMap(_ => t.remove(remove))
+            .flatMap(_ => t.find(add.hash))
+            .futureValue should equal(None)
       }
     }
 
     "have a syncCounter method" which {
       "returns a Future value of Unit and syncs the counter (1)" in withPersistentDBConfig {
-        (c, p) =>
+        (databaseDef, path) =>
           // initial db
           val q: SQLFileDB = (for {
-            db <- Task.now(new SQLFileDB(c))
+            db <- Task.now(new SQLFileDB(databaseDef))
             _  <- futureToTask(db.init())
           } yield db).unsafePerformSync
           val addRemoveFuture01 = q
@@ -116,17 +124,17 @@ class SQLFileDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           q.close()
           // re-open initial db
           val r: SQLFileDB = (for {
-            db <- Task.now(new SQLFileDB(c))
+            db <- Task.now(new SQLFileDB(databaseDef))
             _  <- futureToTask(db.init())
           } yield db).unsafePerformSync
           r.tx.get should equal(4)
-          deleteFolder(p.getParent)
+          deleteFolder(path.getParent)
       }
       "returns a Future value of Unit and syncs the counter (2)" in withPersistentDBConfig {
-        (c, p) =>
+        (databaseDef, path) =>
           // initial db
           val q: SQLFileDB = (for {
-            db <- Task.now(new SQLFileDB(c))
+            db <- Task.now(new SQLFileDB(databaseDef))
             _  <- futureToTask(db.init())
           } yield db).unsafePerformSync
           val addRemoveFuture01 = q
@@ -138,7 +146,7 @@ class SQLFileDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           q.close()
           // re-open initial db
           val r: SQLFileDB = (for {
-            db <- Task.now(new SQLFileDB(c))
+            db <- Task.now(new SQLFileDB(databaseDef))
             _  <- futureToTask(db.init())
           } yield db).unsafePerformSync
           val addRemoveFuture02 =
@@ -147,11 +155,11 @@ class SQLFileDBSpec extends WordSpecLike with Matchers with ScalaFutures {
           r.close()
           // re-re-open initial db
           val s: SQLFileDB = (for {
-            db <- Task.now(new SQLFileDB(c))
+            db <- Task.now(new SQLFileDB(databaseDef))
             _  <- futureToTask(db.init())
           } yield db).unsafePerformSync
           s.tx.get should equal(7)
-          deleteFolder(p.getParent)
+          deleteFolder(path.getParent)
       }
     }
   }

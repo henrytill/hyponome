@@ -33,6 +33,7 @@ package object hyponome {
     SHA256Hash(s)
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
   def getURI(hostname: String, port: Int, hash: SHA256Hash, name: Option[String]): URI = {
     val end: String = name match {
       case Some(n) => s"$hash/$n"
@@ -40,4 +41,5 @@ package object hyponome {
     }
     new URI("https", s"//$hostname:$port/objects/$end", null)
   }
+
 }

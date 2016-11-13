@@ -30,6 +30,7 @@ sealed trait SortOrder extends Product with Serializable
 case object Ascending  extends SortOrder
 case object Descending extends SortOrder
 
+@SuppressWarnings(Array("org.wartremover.warts.DefaultArguments"))
 final case class StoreQuery(hash: Option[SHA256Hash] = None,
                             name: Option[String] = None,
                             remoteAddress: Option[InetAddress] = None,

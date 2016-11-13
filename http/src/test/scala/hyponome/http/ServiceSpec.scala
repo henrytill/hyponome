@@ -17,10 +17,8 @@
 package hyponome.http
 
 import argonaut._
-import java.io.{File => JFile}
 import java.nio.file.{Path => JPath, Files => JFiles}
 import org.apache.commons.codec.digest.DigestUtils.sha256Hex
-import org.http4s.EntityEncoder.Entity
 import org.http4s.EntityEncoder._
 import org.http4s.MediaType._
 import org.http4s.Uri._
@@ -37,9 +35,7 @@ import org.scalatest.{Matchers, WordSpecLike}
 import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scalaz.concurrent.Task
-import scalaz.stream.Process
 import scalaz.stream.io.fileChunkW
-import scodec.bits._
 import hyponome._
 import hyponome.db.SQLFileDB
 import hyponome.file.LocalFileStore
@@ -64,11 +60,6 @@ class ServiceSpec extends WordSpecLike with Matchers with PropertyChecks {
                 authority = Some(Authority(host = RegName(testHostname), port = Some(testPort))),
                 path = "/objects")
 
-  private def fileToEntity(f: JFile): Entity = {
-    val bitVector = BitVector.fromMmap(new java.io.FileInputStream(f).getChannel)
-    Entity(body = Process.emit(ByteVector(bitVector.toBase64.getBytes)))
-  }
-
   def createRequest(ps: Seq[JPath]): Request = {
     val parts: Vector[Part] = ps.map { (p: JPath) =>
       Part.fileData("file", p.toFile, `Content-Type`(`application/octet-stream`))
@@ -82,23 +73,26 @@ class ServiceSpec extends WordSpecLike with Matchers with PropertyChecks {
             headers = multipart.headers)
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.Any", "org.wartremover.warts.Nothing"))
   def handleGet(r: Response): Task[SHA256Hash] = {
-    val tempFilePath: JPath = tmpDir.resolve(s"${randomUUID}")
+    val tempFilePath: JPath = tmpDir.resolve(s"${randomUUID()}")
     r.body.to(fileChunkW(tempFilePath.toFile.toString)).run.flatMap { (_: Unit) =>
       getSHA256Hash(tempFilePath)
     }
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
   def fetchAndHash(ss: Vector[String]): Task[List[SHA256Hash]] =
     Task.gatherUnordered(ss.map((s: String) => client.get(s)(handleGet)))
 
+  @SuppressWarnings(Array("org.wartremover.warts.Nothing", "org.wartremover.warts.NoNeedForMonad"))
   def upAndDown(r: Request): Task[List[SHA256Hash]] =
     client
       .expect(r)(EntityDecoder[Json])
       .map(_.as[Vector[AddResponse]].toOption)
       .map(_.getOrElse(Vector.empty))
       .map(_.map(_.file.toString))
-      .flatMap(fetchAndHash(_))
+      .flatMap(fetchAndHash)
 
   def roundTrip(ps: Seq[JPath]): Task[List[SHA256Hash]] =
     upAndDown(createRequest(ps))
@@ -139,7 +133,7 @@ class ServiceSpec extends WordSpecLike with Matchers with PropertyChecks {
             _ <- Task.now(JFiles.write(p, ba))
             _ <- Task.now(logger.info(s"Round-tripping $p"))
             r <- roundTrip(List(p))
-          } yield (r shouldEqual List(SHA256Hash(h)))).unsafePerformSync
+          } yield r shouldEqual List(SHA256Hash(h))).unsafePerformSync
         }
       }
     }.unsafePerformSync

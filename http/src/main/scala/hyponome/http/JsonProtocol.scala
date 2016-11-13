@@ -25,6 +25,7 @@ import hyponome._
 import hyponome.db.event._
 import hyponome.db.query._
 
+//noinspection MutatorLikeMethodIsParameterless
 object JsonProtocol {
 
   implicit def sha256HashEncodeJson: EncodeJson[SHA256Hash] =
@@ -62,6 +63,7 @@ object JsonProtocol {
     (c --\ tag).hcursor
       .fold(DecodeResult.fail[A]("Invalid tagged type", c.history))(decoder.decode)
 
+  //noinspection ScalaUnnecessaryParentheses
   implicit def operationEncodeJson: EncodeJson[Operation] =
     EncodeJson { (o: Operation) =>
       o match {
@@ -73,9 +75,10 @@ object JsonProtocol {
   implicit def operationDecodeJson: DecodeJson[Operation] =
     DecodeJson { c =>
       tagged("AddToStore", c, implicitly[DecodeJson[Unit]].map(_ => AddToStore)) |||
-      tagged("RemoveFromStore", c, implicitly[DecodeJson[Unit]].map(_ => RemoveFromStore))
+        tagged("RemoveFromStore", c, implicitly[DecodeJson[Unit]].map(_ => RemoveFromStore))
     }
 
+  //noinspection ScalaUnnecessaryParentheses
   implicit def addStatusEncodeJson: EncodeJson[AddStatus] =
     EncodeJson { (as: AddStatus) =>
       as match {
@@ -87,7 +90,7 @@ object JsonProtocol {
   implicit def addStatusDecodeJson: DecodeJson[AddStatus] =
     DecodeJson { c =>
       tagged("Added", c, implicitly[DecodeJson[Unit]].map(_ => Added)) |||
-      tagged("Exists", c, implicitly[DecodeJson[Unit]].map(_ => Exists))
+        tagged("Exists", c, implicitly[DecodeJson[Unit]].map(_ => Exists))
     }
 
   implicit def removeStatusEncodeJson: EncodeJson[RemoveStatus] =
@@ -101,7 +104,7 @@ object JsonProtocol {
   implicit def removeStatusDecodeJson: DecodeJson[RemoveStatus] =
     DecodeJson { c =>
       tagged("Removed", c, implicitly[DecodeJson[Unit]].map(_ => Removed)) |||
-      tagged("NotFound", c, implicitly[DecodeJson[Unit]].map(_ => NotFound))
+        tagged("NotFound", c, implicitly[DecodeJson[Unit]].map(_ => NotFound))
     }
 
   implicit def AddCodecJson: CodecJson[Add] =
@@ -115,8 +118,12 @@ object JsonProtocol {
                                        "remoteAddress")
 
   implicit def AddResponseCodecJson: CodecJson[AddResponse] =
-    casecodec6(AddResponse.apply, AddResponse.unapply)(
-      "status", "file", "hash", "name", "contentType", "length")
+    casecodec6(AddResponse.apply, AddResponse.unapply)("status",
+                                                       "file",
+                                                       "hash",
+                                                       "name",
+                                                       "contentType",
+                                                       "length")
 
   implicit def RemoveResponseCodecJson: CodecJson[RemoveResponse] =
     casecodec2(RemoveResponse.apply, RemoveResponse.unapply)("status", "hash")

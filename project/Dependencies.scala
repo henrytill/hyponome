@@ -11,6 +11,7 @@ object Dependencies {
   lazy val scalazStreamVersion = "0.8.2a"
 
   lazy val commonDeps = Seq(
+    compilerPlugin("org.wartremover" %% "wartremover" % "1.2.1"),
     "ch.qos.logback"      % "logback-classic"     % "1.1.3",
     "commons-codec"       % "commons-codec"       % "1.10",
     "org.scalacheck"     %% "scalacheck"          % "1.12.5" % "test",

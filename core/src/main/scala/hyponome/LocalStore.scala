@@ -25,8 +25,8 @@ import hyponome.file._
 import hyponome.db.query._
 import hyponome.util._
 
-class LocalStore(
-    dbInst: FileDB[Future], fileStoreInst: FileStore[Task, Path])(implicit ec: ExecutionContext)
+class LocalStore(dbInst: FileDB[Future], fileStoreInst: FileStore[Task, Path])(
+    implicit ec: ExecutionContext)
     extends Store[Task, Future, Path] {
 
   val db: FileDB[Future] = dbInst

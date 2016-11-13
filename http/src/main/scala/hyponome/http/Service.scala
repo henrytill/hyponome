@@ -39,7 +39,7 @@ final class Service[FileStoreIO[_], FileDBIO[_], FileLocation](
     store: Store[FileStoreIO, FileDBIO, FileLocation])(implicit ec: ExecutionContext) {
 
   private def createTmpDir(): JPath = JFiles.createTempDirectory("hyponome")
-  private val tmpDir: JPath = createTmpDir()
+  private val tmpDir: JPath         = createTmpDir()
 
   private def handlePart(r: Request, p: Part): Task[Option[AddResponse]] = {
     val Part(hs, body) = p
@@ -48,7 +48,7 @@ final class Service[FileStoreIO[_], FileDBIO[_], FileLocation](
     // get the "name" parameter
     parameters.flatMap(_.get("name")) match {
       // check if it matches the uploadKey specified in the config
-      case Some(x) if x == cfg.uploadKey =>
+      case Some(x) if x === cfg.uploadKey =>
         // if it does, get the filename, content-type, and address from request/headers
         val filename: Option[String] = parameters
           .flatMap(_.get("filename"))
@@ -60,8 +60,9 @@ final class Service[FileStoreIO[_], FileDBIO[_], FileLocation](
           .getOrElse("application/octet-stream")
         val inetAddress: Option[InetAddress] = r.remote.map(_.getAddress())
         // create a path where the upload will be temporarily copied
-        val tempFilePath: JPath = tmpDir.resolve(s"${randomUUID}.tmp")
+        val tempFilePath: JPath = tmpDir.resolve(s"${randomUUID()}.tmp")
         // for comprehension helper functions
+        @SuppressWarnings(Array("org.wartremover.warts.Any", "org.wartremover.warts.Nothing"))
         def bodyToFile(b: EntityBody, p: JPath): Task[JPath] = {
           b.to(fileChunkW(p.toFile.toString)).run.map((_: Unit) => p)
         }
@@ -107,6 +108,7 @@ final class Service[FileStoreIO[_], FileDBIO[_], FileLocation](
   private object QsortOrder     extends OptionalQueryParamDecoderMatcher[String]("sortOrder")
   // format: on
 
+  @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
   val root = HttpService {
 
     case req @ GET -> Root / "objects" / hash =>
@@ -149,11 +151,11 @@ final class Service[FileStoreIO[_], FileDBIO[_], FileLocation](
         +& QsortBy(sortBy) +& QsortOrder(sortOrder) =>
       val query: StoreQuery = StoreQuery(hash.map(SHA256Hash(_)),
                                          name,
-                                         remoteAddress.map(InetAddress.getByName _),
+                                         remoteAddress.map(InetAddress.getByName),
                                          txLo,
                                          txHi,
-                                         timeLo.map(Timestamp.valueOf(_)),
-                                         timeHi.map(Timestamp.valueOf(_)),
+                                         timeLo.map(Timestamp.valueOf),
+                                         timeHi.map(Timestamp.valueOf),
                                          sortBy match {
                                            case Some("address") => Address
                                            case Some("name")    => Name

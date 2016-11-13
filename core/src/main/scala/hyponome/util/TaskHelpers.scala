@@ -29,6 +29,7 @@ import scalaz.concurrent.Task
   */
 trait TaskHelpers {
 
+  @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
   def futureToTask[A](fut: => Future[A])(implicit ec: ExecutionContext): Task[A] =
     Task.async { k =>
       fut.onComplete {
@@ -41,9 +42,9 @@ trait TaskHelpers {
     val p: Promise[A] = Promise()
     task.unsafePerformAsync {
       case \/-(a) =>
-        val _: Promise[A] = p.success(a); ()
+        val _: Promise[A] = p.success(a)
       case -\/(t) =>
-        val _: Promise[A] = p.failure(t); ()
+        val _: Promise[A] = p.failure(t)
     }
     p.future
   }

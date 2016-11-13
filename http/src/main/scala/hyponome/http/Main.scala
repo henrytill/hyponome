@@ -31,7 +31,7 @@ import hyponome.util._
 
 object Main extends ServerApp {
 
-  private val keypath: String = getClass.getClassLoader.getResource("keystore.jks").getPath()
+  private val keypath: String = getClass.getClassLoader.getResource("keystore.jks").getPath
 
   private def builder: ServerBuilder with SSLSupport = BlazeBuilder
 

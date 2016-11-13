@@ -27,7 +27,11 @@ class LocalFileStoreSpec extends WordSpecLike with Matchers {
   def withLocalFileStore(testCode: LocalFileStore => Any): Unit = {
     val t: LocalFileStore = new LocalFileStore(testStorePath)
     val _: Unit           = t.create().unsafePerformSync
-    try { testCode(t); () } finally { deleteFolder(testStorePath); () }
+    try {
+      val _: Any = testCode(t)
+    } finally {
+      val _ = deleteFolder(testStorePath)
+    }
   }
 
   private def checkExists(h: SHA256Hash, t: LocalFileStore)(a: AddStatus): Task[Boolean] = {

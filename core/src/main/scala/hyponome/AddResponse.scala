@@ -19,8 +19,8 @@ package hyponome
 import java.net.URI
 
 sealed trait AddStatus extends Product with Serializable
-case object Added  extends AddStatus
-case object Exists extends AddStatus
+case object Added      extends AddStatus
+case object Exists     extends AddStatus
 
 final case class AddResponse(status: AddStatus,
                              file: URI,
@@ -30,6 +30,7 @@ final case class AddResponse(status: AddStatus,
                              length: Long)
 
 object AddResponse {
+  @SuppressWarnings(Array("org.wartremover.warts.Overloading"))
   def apply(a: Add, s: AddStatus): AddResponse = {
     val uri = getURI(a.hostname, a.port, a.hash, a.name)
     AddResponse(s, uri, a.hash, a.name, a.contentType, a.length)
