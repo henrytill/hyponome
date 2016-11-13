@@ -1,6 +1,9 @@
 all: http/src/main/resources/keystore.jks http/src/test/resources/hyponome.pem
 
-http/src/main/resources/keystore.jks:
+http/src/main/resources http/src/test/resources:
+	mkdir -p $@
+
+http/src/main/resources/keystore.jks: http/src/main/resources
 	keytool -genkey \
 		-alias domain \
 		-keyalg RSA \
@@ -10,7 +13,7 @@ http/src/main/resources/keystore.jks:
 		-storepass password \
 		-dname "CN=localhost, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown"
 
-http/src/test/resources/hyponome.pem: http/src/main/resources/keystore.jks
+http/src/test/resources/hyponome.pem: http/src/main/resources/keystore.jks http/src/test/resources
 	keytool -exportcert \
 		-rfc \
 		-alias domain \
