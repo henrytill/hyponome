@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Henry Till
+ * Copyright 2016-2017 Henry Till
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,32 +14,16 @@
  * limitations under the License.
  */
 
-import java.net.URI
-import java.nio.file.{Files, Path}
-import org.apache.commons.codec.digest.DigestUtils.sha256Hex
+import java.nio.file.Path
+import scala.concurrent.ExecutionContext
+import scalaz.Kleisli
 import scalaz.concurrent.Task
+import slick.driver.H2Driver.backend.DatabaseDef
 
-package object hyponome {
+package object hyponome extends Types {
+  /** The LocalStore Monad */
+  type LocalStoreM[A] = Kleisli[Task, LocalStoreContext, A]
 
-  private def withInputStream[T](path: Path)(op: java.io.InputStream => T): T = {
-    val fist = Files.newInputStream(path)
-    try {
-      op(fist)
-    } finally fist.close()
-  }
-
-  def getSHA256Hash(p: Path): Task[SHA256Hash] = Task {
-    val s: String = withInputStream(p)(sha256Hex)
-    SHA256Hash(s)
-  }
-
-  @SuppressWarnings(Array("org.wartremover.warts.Null"))
-  def getURI(hostname: String, port: Int, hash: SHA256Hash, name: Option[String]): URI = {
-    val end: String = name match {
-      case Some(n) => s"$hash/$n"
-      case None    => s"$hash"
-    }
-    new URI("https", s"//$hostname:$port/objects/$end", null)
-  }
-
+  def localStore(implicit ec: ExecutionContext, store: Store[LocalStoreM, Path, DatabaseDef]): Store[LocalStoreM, Path, DatabaseDef] =
+    store
 }

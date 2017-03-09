@@ -1,7 +1,8 @@
-target/
 *.db
-store/
+*.err
+*.iml
 *.jks
 *.pem
 .idea
-*.iml
+store/
+target/

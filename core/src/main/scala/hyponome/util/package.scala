@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Henry Till
+ * Copyright 2016-2017 Henry Till
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,19 @@
 
 package hyponome
 
-package object util extends TaskHelpers {
-  def randomUUID(): java.util.UUID = java.util.UUID.randomUUID()
+import java.nio.ByteBuffer
+import java.nio.file.{Files, Path}
 
-  @SuppressWarnings(Array("org.wartremover.warts.Equals"))
-  implicit final class AnyOps[A](self: A) {
-    def ===(other: A): Boolean = self == other
+package object util extends TaskHelpers {
+
+  implicit class LongHelpers(val self: Long) extends AnyVal {
+    def bytes: Array[Byte] =
+      ByteBuffer.allocate(java.lang.Long.SIZE / java.lang.Byte.SIZE).putLong(Long.box(self)).array
+  }
+
+  def withInputStream[T](path: Path)(op: java.io.InputStream => T): T = {
+    val fist = Files.newInputStream(path)
+    try op(fist)
+    finally fist.close()
   }
 }

@@ -16,82 +16,28 @@
 
 package hyponome
 
-import java.net.InetAddress
-import java.nio.file._
-import java.util.UUID.randomUUID
-import java.util.concurrent.atomic.AtomicLong
-import scala.util.{Success, Try}
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.{FileVisitResult, Files, Path, SimpleFileVisitor}
+import java.util.UUID
+
 import slick.driver.H2Driver.api._
-import slick.driver.H2Driver.backend.DatabaseDef
+import scala.util.{Success, Try}
 
-package object test {
+package object test extends TestData {
 
-  // val hostname: String = InetAddress.getLocalHost().getHostName()
-  val testHostname: String = "localhost"
+  def uuid(): String = UUID.randomUUID.toString
 
-  val testPort: Int = 4000
+  def testStoreDir(): Path =
+    Files.createTempDirectory("hyponome-")
 
-  val fs: FileSystem = FileSystems.getDefault
-
-  val testStorePath: Path = fs.getPath("/tmp/hyponome/store")
-
-  val testPDF: Path = {
-    val s: String = getClass.getResource("/test.pdf").getPath
-    fs.getPath(s)
-  }
-
-  val testPDFHash = SHA256Hash("eba205fb9114750b2ce83db62f9c2a15dd068bcba31a2de32d8df7f7c8d85441")
-
-  val ip: Option[InetAddress] = Some(InetAddress.getByName("192.168.1.253"))
-
-  val add = Add(testHostname,
-                testPort,
-                testPDF,
-                testPDFHash,
-                Some(testPDF.toFile.getName),
-                "application/octet-stream",
-                testPDF.toFile.length,
-                ip)
-
-  val added = AddResponse(Added,
-                          getURI(add.hostname, add.port, add.hash, add.name),
-                          add.hash,
-                          add.name,
-                          add.contentType,
-                          add.length)
-
-  val existed = AddResponse(Exists,
-                            getURI(add.hostname, add.port, add.hash, add.name),
-                            add.hash,
-                            add.name,
-                            add.contentType,
-                            add.length)
-
-  val remove = Remove(add.hash, add.remoteAddress)
-
-  val expected = File(add.hash, add.name, add.contentType, add.length)
-
-  def makeCounter(): AtomicLong = new AtomicLong()
-
-  def makeDbName(): String = randomUUID.toString
-
-  def makeTestDB: () => DatabaseDef = { () =>
-    Database.forURL(url = s"jdbc:h2:mem:${makeDbName()};CIPHER=AES",
-                    user = "hyponome",
-                    password = "hyponome hyponome", // password = "filepwd userpwd"
-                    driver = "org.h2.Driver",
-                    keepAliveConnection = true)
-  }
-
-  @SuppressWarnings(Array("org.wartremover.warts.ToString"))
-  def makePersistentDBConfig(location: Path): () => DatabaseDef = { () =>
-    val p: String = location.toString
-    Database.forURL(url = s"jdbc:h2:$p;CIPHER=AES",
-                    user = "hyponome",
-                    password = "hyponome hyponome", // password = "filepwd userpwd"
-                    driver = "org.h2.Driver",
-                    keepAliveConnection = true)
-  }
+  def freshTestContext() = LocalStoreContext(
+    dbDef = Database.forURL(url = s"jdbc:h2:mem:${uuid()};CIPHER=AES",
+                            user = "hyponome",
+                            password = "hyponome hyponome",
+                            driver = "org.h2.Driver",
+                            keepAliveConnection = true),
+    storePath = testStoreDir()
+  )
 
   /**
     * Makes a SimpleFileVisitor to delete files and their containing
@@ -101,7 +47,7 @@ package object test {
     */
   private def makeDeleteFileVisitor: SimpleFileVisitor[Path] =
     new SimpleFileVisitor[Path] {
-      override def visitFile(p: Path, attrs: attribute.BasicFileAttributes): FileVisitResult = {
+      override def visitFile(p: Path, attrs: BasicFileAttributes): FileVisitResult = {
         Files.delete(p)
         FileVisitResult.CONTINUE
       }

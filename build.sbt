@@ -1,33 +1,24 @@
-lazy val argonautVersion     = "6.1a"
-lazy val http4sVersion       = "0.14.1a"
 lazy val scalazVersion       = "7.2.4"
-lazy val scalazStreamVersion = "0.8.2a"
 
-lazy val commonDeps = Seq(
-  compilerPlugin("org.wartremover" %% "wartremover" % "1.2.1"),
-  "ch.qos.logback"      % "logback-classic"     % "1.1.3",
-  "commons-codec"       % "commons-codec"       % "1.10",
-  "org.log4s"          %% "log4s"               % "1.3.4",
-  "org.scalacheck"     %% "scalacheck"          % "1.12.5" % "test",
-  "org.scalatest"      %% "scalatest"           % "2.2.6"  % "test",
-  "org.scalaz"         %% "scalaz-core"         % scalazVersion,
-  "org.scalaz"         %% "scalaz-concurrent"   % scalazVersion)
+lazy val commonDepsSettings = Seq(
+  libraryDependencies ++= Seq(
+    compilerPlugin("org.wartremover" %% "wartremover" % "1.2.1"),
+    "ch.qos.logback"      % "logback-classic"     % "1.1.3",
+    "com.novocode"        % "junit-interface"     % "0.11"   % "test",
+    "commons-codec"       % "commons-codec"       % "1.10",
+    "org.log4s"          %% "log4s"               % "1.3.4",
+    "org.scalacheck"     %% "scalacheck"          % "1.12.5" % "test",
+    "org.scalaz"         %% "scalaz-core"         % scalazVersion,
+    "org.scalaz"         %% "scalaz-concurrent"   % scalazVersion))
 
-lazy val coreDeps = Seq(
-  "com.h2database"      % "h2"                  % "1.4.190",
-  "com.typesafe.slick" %% "slick"               % "3.1.1")
-
-lazy val httpDeps = Seq(
-  "com.typesafe"        % "config"              % "1.3.0",
-  "io.argonaut"        %% "argonaut"            % argonautVersion,
-  "org.http4s"         %% "http4s-argonaut"     % http4sVersion % "test",
-  "org.http4s"         %% "http4s-dsl"          % http4sVersion,
-  "org.http4s"         %% "http4s-blaze-server" % http4sVersion,
-  "org.http4s"         %% "http4s-blaze-client" % http4sVersion,
-  "org.scalaz.stream"  %% "scalaz-stream"       % scalazStreamVersion)
+lazy val coreDepsSettings = Seq(
+  libraryDependencies ++= Seq(
+    "com.h2database"      % "h2"                  % "1.4.190",
+    "com.typesafe.slick" %% "slick"               % "3.1.1"))
 
 lazy val commonOptions = Seq(
   "-language:higherKinds",
+  "-language:implicitConversions",
   "-Xfatal-warnings",
   "-Xfuture",
   "-Xlint",
@@ -37,8 +28,7 @@ lazy val commonOptions = Seq(
   "-Ywarn-unused-import",
   "-Ywarn-value-discard",
   "-deprecation",
-  "-encoding",
-  "UTF-8",
+  "-encoding", "UTF-8",
   "-feature",
   "-unchecked")
 
@@ -74,34 +64,39 @@ lazy val wartremoverOptions = List(
   "Var",
   "While").map((s: String) => s"-P:wartremover:traverser:org.wartremover.warts.$s")
 
-lazy val consoleOptions = commonOptions diff Seq("-Ywarn-unused-import")
+lazy val initialConsoleCommands =
+  """|import hyponome._
+     |import java.nio.file.FileSystems
+     |import scala.concurrent.ExecutionContext.Implicits.global
+     |val fs = FileSystems.getDefault
+     |""".stripMargin
 
-lazy val up = taskKey[Unit]("Convenience task to run hyponome from sbt's interactive mode.")
+lazy val initialTestConsoleCommands =
+  initialConsoleCommands ++ "import hyponome.test._\n"
 
-lazy val commonSettings = Seq(
-  organization := "net.xngns",
-  version := "0.1.0-SNAPSHOT",
-  scalaVersion := "2.11.8",
-  resolvers ++= Seq(Resolver.sonatypeRepo("snapshots"), Resolver.sonatypeRepo("releases")),
-  scalacOptions := commonOptions ++ wartremoverOptions,
-  scalacOptions in (Compile, console) := consoleOptions,
-  scalacOptions in (Test, console) := consoleOptions,
-  fork in Test := true)
+lazy val commonSettings =
+  commonDepsSettings ++
+  Seq(organization := "net.xngns",
+      version := "0.1.0-SNAPSHOT",
+      scalaVersion := "2.11.8",
+      scalacOptions ++= commonOptions ++ wartremoverOptions,
+      scalacOptions in console in Compile --= wartremoverOptions ++ Seq("-Ywarn-unused-import"),
+      scalacOptions in console in Test    --= wartremoverOptions ++ Seq("-Ywarn-unused-import"),
+      initialCommands in console in Compile := initialConsoleCommands,
+      initialCommands in console in Test    := initialTestConsoleCommands,
+      resolvers ++= Seq(
+        Resolver.sonatypeRepo("snapshots"),
+        Resolver.sonatypeRepo("releases"),
+        Resolver.bintrayRepo("xngns", "maven")),
+      testOptions += Tests.Argument(TestFrameworks.JUnit, "-v"),
+      fork in Test := true)
 
 lazy val core = (project in file("core"))
   .settings(name := "hyponome-core")
   .settings(commonSettings: _*)
-  .settings(libraryDependencies ++= commonDeps ++ coreDeps)
-
-lazy val http = (project in file("http"))
-  .settings(name := "hyponome-http",
-            fullRunTask(up, Test, "hyponome.http.Main"),
-            mainClass in (Compile, run) := Some("hyponome.http.Main"))
-  .dependsOn(core % "test->test;compile->compile")
-  .settings(commonSettings: _*)
-  .settings(libraryDependencies ++= commonDeps ++ httpDeps)
+  .settings(coreDepsSettings: _*)
 
 lazy val root = (project in file("."))
-  .aggregate(core, http)
-  .dependsOn(core, http)
+  .aggregate(core)
+  .dependsOn(core % "test->test;compile->compile")
   .settings(commonSettings: _*)

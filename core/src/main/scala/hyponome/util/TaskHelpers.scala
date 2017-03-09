@@ -21,8 +21,8 @@ package hyponome.util
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success}
-import scalaz.{\/, -\/, \/-}
 import scalaz.concurrent.Task
+import scalaz.{-\/, \/, \/-}
 
 /**
   * Future <-> Task conversion functions

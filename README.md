@@ -5,7 +5,7 @@ hyponome
 
 [![Build Status](https://travis-ci.org/henrytill/hyponome.svg?branch=master)](https://travis-ci.org/henrytill/hyponome)
 
-A [content-addressable](https://en.wikipedia.org/wiki/Content-addressable_storage) file store with a simple REST interface, accessible via HTTP
+A [content-addressable](https://en.wikipedia.org/wiki/Content-addressable_storage) file store.
 
 ## Rationale
 
@@ -14,60 +14,6 @@ hyponome started life as a simple paste server, with the premise that URLs of up
 ## Status
 
 In its current state, hyponome should be considered experimental and unstable.  Discussion of ongoing development can be found in the [issue tracker](https://github.com/henrytill/hyponome-scala/issues) and the [wiki](https://github.com/henrytill/hyponome-scala/wiki).
-
-## Usage
-
-In order to use hyponome, you will need [a JDK](http://openjdk.java.net/), [Make](https://www.gnu.org/software/make/), and [sbt](http://www.scala-sbt.org/).
-
-```
-$ git clone https://github.com/henrytill/hyponome-scala.git
-
-$ cd hyponome-scala
-
-$ make
-
-$ sbt http/run
-```
-
-Once the server is running:
-```
-$ cat > hello.txt << EOF
-> Hello, world!
-> EOF
-
-$ sha256sum hello.txt
-d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5  hello.txt
-
-$ curl --cacert <path/to/hyponome.pem> -F file=@hello.txt https://localhost:4000/objects
-[
-  {
-    "name" : "hello.txt",
-    "hash" : {
-      "SHA256Hash" : "d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5"
-    },
-    "contentType" : "text/plain; charset=UTF-8",
-    "status" : {
-      "Created" : {
-
-      }
-    },
-    "file" : {
-      "URI" : "https://localhost:4000/objects/d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5/hello.txt"
-    },
-    "length" : 14,
-    "remoteAddress" : {
-      "InetAddress" : "192.168.1.253"
-    }
-  }
-]%
-
-$ curl --cacert <path/to/hyponome.pem> https://localhost:4000/objects/d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5/hello.txt
-Hello, world!
-
-$ curl -s --cacert <path/to/hyponome.pem> https://localhost:4000/objects/d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5/hello.txt | sha256sum
-d9014c4624844aa5bac314773d6b689ad467fa4e1d1a50a1b8a99d5a95f72ff5  -
-```
-**NOTE**: `hyponome.pem` is created by running `make` (see above) and is located at `src/test/resources/hyponome.pem`.  It is only intended to be used for development/preview purposes.
 
 ## Other Versions
 
