@@ -3,7 +3,7 @@
 hyponome
 ========
 
-[![Build Status](https://travis-ci.org/henrytill/hyponome-scala.svg?branch=master)](https://travis-ci.org/henrytill/hyponome-scala)
+[![Build Status](https://travis-ci.org/henrytill/hyponome.svg?branch=master)](https://travis-ci.org/henrytill/hyponome)
 
 A [content-addressable](https://en.wikipedia.org/wiki/Content-addressable_storage) file store with a simple REST interface, accessible via HTTP
 
