@@ -5,7 +5,6 @@ lazy val commonDepsSettings = Seq(
     compilerPlugin("org.wartremover" %% "wartremover" % "1.2.1"),
     "ch.qos.logback"      % "logback-classic"     % "1.1.3",
     "com.novocode"        % "junit-interface"     % "0.11"   % "test",
-    "commons-codec"       % "commons-codec"       % "1.10",
     "org.log4s"          %% "log4s"               % "1.3.4",
     "org.scalacheck"     %% "scalacheck"          % "1.12.5" % "test",
     "org.scalaz"         %% "scalaz-core"         % scalazVersion,
@@ -14,7 +13,8 @@ lazy val commonDepsSettings = Seq(
 lazy val coreDepsSettings = Seq(
   libraryDependencies ++= Seq(
     "com.h2database"      % "h2"                  % "1.4.190",
-    "com.typesafe.slick" %% "slick"               % "3.1.1"))
+    "com.typesafe.slick" %% "slick"               % "3.1.1",
+    "net.xngns"          %% "klados-hash"         % "0.1.0-37e80e3"))
 
 lazy val commonOptions = Seq(
   "-language:higherKinds",

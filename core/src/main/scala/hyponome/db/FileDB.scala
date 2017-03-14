@@ -114,7 +114,7 @@ object FileDB {
             Exists.point[LocalStoreM]
           else {
             val ts = now
-            val id = IdHash.fromBytes(hash.bytes ++ ts.bytes ++ user.toString.getBytes ++ message.msg.getBytes)
+            val id = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ message.msg.getBytes)
             val f  = File(hash, name, contentType, length, metadata)
             val e  = Event(id, ts, AddToStore, hash, user, message)
             for {
@@ -134,7 +134,7 @@ object FileDB {
             NotFound.point[LocalStoreM]
           else {
             val ts = now
-            val id = IdHash.fromBytes(hash.bytes ++ ts.bytes ++ user.toString.getBytes ++ message.msg.getBytes)
+            val id = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ message.msg.getBytes)
             val e  = Event(id, ts, RemoveFromStore, hash, user, message)
             addEventToDB(db, e).map((_: Unit) => Removed)
           }

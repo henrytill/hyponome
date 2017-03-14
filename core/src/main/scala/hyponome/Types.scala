@@ -17,9 +17,9 @@
 package hyponome
 
 import hyponome.util._
+import net.xngns.klados.hash.SHA256Hash
 import java.nio.file.{Path}
-import javax.xml.bind.DatatypeConverter.{parseHexBinary, printHexBinary}
-import org.apache.commons.codec.digest.DigestUtils
+import javax.xml.bind.DatatypeConverter.parseHexBinary
 import scalaz.concurrent.Task
 import slick.driver.H2Driver.api._
 import slick.driver.H2Driver.backend.DatabaseDef
@@ -67,19 +67,6 @@ trait Types {
       })
   }
 
-  abstract class CryptographicHash(val bytes: Array[Byte]) {
-    override def toString: String = printHexBinary(bytes).toLowerCase
-  }
-
-  class SHA256Hash(bytes: Array[Byte]) extends CryptographicHash(bytes) {
-    @SuppressWarnings(Array("org.wartremover.warts.Equals"))
-    override def equals(that: Any): Boolean =
-      that match {
-        case that: SHA256Hash => this.bytes sameElements that.bytes
-        case _                => false
-      }
-  }
-
   class IdHash(bytes: Array[Byte]) extends SHA256Hash(bytes)
 
   object IdHash {
@@ -87,7 +74,7 @@ trait Types {
       new IdHash(bytes)
 
     def fromBytes(bs: Array[Byte]): IdHash =
-      IdHash(DigestUtils.sha256(bs))
+      IdHash(SHA256Hash(bs).getBytes)
 
     def fromHex(s: String): IdHash =
       IdHash(parseHexBinary(s))
@@ -103,11 +90,11 @@ trait Types {
       new FileHash(bytes)
 
     def fromBytes(bs: Array[Byte]): FileHash =
-      FileHash(DigestUtils.sha256(bs))
+      FileHash(SHA256Hash(bs).getBytes)
 
     def fromPath(p: Path): Task[FileHash] = Task {
-      val bytes: Array[Byte] = withInputStream(p)(DigestUtils.sha256)
-      FileHash(bytes)
+      val hash: SHA256Hash = withInputStream(p)(SHA256Hash.apply)
+      FileHash(hash.getBytes)
     }
 
     def fromHex(s: String): FileHash =

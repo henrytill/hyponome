@@ -78,7 +78,7 @@ class LocalFileStoreTests {
     val (status, Some(path)) = addFile(testPDF).run(freshTestContext()).unsafePerformSync
     val copiedHash: FileHash = FileHash.fromPath(path).unsafePerformSync
     Assert.assertEquals(Added, status)
-    Assert.assertArrayEquals(testPDFHash.bytes, copiedHash.bytes)
+    Assert.assertArrayEquals(testPDFHash.getBytes, copiedHash.getBytes)
   }
 
   @Test

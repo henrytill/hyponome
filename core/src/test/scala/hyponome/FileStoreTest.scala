@@ -17,7 +17,6 @@
 package hyponome
 
 import java.nio.file.{Files, Path}
-import org.apache.commons.codec.digest.DigestUtils.sha256Hex
 import org.scalacheck.{Arbitrary, Gen, Prop}
 import scalaz.concurrent.Task
 
@@ -33,11 +32,11 @@ class FileStoreTest {
   val prop_roundTrip: Prop = Prop.forAll(genNEListOfNEByteArrays) { (bas: List[Array[Byte]]) =>
     (for {
       t  <- Task.now(Files.createTempDirectory("hyponome-test-uploads-"))
-      hs <- Task.now(bas.map(sha256Hex))
-      ps <- Task.now(hs.map(t.resolve))
+      hs <- Task.now(bas.map(FileHash.fromBytes))
+      ps <- Task.now(hs.map((h: FileHash) => t.resolve(h.toString)))
       zs <- Task.now(bas.zip(ps))
       _  <- Task.now(zs.foreach((t: (Array[Byte], Path)) => Files.write(t._2, t._1)))
       r  <- roundTrip(ps)
-    } yield r == hs.map(FileHash.fromHex(_))).unsafePerformSync
+    } yield r == hs).unsafePerformSync
   }
 }
