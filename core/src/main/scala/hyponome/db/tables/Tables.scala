@@ -25,7 +25,7 @@ class Files(tag: Tag) extends Table[File](tag, "FILES") {
   def name        = column[Option[String]]("NAME")
   def contentType = column[Option[String]]("CONTENT_TYPE")
   def length      = column[Long]("LENGTH")
-  def metadata    = column[Metadata]("METADATA")
+  def metadata    = column[Option[Metadata]]("METADATA")
   def *           = (hash, name, contentType, length, metadata) <> (File.tupled, File.unapply)
 }
 
@@ -36,7 +36,7 @@ class Events(tag: Tag) extends Table[Event](tag, "EVENTS") {
   def operation = column[Operation]("OPERATION")
   def hash      = column[FileHash]("HASH", O.SqlType("CHARACTER(64)"))
   def user      = column[User]("USER")
-  def message   = column[Message]("MESSAGE")
+  def message   = column[Option[Message]]("MESSAGE")
   def *         = (id, timestamp, operation, hash, user, message) <> (Event.tupled, Event.unapply)
   def file      = foreignKey("HASH_FK", hash, TableQuery[Files])(_.hash)
 }

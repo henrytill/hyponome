@@ -136,9 +136,9 @@ trait Types {
       MappedColumnType.base[Message, String](_.msg, Message.apply)
   }
 
-  case class File(hash: FileHash, name: Option[String], contentType: Option[String], length: Long, metadata: Metadata)
+  case class File(hash: FileHash, name: Option[String], contentType: Option[String], length: Long, metadata: Option[Metadata])
 
-  case class Event(id: IdHash, timestamp: Long, operation: Operation, file: FileHash, user: User, message: Message)
+  case class Event(id: IdHash, timestamp: Long, operation: Operation, file: FileHash, user: User, message: Option[Message])
 
   sealed trait SortBy    extends Product with Serializable
   case object SortByTime extends SortBy
@@ -168,5 +168,5 @@ trait Types {
                                 name: Option[String],
                                 contentType: Option[String],
                                 length: Long,
-                                metadata: Metadata)
+                                metadata: Option[Metadata])
 }

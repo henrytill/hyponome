@@ -21,6 +21,7 @@ import scalaz.concurrent.Task
 import slick.driver.H2Driver.backend.DatabaseDef
 
 package object hyponome extends Types {
+
   /** The LocalStore Monad */
   type LocalStoreM[A] = Kleisli[Task, LocalStoreContext, A]
 

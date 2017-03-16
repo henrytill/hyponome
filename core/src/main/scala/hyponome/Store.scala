@@ -36,9 +36,9 @@ trait Store[M[_], P, D] {
 
   def findFile(hash: FileHash): M[Option[JFile]]
 
-  def addFile(p: P, metadata: Metadata, user: User, message: Message): M[AddStatus]
+  def addFile(p: P, metadata: Option[Metadata], user: User, message: Option[Message]): M[AddStatus]
 
-  def removeFile(hash: FileHash, user: User, message: Message): M[RemoveStatus]
+  def removeFile(hash: FileHash, user: User, message: Option[Message]): M[RemoveStatus]
 }
 
 object Store {
@@ -89,9 +89,9 @@ object Store {
                               name: Option[String],
                               contentType: Option[String],
                               length: Long,
-                              metadata: Metadata,
+                              metadata: Option[Metadata],
                               user: User,
-                              message: Message): LocalStoreM[AddStatus] =
+                              message: Option[Message]): LocalStoreM[AddStatus] =
         fdb.addFile(db, hash, name, contentType, length, metadata, user, message)
 
       private def addToFileStore(store: Path, hash: FileHash, file: Path, addToDbStatus: AddStatus): LocalStoreM[AddStatus] =
@@ -100,7 +100,7 @@ object Store {
           case x     => x.point[LocalStoreM]
         }
 
-      def addFile(p: Path, metadata: Metadata, user: User, message: Message): LocalStoreM[AddStatus] = {
+      def addFile(p: Path, metadata: Option[Metadata], user: User, message: Option[Message]): LocalStoreM[AddStatus] = {
         for {
           ctx    <- LocalStoreM.ask
           hash   <- LocalStoreM.fromTask(FileHash.fromPath(p))
@@ -126,7 +126,7 @@ object Store {
        * } yield result
        */
 
-      private def removeFromFileDB(db: DatabaseDef, hash: FileHash, user: User, message: Message): LocalStoreM[RemoveStatus] =
+      private def removeFromFileDB(db: DatabaseDef, hash: FileHash, user: User, message: Option[Message]): LocalStoreM[RemoveStatus] =
         fdb.removeFile(db, hash, user, message)
 
       private def removeFromFileStore(store: Path, hash: FileHash, removeFromDbStatus: RemoveStatus): LocalStoreM[RemoveStatus] =
@@ -135,7 +135,7 @@ object Store {
           case x       => x.point[LocalStoreM]
         }
 
-      def removeFile(hash: FileHash, user: User, message: Message): LocalStoreM[RemoveStatus] =
+      def removeFile(hash: FileHash, user: User, message: Option[Message]): LocalStoreM[RemoveStatus] =
         for {
           ctx <- LocalStoreM.ask
           rs1 <- removeFromFileDB(ctx.dbDef, hash, user, message)

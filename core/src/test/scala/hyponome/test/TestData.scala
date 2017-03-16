@@ -12,18 +12,18 @@ trait TestData {
   val testPDFContentType: Option[String] = Some("application/octet-stream")
   val testPDFLength: Long                = testPDF.toFile.length
   val testUser: User                     = User("Alice", "alice@zz.cc")
-  val testMetadata: Metadata             = Metadata("This is some metadata")
-  val testMessageAdd: Message            = Message("I'm adding this file")
-  val testMessageRemove: Message         = Message("I'm removing this file")
+  val testMetadata: Option[Metadata]     = Some(Metadata("This is some metadata"))
+  val testMessageAdd: Option[Message]    = Some(Message("I'm adding this file"))
+  val testMessageRemove: Option[Message] = Some(Message("I'm removing this file"))
 
   case class TestData(file: Path,
                       hash: FileHash,
                       name: Option[String],
                       contentType: Option[String],
                       length: Long,
-                      metadata: Metadata,
+                      metadata: Option[Metadata],
                       user: User,
-                      message: Message)
+                      message: Option[Message])
 
   val testData = TestData(testPDF, testPDFHash, testPDFName, testPDFContentType, testPDFLength, testMetadata, testUser, testMessageAdd)
 

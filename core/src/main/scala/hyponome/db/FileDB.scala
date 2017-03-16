@@ -39,11 +39,11 @@ trait FileDB[M[_], D] {
               name: Option[String],
               contentType: Option[String],
               length: Long,
-              metadata: Metadata,
+              metadata: Option[Metadata],
               user: User,
-              message: Message): M[AddStatus]
+              message: Option[Message]): M[AddStatus]
 
-  def removeFile(db: D, hash: FileHash, user: User, message: Message): M[RemoveStatus]
+  def removeFile(db: D, hash: FileHash, user: User, message: Option[Message]): M[RemoveStatus]
 
   def countFiles(db: D): M[Long]
 
@@ -104,19 +104,20 @@ object FileDB {
                 name: Option[String],
                 contentType: Option[String],
                 length: Long,
-                metadata: Metadata,
+                metadata: Option[Metadata],
                 user: User,
-                message: Message): LocalStoreM[AddStatus] = {
+                message: Option[Message]): LocalStoreM[AddStatus] = {
       for {
         isAdded <- added(db, hash)
         status <- {
           if (isAdded)
             Exists.point[LocalStoreM]
           else {
-            val ts = now
-            val id = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ message.msg.getBytes)
-            val f  = File(hash, name, contentType, length, metadata)
-            val e  = Event(id, ts, AddToStore, hash, user, message)
+            val ts           = now
+            val messageBytes = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
+            val id           = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ messageBytes)
+            val f            = File(hash, name, contentType, length, metadata)
+            val e            = Event(id, ts, AddToStore, hash, user, message)
             for {
               isRemoved <- removed(db, hash)
               _         <- if (isRemoved) addEventToDB(db, e) else addFileToDB(db, f, e)
@@ -126,16 +127,17 @@ object FileDB {
       } yield status
     }
 
-    def removeFile(db: DatabaseDef, hash: FileHash, user: User, message: Message): LocalStoreM[RemoveStatus] = {
+    def removeFile(db: DatabaseDef, hash: FileHash, user: User, message: Option[Message]): LocalStoreM[RemoveStatus] = {
       for {
         isRemoved <- removed(db, hash)
         status <- {
           if (isRemoved)
             NotFound.point[LocalStoreM]
           else {
-            val ts = now
-            val id = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ message.msg.getBytes)
-            val e  = Event(id, ts, RemoveFromStore, hash, user, message)
+            val ts           = now
+            val messageBytes = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
+            val id           = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ messageBytes)
+            val e            = Event(id, ts, RemoveFromStore, hash, user, message)
             addEventToDB(db, e).map((_: Unit) => Removed)
           }
         }
