@@ -18,7 +18,6 @@ import java.nio.file.Path
 import scala.concurrent.ExecutionContext
 import scalaz.Kleisli
 import scalaz.concurrent.Task
-import slick.driver.H2Driver.backend.DatabaseDef
 
 package object hyponome extends Types {
 
@@ -27,6 +26,6 @@ package object hyponome extends Types {
 
   val LocalStoreM = new StoreM[LocalStoreContext]
 
-  def localStore(implicit ec: ExecutionContext, store: Store[LocalStoreM, Path, DatabaseDef]): Store[LocalStoreM, Path, DatabaseDef] =
+  def localStore(implicit ec: ExecutionContext, store: Store[LocalStoreM, Path]): Store[LocalStoreM, Path] =
     store
 }

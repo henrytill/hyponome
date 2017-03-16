@@ -24,7 +24,7 @@ import scala.concurrent.ExecutionContext
 import scalaz.Scalaz._
 import slick.driver.H2Driver.backend.DatabaseDef
 
-trait Store[M[_], P, D] {
+trait Store[M[_], P] {
 
   def init(): M[StoreStatus]
 
@@ -46,8 +46,8 @@ object Store {
   @SuppressWarnings(Array("org.wartremover.warts.ExplicitImplicitTypes"))
   implicit def localStore(implicit ec: ExecutionContext,
                           fs: FileStore[LocalStoreM, Path],
-                          fdb: FileDB[LocalStoreM, DatabaseDef]): Store[LocalStoreM, Path, DatabaseDef] =
-    new Store[LocalStoreM, Path, DatabaseDef] {
+                          fdb: FileDB[LocalStoreM, DatabaseDef]): Store[LocalStoreM, Path] =
+    new Store[LocalStoreM, Path] {
 
       def init(): LocalStoreM[StoreStatus] =
         for {
