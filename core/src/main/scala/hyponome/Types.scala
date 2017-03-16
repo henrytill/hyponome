@@ -18,16 +18,13 @@ package hyponome
 
 import hyponome.util._
 import net.xngns.klados.hash.SHA256Hash
-import java.nio.file.{Path}
+import java.nio.file.Path
 import javax.xml.bind.DatatypeConverter.parseHexBinary
 import scalaz.concurrent.Task
 import slick.driver.H2Driver.api._
-import slick.driver.H2Driver.backend.DatabaseDef
 import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
 
 trait Types {
-
-  case class LocalStoreContext(dbDef: DatabaseDef, storePath: Path)
 
   abstract class AppError(msg: String) extends Exception(msg)
   case class Default(msg: String)      extends AppError(msg)
