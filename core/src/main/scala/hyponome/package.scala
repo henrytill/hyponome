@@ -25,6 +25,8 @@ package object hyponome extends Types {
   /** The LocalStore Monad */
   type LocalStoreM[A] = Kleisli[Task, LocalStoreContext, A]
 
+  val LocalStoreM = new StoreM[LocalStoreContext]
+
   def localStore(implicit ec: ExecutionContext, store: Store[LocalStoreM, Path, DatabaseDef]): Store[LocalStoreM, Path, DatabaseDef] =
     store
 }

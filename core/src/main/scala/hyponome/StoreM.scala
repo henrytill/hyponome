@@ -18,26 +18,26 @@ package hyponome
 
 import hyponome.util._
 import scala.concurrent.{ExecutionContext, Future}
-import scalaz._
+import scalaz.Kleisli
 import scalaz.concurrent.Task
 
-object LocalStoreM {
+final class StoreM[Context] {
 
-  def apply[A](f: LocalStoreContext => Task[A]): LocalStoreM[A] =
+  def apply[A](f: Context => Task[A]): Kleisli[Task, Context, A] =
     Kleisli(f)
 
-  def ask: LocalStoreM[LocalStoreContext] =
-    Kleisli.ask[Task, LocalStoreContext]
+  def ask: Kleisli[Task, Context, Context] =
+    Kleisli.ask[Task, Context]
 
-  def fromCanThrow[A](x: => A): LocalStoreM[A] =
-    apply[A]((_: LocalStoreContext) => Task[A](x))
+  def fromCanThrow[A](x: => A): Kleisli[Task, Context, A] =
+    apply[A]((_: Context) => Task[A](x))
 
-  def fromTask[A](t: => Task[A]): LocalStoreM[A] =
-    apply[A]((_: LocalStoreContext) => t)
+  def fromTask[A](t: => Task[A]): Kleisli[Task, Context, A] =
+    apply[A]((_: Context) => t)
 
-  def fromFuture[A](x: => Future[A])(implicit ec: ExecutionContext): LocalStoreM[A] =
-    apply[A]((_: LocalStoreContext) => futureToTask[A](x))
+  def fromFuture[A](x: => Future[A])(implicit ec: ExecutionContext): Kleisli[Task, Context, A] =
+    apply[A]((_: Context) => futureToTask(x))
 
-  def throwError[A](x: => Throwable): LocalStoreM[A] =
-    apply[A]((_: LocalStoreContext) => Task.fail(x))
+  def throwError[A](x: => Throwable): Kleisli[Task, Context, A] =
+    apply[A]((_: Context) => Task.fail(x))
 }
