@@ -58,7 +58,6 @@ object FileDB {
 
     private val files: TableQuery[Files]   = TableQuery[Files]
     private val events: TableQuery[Events] = TableQuery[Events]
-    private val dummyTimestamp             = new java.sql.Timestamp(0)
     private def now: Long                  = System.currentTimeMillis
 
     private def create(db: DatabaseDef): LocalStoreM[Unit] =
@@ -93,6 +92,7 @@ object FileDB {
         case _                                           => false
       }
     }
+
     private def addEventToDB(db: DatabaseDef, e: Event): LocalStoreM[Unit] =
       LocalStoreM.fromFuture(db.run(DBIO.seq(events += e)))
 
@@ -113,11 +113,11 @@ object FileDB {
           if (isAdded)
             Exists.point[LocalStoreM]
           else {
-            val ts           = now
-            val messageBytes = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
-            val id           = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ messageBytes)
-            val f            = File(hash, name, contentType, length, metadata)
-            val e            = Event(id, ts, AddToStore, hash, user, message)
+            val ts = now
+            val mb = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
+            val id = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ mb)
+            val f  = File(hash, name, contentType, length, metadata)
+            val e  = Event(id, ts, AddToStore, hash, user, message)
             for {
               isRemoved <- removed(db, hash)
               _         <- if (isRemoved) addEventToDB(db, e) else addFileToDB(db, f, e)
@@ -134,10 +134,10 @@ object FileDB {
           if (isRemoved)
             NotFound.point[LocalStoreM]
           else {
-            val ts           = now
-            val messageBytes = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
-            val id           = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ messageBytes)
-            val e            = Event(id, ts, RemoveFromStore, hash, user, message)
+            val ts = now
+            val mb = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
+            val id = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ mb)
+            val e  = Event(id, ts, RemoveFromStore, hash, user, message)
             addEventToDB(db, e).map((_: Unit) => Removed)
           }
         }
