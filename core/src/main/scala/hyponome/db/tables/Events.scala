@@ -20,16 +20,6 @@ import hyponome._
 import slick.driver.H2Driver.api._
 
 @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
-class Files(tag: Tag) extends Table[File](tag, "FILES") {
-  def hash        = column[FileHash]("HASH", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
-  def name        = column[Option[String]]("NAME")
-  def contentType = column[Option[String]]("CONTENT_TYPE")
-  def length      = column[Long]("LENGTH")
-  def metadata    = column[Option[Metadata]]("METADATA")
-  def *           = (hash, name, contentType, length, metadata) <> (File.tupled, File.unapply)
-}
-
-@SuppressWarnings(Array("org.wartremover.warts.Nothing"))
 class Events(tag: Tag) extends Table[Event](tag, "EVENTS") {
   def id        = column[IdHash]("ID", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
   def timestamp = column[Long]("TIMESTAMP")
