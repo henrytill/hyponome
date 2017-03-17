@@ -21,8 +21,8 @@ import hyponome.util._
 import hyponome.db.tables.{Events, Files}
 import scala.concurrent.ExecutionContext
 import scalaz.Scalaz._
-import slick.driver.H2Driver.api._
-import slick.driver.H2Driver.backend.DatabaseDef
+import slick.driver.SQLiteDriver.api._
+import slick.driver.SQLiteDriver.backend.DatabaseDef
 import slick.jdbc.meta.MTable
 import slick.lifted.Query
 
@@ -72,10 +72,7 @@ object FileDB {
         status <- if (extant) DBExists.point[LocalStoreM] else create(db).map((_: Unit) => DBInitialized)
       } yield status
 
-    def close(db: DatabaseDef): Unit = {
-      val _ = db.createSession().createStatement().execute("shutdown")
-      db.close
-    }
+    def close(db: DatabaseDef): Unit = db.close
 
     private def added(db: DatabaseDef, hash: FileHash): LocalStoreM[Boolean] = {
       val q = events.filter(_.hash === hash).sortBy(_.timestamp.desc)

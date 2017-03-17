@@ -22,7 +22,7 @@ import java.io.{File => JFile}
 import java.nio.file.{Files, Path}
 import scala.concurrent.ExecutionContext
 import scalaz.Scalaz._
-import slick.driver.H2Driver.backend.DatabaseDef
+import slick.driver.SQLiteDriver.backend.DatabaseDef
 
 trait Store[M[_], P] {
 

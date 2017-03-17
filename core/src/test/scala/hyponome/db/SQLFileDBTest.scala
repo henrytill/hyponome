@@ -21,7 +21,7 @@ import hyponome.test._
 import org.junit.{Assert, Test}
 import scala.concurrent.ExecutionContext
 import scalaz.concurrent.Task
-import slick.driver.H2Driver.backend.DatabaseDef
+import slick.driver.SQLiteDriver.backend.DatabaseDef
 
 @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
 class SQLFileDBTest {

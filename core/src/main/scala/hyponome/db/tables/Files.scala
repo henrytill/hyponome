@@ -17,7 +17,7 @@
 package hyponome.db.tables
 
 import hyponome._
-import slick.driver.H2Driver.api._
+import slick.driver.SQLiteDriver.api._
 
 @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
 class Files(tag: Tag) extends Table[File](tag, "FILES") {

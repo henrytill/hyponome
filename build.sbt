@@ -12,9 +12,9 @@ lazy val commonDepsSettings = Seq(
 
 lazy val coreDepsSettings = Seq(
   libraryDependencies ++= Seq(
-    "com.h2database"      % "h2"                  % "1.4.190",
     "com.typesafe.slick" %% "slick"               % "3.1.1",
-    "net.xngns"          %% "klados-hash"         % "0.1.0-37e80e3"))
+    "net.xngns"          %% "klados-hash"         % "0.1.0-37e80e3",
+    "org.xerial"          % "sqlite-jdbc"         % "3.16.1"))
 
 lazy val commonOptions = Seq(
   "-language:higherKinds",
@@ -89,6 +89,7 @@ lazy val commonSettings =
         Resolver.sonatypeRepo("releases"),
         Resolver.bintrayRepo("xngns", "maven")),
       testOptions += Tests.Argument(TestFrameworks.JUnit, "-v"),
+      parallelExecution in Test := false,
       fork in Test := true)
 
 lazy val core = (project in file("core"))

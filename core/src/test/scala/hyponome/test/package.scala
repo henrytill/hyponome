@@ -20,7 +20,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{FileVisitResult, Files, Path, SimpleFileVisitor}
 import java.util.UUID
 
-import slick.driver.H2Driver.api._
+import slick.driver.SQLiteDriver.api._
 import scala.util.{Success, Try}
 
 package object test extends TestData {
@@ -31,10 +31,7 @@ package object test extends TestData {
     Files.createTempDirectory("hyponome-")
 
   def freshTestContext() = LocalStoreContext(
-    dbDef = Database.forURL(url = s"jdbc:h2:mem:${uuid()};CIPHER=AES",
-                            user = "hyponome",
-                            password = "hyponome hyponome",
-                            driver = "org.h2.Driver",
+    dbDef = Database.forURL(url = "jdbc:sqlite:file::memory:?cache=shared",
                             keepAliveConnection = true),
     storePath = testStoreDir()
   )

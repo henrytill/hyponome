@@ -17,6 +17,6 @@
 package hyponome
 
 import java.nio.file.Path
-import slick.driver.H2Driver.backend.DatabaseDef
+import slick.driver.SQLiteDriver.backend.DatabaseDef
 
 final case class LocalStoreContext(dbDef: DatabaseDef, storePath: Path)

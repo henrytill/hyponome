@@ -21,8 +21,8 @@ import net.xngns.klados.hash.SHA256Hash
 import java.nio.file.Path
 import javax.xml.bind.DatatypeConverter.parseHexBinary
 import scalaz.concurrent.Task
-import slick.driver.H2Driver.api._
-import slick.driver.H2Driver.{BaseColumnType, MappedColumnType}
+import slick.driver.SQLiteDriver.api._
+import slick.driver.SQLiteDriver.{BaseColumnType, MappedColumnType}
 
 trait Types {
 
