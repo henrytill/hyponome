@@ -6,9 +6,6 @@ scala:
 jdk:
   - oraclejdk8
 
-before_script:
-  - make
-
 cache:
   directories:
     - $HOME/.ivy2/cache
