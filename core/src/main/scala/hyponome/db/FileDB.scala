@@ -58,7 +58,7 @@ object FileDB {
 
     private val files: TableQuery[Files]   = TableQuery[Files]
     private val events: TableQuery[Events] = TableQuery[Events]
-    private def now: Long                  = System.currentTimeMillis
+    private def now(): Long                = System.currentTimeMillis
 
     private def create(db: DatabaseDef): LocalStore.T[Unit] =
       LocalStore.fromFuture[Unit](db.run(DBIO.seq((events.schema ++ files.schema).create)))
@@ -110,7 +110,7 @@ object FileDB {
           if (isAdded)
             Exists.point[LocalStore.T]
           else {
-            val ts = now
+            val ts = now()
             val mb = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
             val id = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ mb)
             val f  = File(hash, name, contentType, length, metadata)
@@ -131,7 +131,7 @@ object FileDB {
           if (isRemoved)
             NotFound.point[LocalStore.T]
           else {
-            val ts = now
+            val ts = now()
             val mb = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
             val id = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ mb)
             val e  = Event(id, ts, RemoveFromStore, hash, user, message)
