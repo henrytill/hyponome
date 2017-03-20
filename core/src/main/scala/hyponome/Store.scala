@@ -45,44 +45,44 @@ object Store {
 
   @SuppressWarnings(Array("org.wartremover.warts.ExplicitImplicitTypes"))
   implicit def localStore(implicit ec: ExecutionContext,
-                          fs: FileStore[LocalStoreM, Path],
-                          fdb: FileDB[LocalStoreM, DatabaseDef]): Store[LocalStoreM, Path] =
-    new Store[LocalStoreM, Path] {
+                          fs: FileStore[LocalStore.T, Path],
+                          fdb: FileDB[LocalStore.T, DatabaseDef]): Store[LocalStore.T, Path] =
+    new Store[LocalStore.T, Path] {
 
-      def init(): LocalStoreM[StoreStatus] =
+      def init(): LocalStore.T[StoreStatus] =
         for {
-          ctx       <- LocalStoreM.ask
+          ctx       <- LocalStore.ask
           fdbStatus <- fdb.init(ctx.dbDef)
           fsStatus  <- fs.init(ctx.storePath)
-          status    <- StoreExists.point[LocalStoreM]
+          status    <- StoreExists.point[LocalStore.T]
         } yield status
 
-      def info(hash: FileHash): LocalStoreM[Option[File]] =
+      def info(hash: FileHash): LocalStore.T[Option[File]] =
         for {
-          ctx       <- LocalStoreM.ask
+          ctx       <- LocalStore.ask
           maybeFile <- fdb.findFile(ctx.dbDef, hash)
         } yield maybeFile
 
-      def count(): LocalStoreM[Long] =
+      def count(): LocalStore.T[Long] =
         for {
-          ctx   <- LocalStoreM.ask
+          ctx   <- LocalStore.ask
           count <- fdb.countFiles(ctx.dbDef)
         } yield count
 
-      def query(q: StoreQuery): LocalStoreM[Seq[StoreQueryResponse]] =
+      def query(q: StoreQuery): LocalStore.T[Seq[StoreQueryResponse]] =
         for {
-          ctx    <- LocalStoreM.ask
+          ctx    <- LocalStore.ask
           result <- fdb.query(ctx.dbDef, q)
         } yield result
 
-      def findFile(hash: FileHash): LocalStoreM[Option[JFile]] =
+      def findFile(hash: FileHash): LocalStore.T[Option[JFile]] =
         for {
-          ctx    <- LocalStoreM.ask
+          ctx    <- LocalStore.ask
           result <- fs.findFile(ctx.storePath, hash)
         } yield result.map(_.toFile)
 
-      private def getContentType(p: Path): LocalStoreM[String] =
-        LocalStoreM.fromCanThrow(Files.probeContentType(p))
+      private def getContentType(p: Path): LocalStore.T[String] =
+        LocalStore.fromCanThrow(Files.probeContentType(p))
 
       private def addToFileDB(db: DatabaseDef,
                               hash: FileHash,
@@ -91,53 +91,53 @@ object Store {
                               length: Long,
                               metadata: Option[Metadata],
                               user: User,
-                              message: Option[Message]): LocalStoreM[AddStatus] =
+                              message: Option[Message]): LocalStore.T[AddStatus] =
         fdb.addFile(db, hash, name, contentType, length, metadata, user, message)
 
-      private def addToFileStore(store: Path, hash: FileHash, file: Path, addToDbStatus: AddStatus): LocalStoreM[AddStatus] =
+      private def addToFileStore(store: Path, hash: FileHash, file: Path, addToDbStatus: AddStatus): LocalStore.T[AddStatus] =
         addToDbStatus match {
           case Added => fs.addFile(store, hash, file)
-          case x     => x.point[LocalStoreM]
+          case x     => x.point[LocalStore.T]
         }
 
-      def addFile(p: Path, metadata: Option[Metadata], user: User, message: Option[Message]): LocalStoreM[AddStatus] = {
+      def addFile(p: Path, metadata: Option[Metadata], user: User, message: Option[Message]): LocalStore.T[AddStatus] = {
         for {
-          ctx    <- LocalStoreM.ask
-          hash   <- LocalStoreM.fromTask(FileHash.fromPath(p))
-          name   <- LocalStoreM.fromCanThrow(p.getFileName).map((p: Path) => Some(p.toFile.toString))
-          ctype  <- LocalStoreM.fromCanThrow(Option(Files.probeContentType(p)))
-          length <- LocalStoreM.fromCanThrow(p.toFile.length)
+          ctx    <- LocalStore.ask
+          hash   <- LocalStore.fromTask(FileHash.fromPath(p))
+          name   <- LocalStore.fromCanThrow(p.getFileName).map((p: Path) => Some(p.toFile.toString))
+          ctype  <- LocalStore.fromCanThrow(Option(Files.probeContentType(p)))
+          length <- LocalStore.fromCanThrow(p.toFile.length)
           as1    <- addToFileDB(ctx.dbDef, hash, name, ctype, length, metadata, user, message)
           as2    <- addToFileStore(ctx.storePath, hash, p, as1)
         } yield as2
       }
 
       /*
-       * def exists(h: FileHash): LocalStoreM[Boolean] =
+       * def exists(h: FileHash): LocalStore.T[Boolean] =
        *  for {
-       *    ctx       <- LocalStoreM.ask
+       *    ctx       <- LocalStore.ask
        *    maybeFile <- info(h)
        *    result <- {
        *      if (maybeFile.isEmpty)
-       *        false.point[LocalStoreM]
+       *        false.point[LocalStore.T]
        *      else
        *        fs.findFile(ctx.storePath, h).map(_.isDefined)
        *    }
        * } yield result
        */
 
-      private def removeFromFileDB(db: DatabaseDef, hash: FileHash, user: User, message: Option[Message]): LocalStoreM[RemoveStatus] =
+      private def removeFromFileDB(db: DatabaseDef, hash: FileHash, user: User, message: Option[Message]): LocalStore.T[RemoveStatus] =
         fdb.removeFile(db, hash, user, message)
 
-      private def removeFromFileStore(store: Path, hash: FileHash, removeFromDbStatus: RemoveStatus): LocalStoreM[RemoveStatus] =
+      private def removeFromFileStore(store: Path, hash: FileHash, removeFromDbStatus: RemoveStatus): LocalStore.T[RemoveStatus] =
         removeFromDbStatus match {
           case Removed => fs.removeFile(store, hash)
-          case x       => x.point[LocalStoreM]
+          case x       => x.point[LocalStore.T]
         }
 
-      def removeFile(hash: FileHash, user: User, message: Option[Message]): LocalStoreM[RemoveStatus] =
+      def removeFile(hash: FileHash, user: User, message: Option[Message]): LocalStore.T[RemoveStatus] =
         for {
-          ctx <- LocalStoreM.ask
+          ctx <- LocalStore.ask
           rs1 <- removeFromFileDB(ctx.dbDef, hash, user, message)
           rs2 <- removeFromFileStore(ctx.storePath, hash, rs1)
         } yield rs2

@@ -27,20 +27,21 @@ class LocalFileStoreTests {
   import ExecutionContext.Implicits.global
   import hyponome.file.FileStore._
 
-  def addFile(file: Path)(implicit ec: ExecutionContext, fileStore: FileStore[LocalStoreM, Path]): LocalStoreM[(AddStatus, Option[Path])] =
+  def addFile(file: Path)(implicit ec: ExecutionContext,
+                          fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[(AddStatus, Option[Path])] =
     for {
-      ctx  <- LocalStoreM.ask
-      hash <- LocalStoreM.fromTask(FileHash.fromPath(file))
+      ctx  <- LocalStore.ask
+      hash <- LocalStore.fromTask(FileHash.fromPath(file))
       _    <- fileStore.init(ctx.storePath)
       as   <- fileStore.addFile(ctx.storePath, hash, file)
       path <- fileStore.findFile(ctx.storePath, hash)
     } yield (as, path)
 
   def addAndThenRemoveFile(file: Path)(implicit ec: ExecutionContext,
-                                       fileStore: FileStore[LocalStoreM, Path]): LocalStoreM[(RemoveStatus, Option[Path])] =
+                                       fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[(RemoveStatus, Option[Path])] =
     for {
-      ctx  <- LocalStoreM.ask
-      hash <- LocalStoreM.fromTask(FileHash.fromPath(file))
+      ctx  <- LocalStore.ask
+      hash <- LocalStore.fromTask(FileHash.fromPath(file))
       _    <- fileStore.init(ctx.storePath)
       _    <- fileStore.addFile(ctx.storePath, hash, file)
       path <- fileStore.findFile(ctx.storePath, hash)
@@ -48,10 +49,10 @@ class LocalFileStoreTests {
     } yield (rs, path)
 
   def addAndThenAddFile(file: Path)(implicit ec: ExecutionContext,
-                                    fileStore: FileStore[LocalStoreM, Path]): LocalStoreM[(AddStatus, Option[Path])] =
+                                    fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[(AddStatus, Option[Path])] =
     for {
-      ctx  <- LocalStoreM.ask
-      hash <- LocalStoreM.fromTask(FileHash.fromPath(file))
+      ctx  <- LocalStore.ask
+      hash <- LocalStore.fromTask(FileHash.fromPath(file))
       _    <- fileStore.init(ctx.storePath)
       _    <- fileStore.addFile(ctx.storePath, hash, file)
       path <- fileStore.findFile(ctx.storePath, hash)
@@ -59,16 +60,16 @@ class LocalFileStoreTests {
     } yield (as, path)
 
   def removeNonExistentFile(hash: FileHash)(implicit ec: ExecutionContext,
-                                            fileStore: FileStore[LocalStoreM, Path]): LocalStoreM[RemoveStatus] =
+                                            fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[RemoveStatus] =
     for {
-      ctx <- LocalStoreM.ask
+      ctx <- LocalStore.ask
       _   <- fileStore.init(ctx.storePath)
       rs  <- fileStore.removeFile(ctx.storePath, hash)
     } yield rs
 
-  def doubleCreate(implicit ec: ExecutionContext, fileStore: FileStore[LocalStoreM, Path]): LocalStoreM[FileStoreStatus] =
+  def doubleCreate(implicit ec: ExecutionContext, fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[FileStoreStatus] =
     for {
-      ctx <- LocalStoreM.ask
+      ctx <- LocalStore.ask
       _   <- fileStore.init(ctx.storePath)
       ss  <- fileStore.init(ctx.storePath)
     } yield ss

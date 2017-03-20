@@ -52,7 +52,7 @@ trait FileDB[M[_], D] {
 
 object FileDB {
 
-  implicit def SQLFileDB(implicit ec: ExecutionContext): FileDB[LocalStoreM, DatabaseDef] = new FileDB[LocalStoreM, DatabaseDef] {
+  implicit def SQLFileDB(implicit ec: ExecutionContext): FileDB[LocalStore.T, DatabaseDef] = new FileDB[LocalStore.T, DatabaseDef] {
 
     type Q = Query[(Files, Events), (File, Event), Seq]
 
@@ -60,41 +60,41 @@ object FileDB {
     private val events: TableQuery[Events] = TableQuery[Events]
     private def now: Long                  = System.currentTimeMillis
 
-    private def create(db: DatabaseDef): LocalStoreM[Unit] =
-      LocalStoreM.fromFuture[Unit](db.run(DBIO.seq((events.schema ++ files.schema).create)))
+    private def create(db: DatabaseDef): LocalStore.T[Unit] =
+      LocalStore.fromFuture[Unit](db.run(DBIO.seq((events.schema ++ files.schema).create)))
 
-    private def exists(db: DatabaseDef): LocalStoreM[Boolean] =
-      LocalStoreM.fromFuture(db.run(MTable.getTables)).map((tables: Vector[MTable]) => tables.nonEmpty)
+    private def exists(db: DatabaseDef): LocalStore.T[Boolean] =
+      LocalStore.fromFuture(db.run(MTable.getTables)).map((tables: Vector[MTable]) => tables.nonEmpty)
 
-    def init(db: DatabaseDef): LocalStoreM[DBStatus] =
+    def init(db: DatabaseDef): LocalStore.T[DBStatus] =
       for {
         extant <- exists(db)
-        status <- if (extant) DBExists.point[LocalStoreM] else create(db).map((_: Unit) => DBInitialized)
+        status <- if (extant) DBExists.point[LocalStore.T] else create(db).map((_: Unit) => DBInitialized)
       } yield status
 
     def close(db: DatabaseDef): Unit = db.close
 
-    private def added(db: DatabaseDef, hash: FileHash): LocalStoreM[Boolean] = {
+    private def added(db: DatabaseDef, hash: FileHash): LocalStore.T[Boolean] = {
       val q = events.filter(_.hash === hash).sortBy(_.timestamp.desc)
-      LocalStoreM.fromFuture(db.run(q.result.headOption)).map {
+      LocalStore.fromFuture(db.run(q.result.headOption)).map {
         case Some(Event(_, _, AddToStore, _, _, _)) => true
         case _                                      => false
       }
     }
 
-    private def removed(db: DatabaseDef, hash: FileHash): LocalStoreM[Boolean] = {
+    private def removed(db: DatabaseDef, hash: FileHash): LocalStore.T[Boolean] = {
       val q = events.filter(_.hash === hash).sortBy(_.timestamp.desc)
-      LocalStoreM.fromFuture(db.run(q.result.headOption)).map {
+      LocalStore.fromFuture(db.run(q.result.headOption)).map {
         case Some(Event(_, _, RemoveFromStore, _, _, _)) => true
         case _                                           => false
       }
     }
 
-    private def addEventToDB(db: DatabaseDef, e: Event): LocalStoreM[Unit] =
-      LocalStoreM.fromFuture(db.run(DBIO.seq(events += e)))
+    private def addEventToDB(db: DatabaseDef, e: Event): LocalStore.T[Unit] =
+      LocalStore.fromFuture(db.run(DBIO.seq(events += e)))
 
-    private def addFileToDB(db: DatabaseDef, f: File, e: Event): LocalStoreM[Unit] =
-      LocalStoreM.fromFuture(db.run(DBIO.seq(files += f, events += e)))
+    private def addFileToDB(db: DatabaseDef, f: File, e: Event): LocalStore.T[Unit] =
+      LocalStore.fromFuture(db.run(DBIO.seq(files += f, events += e)))
 
     def addFile(db: DatabaseDef,
                 hash: FileHash,
@@ -103,12 +103,12 @@ object FileDB {
                 length: Long,
                 metadata: Option[Metadata],
                 user: User,
-                message: Option[Message]): LocalStoreM[AddStatus] = {
+                message: Option[Message]): LocalStore.T[AddStatus] = {
       for {
         isAdded <- added(db, hash)
         status <- {
           if (isAdded)
-            Exists.point[LocalStoreM]
+            Exists.point[LocalStore.T]
           else {
             val ts = now
             val mb = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
@@ -124,12 +124,12 @@ object FileDB {
       } yield status
     }
 
-    def removeFile(db: DatabaseDef, hash: FileHash, user: User, message: Option[Message]): LocalStoreM[RemoveStatus] = {
+    def removeFile(db: DatabaseDef, hash: FileHash, user: User, message: Option[Message]): LocalStore.T[RemoveStatus] = {
       for {
         isRemoved <- removed(db, hash)
         status <- {
           if (isRemoved)
-            NotFound.point[LocalStoreM]
+            NotFound.point[LocalStore.T]
           else {
             val ts = now
             val mb = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
@@ -141,30 +141,30 @@ object FileDB {
       } yield status
     }
 
-    def findFile(db: DatabaseDef, hash: FileHash): LocalStoreM[Option[File]] =
+    def findFile(db: DatabaseDef, hash: FileHash): LocalStore.T[Option[File]] =
       for {
         isRemoved <- removed(db, hash)
         maybeFile <- {
           if (isRemoved)
-            None.point[LocalStoreM]
+            None.point[LocalStore.T]
           else {
             val files: TableQuery[Files] = TableQuery[Files]
             val q                        = files.filter(_.hash === hash)
-            LocalStoreM.fromFuture(db.run(q.result.headOption))
+            LocalStore.fromFuture(db.run(q.result.headOption))
           }
         }
       } yield maybeFile
 
-    def countFiles(db: DatabaseDef): LocalStoreM[Long] = {
+    def countFiles(db: DatabaseDef): LocalStore.T[Long] = {
       val q = files.length
-      LocalStoreM.fromFuture(db.run(q.result)).map(_.longValue)
+      LocalStore.fromFuture(db.run(q.result)).map(_.longValue)
     }
 
     @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
-    def query(db: DatabaseDef, q: StoreQuery): LocalStoreM[Seq[StoreQueryResponse]] =
+    def query(db: DatabaseDef, q: StoreQuery): LocalStore.T[Seq[StoreQueryResponse]] =
       q match {
         case StoreQuery(None, None, None, None, None, None, None, _, _) =>
-          Seq.empty[StoreQueryResponse].point[LocalStoreM]
+          Seq.empty[StoreQueryResponse].point[LocalStore.T]
         case StoreQuery(hash, name, user, txLo, txHi, timeLo, timeHi, sortBy, sortOrder) =>
           def notRemoved: Q = {
             val removes = events.filter(_.operation === (RemoveFromStore: Operation))
@@ -230,7 +230,7 @@ object FileDB {
           val filterAndSort =
             filterByHash andThen filterByName andThen filterByUser andThen filterByTimestamp andThen sort
           val composedQuery = filterAndSort(notRemoved)
-          LocalStoreM.fromFuture(db.run(composedQuery.result)).map { r =>
+          LocalStore.fromFuture(db.run(composedQuery.result)).map { r =>
             r.map {
               case (f: File, e: Event) =>
                 StoreQueryResponse(e.id, e.timestamp, e.operation, e.user, f.hash, f.name, f.contentType, f.length, f.metadata)

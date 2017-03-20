@@ -33,59 +33,59 @@ trait FileStore[M[_], S] {
 
 object FileStore {
 
-  implicit object LocalFileStore extends FileStore[LocalStoreM, Path] {
+  implicit object LocalFileStore extends FileStore[LocalStore.T, Path] {
 
-    def fileStoreExists(store: Path): LocalStoreM[Boolean] =
-      LocalStoreM.fromCanThrow(Files.exists(store))
+    def fileStoreExists(store: Path): LocalStore.T[Boolean] =
+      LocalStore.fromCanThrow(Files.exists(store))
 
-    def createFileStore(store: Path): LocalStoreM[Path] =
-      LocalStoreM.fromCanThrow(Files.createDirectories(store))
+    def createFileStore(store: Path): LocalStore.T[Path] =
+      LocalStore.fromCanThrow(Files.createDirectories(store))
 
-    def init(store: Path): LocalStoreM[FileStoreStatus] =
+    def init(store: Path): LocalStore.T[FileStoreStatus] =
       for {
         exists <- fileStoreExists(store)
         status <- {
           if (exists)
-            FileStoreExists.point[LocalStoreM]
+            FileStoreExists.point[LocalStore.T]
           else
             createFileStore(store).map((_: Path) => FileStoreCreated)
         }
       } yield status
 
-    private def fileExists(p: Path): LocalStoreM[Boolean] =
-      LocalStoreM.fromCanThrow(Files.exists(p))
+    private def fileExists(p: Path): LocalStore.T[Boolean] =
+      LocalStore.fromCanThrow(Files.exists(p))
 
-    private def resolvePath(store: Path, hash: FileHash): LocalStoreM[Path] = {
+    private def resolvePath(store: Path, hash: FileHash): LocalStore.T[Path] = {
       val (dir, file) = hash.toString.splitAt(2)
-      store.resolve(dir).resolve(file).toAbsolutePath.point[LocalStoreM]
+      store.resolve(dir).resolve(file).toAbsolutePath.point[LocalStore.T]
     }
 
-    def findFile(store: Path, hash: FileHash): LocalStoreM[Option[Path]] =
+    def findFile(store: Path, hash: FileHash): LocalStore.T[Option[Path]] =
       for {
         path   <- resolvePath(store, hash)
         exists <- fileExists(path)
       } yield if (exists) Some(path) else None
 
-    def addFile(store: Path, hash: FileHash, file: Path): LocalStoreM[AddStatus] =
+    def addFile(store: Path, hash: FileHash, file: Path): LocalStore.T[AddStatus] =
       for {
         destination <- resolvePath(store, hash)
-        _           <- LocalStoreM.fromCanThrow(Files.createDirectories(destination.getParent))
+        _           <- LocalStore.fromCanThrow(Files.createDirectories(destination.getParent))
         exists      <- fileExists(destination)
         status <- {
-          if (!exists) LocalStoreM.fromCanThrow(Files.copy(file, destination)).map((_: Path) => Added) else Exists.point[LocalStoreM]
+          if (!exists) LocalStore.fromCanThrow(Files.copy(file, destination)).map((_: Path) => Added) else Exists.point[LocalStore.T]
         }
       } yield status
 
-    def removeFile(store: Path, hash: FileHash): LocalStoreM[RemoveStatus] =
+    def removeFile(store: Path, hash: FileHash): LocalStore.T[RemoveStatus] =
       for {
         exists <- findFile(store, hash)
         status <- {
           if (exists.isEmpty)
-            NotFound.point[LocalStoreM]
+            NotFound.point[LocalStore.T]
           else
             for {
               path <- resolvePath(store, hash)
-              _    <- LocalStoreM.fromCanThrow(Files.delete(path))
+              _    <- LocalStore.fromCanThrow(Files.delete(path))
             } yield Removed
         }
       } yield status

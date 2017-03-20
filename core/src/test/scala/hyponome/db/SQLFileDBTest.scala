@@ -29,16 +29,17 @@ class SQLFileDBTest {
   import scala.concurrent.ExecutionContext.Implicits.global
   import hyponome.db.FileDB._
 
-  def safeRun[A, B, C](ctx: LocalStoreContext, thing: => LocalStoreM[C])(implicit ec: ExecutionContext,
-                                                                         fileDB: FileDB[LocalStoreM, DatabaseDef]): Task[C] =
+  def safeRun[A, B, C](ctx: LocalStoreContext, thing: => LocalStore.T[C])(implicit ec: ExecutionContext,
+                                                                          fileDB: FileDB[LocalStore.T, DatabaseDef]): Task[C] =
     for {
       result <- thing.run(ctx).handleWith { case ex: Throwable => fileDB.close(ctx.dbDef); Task.fail(ex) }
       _      <- Task(fileDB.close(ctx.dbDef))
     } yield result
 
-  def singleAddTest(testData: TestData)(implicit ec: ExecutionContext, fileDB: FileDB[LocalStoreM, DatabaseDef]): LocalStoreM[AddStatus] =
+  def singleAddTest(testData: TestData)(implicit ec: ExecutionContext,
+                                        fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[AddStatus] =
     for {
-      ctx <- LocalStoreM.ask
+      ctx <- LocalStore.ask
       _   <- fileDB.init(ctx.dbDef)
       afs <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
@@ -51,9 +52,9 @@ class SQLFileDBTest {
     } yield afs
 
   def addThenRemove(testData: TestData)(implicit ec: ExecutionContext,
-                                        fileDB: FileDB[LocalStoreM, DatabaseDef]): LocalStoreM[RemoveStatus] =
+                                        fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[RemoveStatus] =
     for {
-      ctx <- LocalStoreM.ask
+      ctx <- LocalStore.ask
       iss <- fileDB.init(ctx.dbDef)
       afs <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
@@ -66,9 +67,9 @@ class SQLFileDBTest {
       rfs <- fileDB.removeFile(ctx.dbDef, testData.hash, testData.user, testMessageRemove)
     } yield rfs
 
-  def addThenAdd(testData: TestData)(implicit ec: ExecutionContext, fileDB: FileDB[LocalStoreM, DatabaseDef]): LocalStoreM[AddStatus] =
+  def addThenAdd(testData: TestData)(implicit ec: ExecutionContext, fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[AddStatus] =
     for {
-      ctx <- LocalStoreM.ask
+      ctx <- LocalStore.ask
       iss <- fileDB.init(ctx.dbDef)
       as1 <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
@@ -89,9 +90,9 @@ class SQLFileDBTest {
     } yield as2
 
   def addThenRemoveThenAdd(testData: TestData)(implicit ec: ExecutionContext,
-                                               fileDB: FileDB[LocalStoreM, DatabaseDef]): LocalStoreM[AddStatus] =
+                                               fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[AddStatus] =
     for {
-      ctx <- LocalStoreM.ask
+      ctx <- LocalStore.ask
       iss <- fileDB.init(ctx.dbDef)
       as1 <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
@@ -113,9 +114,9 @@ class SQLFileDBTest {
     } yield as2
 
   def addThenRemoveThenRemove(testData: TestData)(implicit ec: ExecutionContext,
-                                                  fileDB: FileDB[LocalStoreM, DatabaseDef]): LocalStoreM[RemoveStatus] =
+                                                  fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[RemoveStatus] =
     for {
-      ctx <- LocalStoreM.ask
+      ctx <- LocalStore.ask
       iss <- fileDB.init(ctx.dbDef)
       afs <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
@@ -129,9 +130,10 @@ class SQLFileDBTest {
       rs2 <- fileDB.removeFile(ctx.dbDef, testData.hash, testData.user, testMessageRemove)
     } yield rs2
 
-  def addThenFind(testData: TestData)(implicit ec: ExecutionContext, fileDB: FileDB[LocalStoreM, DatabaseDef]): LocalStoreM[Option[File]] =
+  def addThenFind(testData: TestData)(implicit ec: ExecutionContext,
+                                      fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[Option[File]] =
     for {
-      ctx <- LocalStoreM.ask
+      ctx <- LocalStore.ask
       iss <- fileDB.init(ctx.dbDef)
       afs <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
@@ -145,9 +147,9 @@ class SQLFileDBTest {
     } yield fff
 
   def addThenRemoveThenFind(testData: TestData)(implicit ec: ExecutionContext,
-                                                fileDB: FileDB[LocalStoreM, DatabaseDef]): LocalStoreM[Option[File]] =
+                                                fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[Option[File]] =
     for {
-      ctx <- LocalStoreM.ask
+      ctx <- LocalStore.ask
       iss <- fileDB.init(ctx.dbDef)
       afs <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
@@ -161,9 +163,9 @@ class SQLFileDBTest {
       fff <- fileDB.findFile(ctx.dbDef, testData.hash)
     } yield fff
 
-  def doubleInit(implicit ec: ExecutionContext, fileDB: FileDB[LocalStoreM, DatabaseDef]): LocalStoreM[DBStatus] =
+  def doubleInit(implicit ec: ExecutionContext, fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[DBStatus] =
     for {
-      ctx <- LocalStoreM.ask
+      ctx <- LocalStore.ask
       _   <- fileDB.init(ctx.dbDef)
       ds  <- fileDB.init(ctx.dbDef)
     } yield ds

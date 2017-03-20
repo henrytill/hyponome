@@ -21,23 +21,25 @@ import scala.concurrent.{ExecutionContext, Future}
 import scalaz.Kleisli
 import scalaz.concurrent.Task
 
-final class StoreM[Context] {
+final class StoreF[Context] {
 
-  def apply[A](f: Context => Task[A]): Kleisli[Task, Context, A] =
+  type T[A] = Kleisli[Task, Context, A]
+
+  def apply[A](f: Context => Task[A]): T[A] =
     Kleisli(f)
 
   def ask: Kleisli[Task, Context, Context] =
     Kleisli.ask[Task, Context]
 
-  def fromCanThrow[A](x: => A): Kleisli[Task, Context, A] =
+  def fromCanThrow[A](x: => A): T[A] =
     apply[A]((_: Context) => Task[A](x))
 
-  def fromTask[A](t: => Task[A]): Kleisli[Task, Context, A] =
+  def fromTask[A](t: => Task[A]): T[A] =
     apply[A]((_: Context) => t)
 
-  def fromFuture[A](x: => Future[A])(implicit ec: ExecutionContext): Kleisli[Task, Context, A] =
+  def fromFuture[A](x: => Future[A])(implicit ec: ExecutionContext): T[A] =
     apply[A]((_: Context) => futureToTask(x))
 
-  def throwError[A](x: => Throwable): Kleisli[Task, Context, A] =
+  def throwError[A](x: => Throwable): T[A] =
     apply[A]((_: Context) => Task.fail(x))
 }

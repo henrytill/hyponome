@@ -16,16 +16,11 @@
 
 import java.nio.file.Path
 import scala.concurrent.ExecutionContext
-import scalaz.Kleisli
-import scalaz.concurrent.Task
 
 package object hyponome extends Types {
 
-  /** The LocalStore Monad */
-  type LocalStoreM[A] = Kleisli[Task, LocalStoreContext, A]
+  val LocalStore = new StoreF[LocalStoreContext]
 
-  val LocalStoreM = new StoreM[LocalStoreContext]
-
-  def localStore(implicit ec: ExecutionContext, store: Store[LocalStoreM, Path]): Store[LocalStoreM, Path] =
+  def localStore(implicit ec: ExecutionContext, store: Store[LocalStore.T, Path]): Store[LocalStore.T, Path] =
     store
 }
