@@ -31,8 +31,7 @@ package object test extends TestData {
     Files.createTempDirectory("hyponome-")
 
   def freshTestContext() = LocalStoreContext(
-    dbDef = Database.forURL(url = "jdbc:sqlite:file::memory:?cache=shared",
-                            keepAliveConnection = true),
+    dbDef = Database.forURL(url = "jdbc:sqlite:file::memory:?cache=shared", keepAliveConnection = true),
     storePath = testStoreDir()
   )
 
