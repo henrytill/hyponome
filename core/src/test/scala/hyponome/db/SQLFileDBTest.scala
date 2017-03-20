@@ -40,7 +40,7 @@ class SQLFileDBTest {
                                         fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[AddStatus] =
     for {
       ctx <- LocalStore.ask
-      _   <- fileDB.init(ctx.dbDef)
+      _   <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
       afs <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
                             testData.name,
@@ -55,7 +55,7 @@ class SQLFileDBTest {
                                         fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[RemoveStatus] =
     for {
       ctx <- LocalStore.ask
-      iss <- fileDB.init(ctx.dbDef)
+      iss <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
       afs <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
                             testData.name,
@@ -70,7 +70,7 @@ class SQLFileDBTest {
   def addThenAdd(testData: TestData)(implicit ec: ExecutionContext, fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[AddStatus] =
     for {
       ctx <- LocalStore.ask
-      iss <- fileDB.init(ctx.dbDef)
+      iss <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
       as1 <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
                             testData.name,
@@ -93,7 +93,7 @@ class SQLFileDBTest {
                                                fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[AddStatus] =
     for {
       ctx <- LocalStore.ask
-      iss <- fileDB.init(ctx.dbDef)
+      iss <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
       as1 <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
                             testData.name,
@@ -117,7 +117,7 @@ class SQLFileDBTest {
                                                   fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[RemoveStatus] =
     for {
       ctx <- LocalStore.ask
-      iss <- fileDB.init(ctx.dbDef)
+      iss <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
       afs <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
                             testData.name,
@@ -134,7 +134,7 @@ class SQLFileDBTest {
                                       fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[Option[File]] =
     for {
       ctx <- LocalStore.ask
-      iss <- fileDB.init(ctx.dbDef)
+      iss <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
       afs <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
                             testData.name,
@@ -150,7 +150,7 @@ class SQLFileDBTest {
                                                 fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[Option[File]] =
     for {
       ctx <- LocalStore.ask
-      iss <- fileDB.init(ctx.dbDef)
+      iss <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
       afs <- fileDB.addFile(ctx.dbDef,
                             testData.hash,
                             testData.name,
@@ -166,55 +166,55 @@ class SQLFileDBTest {
   def doubleInit(implicit ec: ExecutionContext, fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[DBStatus] =
     for {
       ctx <- LocalStore.ask
-      _   <- fileDB.init(ctx.dbDef)
-      ds  <- fileDB.init(ctx.dbDef)
+      _   <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
+      ds  <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
     } yield ds
 
   @Test
   def runSingleAddTest(): Unit = {
-    val actual = safeRun(freshTestContext(), singleAddTest(testData)).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, singleAddTest(testData))).unsafePerformSync
     Assert.assertEquals(Added, actual)
   }
 
   @Test
   def runAddThenRemove(): Unit = {
-    val actual = safeRun(freshTestContext(), addThenRemove(testData)).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemove(testData))).unsafePerformSync
     Assert.assertEquals(Removed, actual)
   }
 
   @Test
   def runAddThenAdd(): Unit = {
-    val actual = safeRun(freshTestContext(), addThenAdd(testData)).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenAdd(testData))).unsafePerformSync
     Assert.assertEquals(Exists, actual)
   }
 
   @Test
   def runAddThenRemoveThenAdd(): Unit = {
-    val actual = safeRun(freshTestContext(), addThenRemoveThenAdd(testData)).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemoveThenAdd(testData))).unsafePerformSync
     Assert.assertEquals(Added, actual)
   }
 
   @Test
   def runAddThenRemoveThenRemove(): Unit = {
-    val actual = safeRun(freshTestContext(), addThenRemoveThenRemove(testData)).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemoveThenRemove(testData))).unsafePerformSync
     Assert.assertEquals(NotFound, actual)
   }
 
   @Test
   def runAddThenFind(): Unit = {
-    val actual = safeRun(freshTestContext(), addThenFind(testData)).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenFind(testData))).unsafePerformSync
     Assert.assertEquals(Some(testFile), actual)
   }
 
   @Test
   def runAddThenRemoveThenFind(): Unit = {
-    val actual = safeRun(freshTestContext(), addThenRemoveThenFind(testData)).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemoveThenFind(testData))).unsafePerformSync
     Assert.assertEquals(None, actual)
   }
 
   @Test
   def runDoubleInit(): Unit = {
-    val actual = safeRun(freshTestContext(), doubleInit).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, doubleInit)).unsafePerformSync
     Assert.assertEquals(DBExists, actual)
   }
 }

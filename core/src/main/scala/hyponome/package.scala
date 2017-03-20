@@ -19,6 +19,8 @@ import scala.concurrent.ExecutionContext
 
 package object hyponome extends Types {
 
+  val currentSchemaVersion: DBSchemaVersion = DBSchemaVersion(1)
+
   val LocalStore = new StoreF[LocalStoreContext]
 
   def localStore(implicit ec: ExecutionContext, store: Store[LocalStore.T, Path]): Store[LocalStore.T, Path] =

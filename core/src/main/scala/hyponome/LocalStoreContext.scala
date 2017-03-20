@@ -16,7 +16,38 @@
 
 package hyponome
 
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
+import scalaz.concurrent.Task
+import slick.driver.SQLiteDriver.api._
 import slick.driver.SQLiteDriver.backend.DatabaseDef
 
-final case class LocalStoreContext(dbDef: DatabaseDef, storePath: Path)
+final case class LocalStoreContext(dbDef: DatabaseDef, dbSchemaVersion: DBSchemaVersion, rootPath: Path, storePath: Path)
+
+object LocalStoreContext {
+
+  private def existsAndIsDirectory(p: Path): Boolean =
+    Files.exists(p) && Files.isDirectory(p)
+
+  private def existsAndIsFile(p: Path): Boolean =
+    Files.exists(p) && Files.isRegularFile(p)
+
+  private def createOrRead(p: Path)(exists: Boolean): Task[DBSchemaVersion] =
+    if (exists) {
+      DBSchemaVersion.fromFile(p)
+    } else {
+      currentSchemaVersion.toFile(p).map((_: Unit) => currentSchemaVersion)
+    }
+
+  private def getSchemaVersion(p: Path): Task[DBSchemaVersion] =
+    Task.now(existsAndIsFile(p)).flatMap(createOrRead(p))
+
+  def fromPath(p: Path): Task[LocalStoreContext] =
+    for {
+      storeDir            <- Task.now(Files.createDirectories(p.resolve("store")))
+      dbDir               <- Task.now(Files.createDirectories(p.resolve("var/hyponome/db")))
+      dbFile              <- Task.now(dbDir.resolve("db.sqlite"))
+      dbSchemaVersionFile <- Task.now(dbDir.resolve("schema"))
+      dbSchemaVersion     <- getSchemaVersion(dbSchemaVersionFile)
+      dbDef               <- Task.now(Database.forURL(url = s"jdbc:sqlite:$dbFile", keepAliveConnection = true))
+    } yield LocalStoreContext(dbDef, dbSchemaVersion, p, storeDir)
+}

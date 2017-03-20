@@ -19,7 +19,7 @@ package hyponome.db
 import hyponome._
 import hyponome.util._
 import hyponome.db.tables.{Events, Files}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scalaz.Scalaz._
 import slick.driver.SQLiteDriver.api._
 import slick.driver.SQLiteDriver.backend.DatabaseDef
@@ -28,7 +28,7 @@ import slick.lifted.Query
 
 trait FileDB[M[_], D] {
 
-  def init(db: D): M[DBStatus]
+  def init(db: D, schemaVersion: DBSchemaVersion): M[DBStatus]
 
   def close(db: D): Unit
 
@@ -66,10 +66,28 @@ object FileDB {
     private def exists(db: DatabaseDef): LocalStore.T[Boolean] =
       LocalStore.fromFuture(db.run(MTable.getTables)).map((tables: Vector[MTable]) => tables.nonEmpty)
 
-    def init(db: DatabaseDef): LocalStore.T[DBStatus] =
+    private def runMigrations(db: DatabaseDef, schemaVersion: DBSchemaVersion): Future[Unit] =
+      Future(())
+
+    private def migrate(db: DatabaseDef, schemaVersion: DBSchemaVersion): LocalStore.T[DBStatus] =
+      LocalStore.fromFuture(runMigrations(db, schemaVersion)).map((_: Unit) => DBExists)
+
+    @SuppressWarnings(Array("org.wartremover.warts.Equals"))
+    private def isCurrent(schemaVersion: DBSchemaVersion): Boolean =
+      schemaVersion == currentSchemaVersion
+
+    def init(db: DatabaseDef, schemaVersion: DBSchemaVersion): LocalStore.T[DBStatus] =
       for {
         extant <- exists(db)
-        status <- if (extant) DBExists.point[LocalStore.T] else create(db).map((_: Unit) => DBInitialized)
+        status <- {
+          if (!extant) {
+            create(db).map((_: Unit) => DBInitialized)
+          } else if (isCurrent(schemaVersion)) {
+            DBExists.point[LocalStore.T]
+          } else {
+            migrate(db, schemaVersion)
+          }
+        }
       } yield status
 
     def close(db: DatabaseDef): Unit = db.close

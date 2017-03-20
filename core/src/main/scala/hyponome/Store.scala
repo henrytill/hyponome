@@ -52,7 +52,7 @@ object Store {
       def init(): LocalStore.T[StoreStatus] =
         for {
           ctx       <- LocalStore.ask
-          fdbStatus <- fdb.init(ctx.dbDef)
+          fdbStatus <- fdb.init(ctx.dbDef, ctx.dbSchemaVersion)
           fsStatus  <- fs.init(ctx.storePath)
           status    <- StoreExists.point[LocalStore.T]
         } yield status

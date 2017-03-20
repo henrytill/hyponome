@@ -76,7 +76,7 @@ class LocalFileStoreTests {
 
   @Test
   def runAddFile(): Unit = {
-    val (status, Some(path)) = addFile(testPDF).run(freshTestContext()).unsafePerformSync
+    val (status, Some(path)) = freshTestContext().flatMap((ctx: LocalStoreContext) => addFile(testPDF).run(ctx)).unsafePerformSync
     val copiedHash: FileHash = FileHash.fromPath(path).unsafePerformSync
     Assert.assertEquals(Added, status)
     Assert.assertArrayEquals(testPDFHash.getBytes, copiedHash.getBytes)
@@ -84,29 +84,32 @@ class LocalFileStoreTests {
 
   @Test
   def runAddAndThenRemoveFile(): Unit = {
-    val (status, Some(path)) = addAndThenRemoveFile(testPDF).run(freshTestContext()).unsafePerformSync
-    val fileExists: Boolean  = Files.exists(path)
+    val (status, Some(path)) =
+      freshTestContext().flatMap((ctx: LocalStoreContext) => addAndThenRemoveFile(testPDF).run(ctx)).unsafePerformSync
+    val fileExists: Boolean = Files.exists(path)
     Assert.assertEquals(Removed, status)
     Assert.assertFalse(fileExists)
   }
 
   @Test
   def runAddAndThenAddFile(): Unit = {
-    val (status, Some(path)) = addAndThenAddFile(testPDF).run(freshTestContext()).unsafePerformSync
-    val fileExists: Boolean  = Files.exists(path)
+    val (status, Some(path)) =
+      freshTestContext().flatMap((ctx: LocalStoreContext) => addAndThenAddFile(testPDF).run(ctx)).unsafePerformSync
+    val fileExists: Boolean = Files.exists(path)
     Assert.assertEquals(Exists, status)
     Assert.assertTrue(fileExists)
   }
 
   @Test
   def runRemoveNonExistentFile(): Unit = {
-    val status: RemoveStatus = removeNonExistentFile(testPDFHash).run(freshTestContext()).unsafePerformSync
+    val status: RemoveStatus =
+      freshTestContext().flatMap((ctx: LocalStoreContext) => removeNonExistentFile(testPDFHash).run(ctx)).unsafePerformSync
     Assert.assertEquals(NotFound, status)
   }
 
   @Test
   def runDoubleCreate(): Unit = {
-    val status: FileStoreStatus = doubleCreate.run(freshTestContext()).unsafePerformSync
+    val status: FileStoreStatus = freshTestContext().flatMap((ctx: LocalStoreContext) => doubleCreate.run(ctx)).unsafePerformSync
     Assert.assertEquals(FileStoreExists, status)
   }
 }

@@ -17,9 +17,10 @@
 package hyponome
 
 import hyponome.util._
-import net.xngns.klados.hash.SHA256Hash
-import java.nio.file.Path
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Path}
 import javax.xml.bind.DatatypeConverter.parseHexBinary
+import net.xngns.klados.hash.SHA256Hash
 import scalaz.concurrent.Task
 import slick.driver.SQLiteDriver.api._
 import slick.driver.SQLiteDriver.{BaseColumnType, MappedColumnType}
@@ -40,6 +41,22 @@ trait Types {
   sealed trait FileStoreStatus extends Product with Serializable
   case object FileStoreCreated extends FileStoreStatus
   case object FileStoreExists  extends FileStoreStatus
+
+  case class DBSchemaVersion(version: Int) {
+    def toFile(p: Path): Task[Unit] =
+      Task
+        .now(Files.write(p, version.toString.getBytes(StandardCharsets.UTF_8)))
+        .map((_: Path) => ())
+  }
+
+  object DBSchemaVersion {
+    def fromFile(p: Path): Task[DBSchemaVersion] =
+      Task
+        .now(Files.readAllBytes(p))
+        .map((bytes: Array[Byte]) => new String(bytes, StandardCharsets.UTF_8))
+        .map((s: String) => Integer.parseInt(s))
+        .map((i: Int) => DBSchemaVersion(i))
+  }
 
   sealed trait AddStatus extends Product with Serializable
   case object Added      extends AddStatus

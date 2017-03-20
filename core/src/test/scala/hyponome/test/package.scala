@@ -19,21 +19,23 @@ package hyponome
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{FileVisitResult, Files, Path, SimpleFileVisitor}
 import java.util.UUID
-
-import slick.driver.SQLiteDriver.api._
 import scala.util.{Success, Try}
+import org.log4s._
 
 package object test extends TestData {
+
+  private val logger = getLogger
 
   def uuid(): String = UUID.randomUUID.toString
 
   def testStoreDir(): Path =
     Files.createTempDirectory("hyponome-")
 
-  def freshTestContext() = LocalStoreContext(
-    dbDef = Database.forURL(url = "jdbc:sqlite:file::memory:?cache=shared", keepAliveConnection = true),
-    storePath = testStoreDir()
-  )
+  def freshTestContext() = {
+    val dir = testStoreDir
+    logger.debug(s"using store at: $dir")
+    LocalStoreContext.fromPath(dir)
+  }
 
   /**
     * Makes a SimpleFileVisitor to delete files and their containing
