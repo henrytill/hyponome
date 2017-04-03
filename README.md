@@ -17,7 +17,7 @@ In its current state, hyponome should be considered experimental and unstable.  
 
 ## Other Versions
 
-The [original version](https://github.com/henrytill/hyponome-clojure) was written in Clojure.
+The [original version](https://bitbucket.org/henrytill/hyponome-clojure) was written in Clojure.
 
 ## Inspiration:
 
