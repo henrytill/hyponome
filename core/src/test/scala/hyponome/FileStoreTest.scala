@@ -17,26 +17,44 @@
 package hyponome
 
 import java.nio.file.{Files, Path}
-import org.scalacheck.{Arbitrary, Gen, Prop}
+import org.scalacheck.{Properties, Prop}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.Implicits.global
+import scalaz.Scalaz._
 import scalaz.concurrent.Task
+import org.log4s._
 
-class FileStoreTest {
+import hyponome.test._
 
-  val genNEByteArray: Gen[Array[Byte]] = Gen.nonEmptyContainerOf[Array, Byte](Arbitrary.arbitrary[Byte])
+object FileStoreProperties {
 
-  val genNEListOfNEByteArrays: Gen[List[Array[Byte]]] = Gen.nonEmptyContainerOf[List, Array[Byte]](genNEByteArray)
+  private val logger = getLogger
 
-  def roundTrip(ps: List[Path]): Task[List[FileHash]] = ???
+  // def roundTrip(ps: List[Path]): Task[List[FileHash]] = ???
+  private def roundTrip(ps: List[Path])(implicit ec: ExecutionContext): Task[List[AddStatus]] =
+    for {
+      ctx <- freshTestContext()
+      ls  <- Task.now(localStore)
+      _   <- ls.init.run(ctx)
+      as  <- ps.map((p: Path) => ls.addFile(p, None, testUser, None).run(ctx)).sequence
+    } yield as
 
   @SuppressWarnings(Array("org.wartremover.warts.Any"))
-  val prop_roundTrip: Prop = Prop.forAll(genNEListOfNEByteArrays) { (bas: List[Array[Byte]]) =>
+  def prop_roundTrip(implicit ec: ExecutionContext): Prop = Prop.forAll(genNEListOfNEByteArrays) { (bas: List[Array[Byte]]) =>
     (for {
       t  <- Task.now(Files.createTempDirectory("hyponome-test-uploads-"))
       hs <- Task.now(bas.map(FileHash.fromBytes))
       ps <- Task.now(hs.map((h: FileHash) => t.resolve(h.toString)))
       zs <- Task.now(bas.zip(ps))
       _  <- Task.now(zs.foreach((t: (Array[Byte], Path)) => Files.write(t._2, t._1)))
-      r  <- roundTrip(ps)
-    } yield r == hs).unsafePerformSync
+      _  <- Task.now(logger.debug(s"Round-tripping ${zs.length} files..."))
+      as <- roundTrip(ps)
+      rs <- Task.now(as.map(_.hash))
+    } yield hs.sameElements(rs)).unsafePerformSync
   }
+}
+
+@SuppressWarnings(Array("org.wartremover.warts.NonUnitStatements"))
+object FileStoreTest extends Properties("FileStore") {
+  property("roundTrip") = FileStoreProperties.prop_roundTrip
 }

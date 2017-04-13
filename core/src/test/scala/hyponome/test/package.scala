@@ -22,7 +22,7 @@ import java.util.UUID
 import scala.util.{Success, Try}
 import org.log4s._
 
-package object test extends TestData {
+package object test extends TestData with Generators {
 
   private val logger = getLogger
 
