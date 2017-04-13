@@ -30,7 +30,6 @@ object FileStoreProperties {
 
   private val logger = getLogger
 
-  // def roundTrip(ps: List[Path]): Task[List[FileHash]] = ???
   private def roundTrip(ps: List[Path])(implicit ec: ExecutionContext): Task[List[AddStatus]] =
     for {
       ctx <- freshTestContext()
