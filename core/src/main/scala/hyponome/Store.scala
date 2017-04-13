@@ -96,8 +96,8 @@ object Store {
 
       private def addToFileStore(store: Path, hash: FileHash, file: Path, addToDbStatus: AddStatus): LocalStore.T[AddStatus] =
         addToDbStatus match {
-          case Added => fs.addFile(store, hash, file)
-          case x     => x.point[LocalStore.T]
+          case Added(hash) => fs.addFile(store, hash, file)
+          case x           => x.point[LocalStore.T]
         }
 
       def addFile(p: Path, metadata: Option[Metadata], user: User, message: Option[Message]): LocalStore.T[AddStatus] = {
@@ -131,8 +131,8 @@ object Store {
 
       private def removeFromFileStore(store: Path, hash: FileHash, removeFromDbStatus: RemoveStatus): LocalStore.T[RemoveStatus] =
         removeFromDbStatus match {
-          case Removed => fs.removeFile(store, hash)
-          case x       => x.point[LocalStore.T]
+          case Removed(hash) => fs.removeFile(store, hash)
+          case x             => x.point[LocalStore.T]
         }
 
       def removeFile(hash: FileHash, user: User, message: Option[Message]): LocalStore.T[RemoveStatus] =

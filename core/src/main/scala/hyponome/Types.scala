@@ -58,13 +58,17 @@ trait Types {
         .map((i: Int) => DBSchemaVersion(i))
   }
 
-  sealed trait AddStatus extends Product with Serializable
-  case object Added      extends AddStatus
-  case object Exists     extends AddStatus
+  trait AddStatus extends Product with Serializable {
+    val hash: FileHash
+  }
+  case class Added(override val hash: FileHash)  extends AddStatus
+  case class Exists(override val hash: FileHash) extends AddStatus
 
-  sealed trait RemoveStatus extends Product with Serializable
-  case object Removed       extends RemoveStatus
-  case object NotFound      extends RemoveStatus
+  trait RemoveStatus extends Product with Serializable {
+    val hash: FileHash
+  }
+  case class Removed(override val hash: FileHash)  extends RemoveStatus
+  case class NotFound(override val hash: FileHash) extends RemoveStatus
 
   sealed trait Operation      extends Product with Serializable
   case object AddToStore      extends Operation

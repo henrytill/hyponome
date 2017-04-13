@@ -173,31 +173,31 @@ class SQLFileDBTest {
   @Test
   def runSingleAddTest(): Unit = {
     val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, singleAddTest(testData))).unsafePerformSync
-    Assert.assertEquals(Added, actual)
+    Assert.assertEquals(Added(testData.hash), actual)
   }
 
   @Test
   def runAddThenRemove(): Unit = {
     val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemove(testData))).unsafePerformSync
-    Assert.assertEquals(Removed, actual)
+    Assert.assertEquals(Removed(testData.hash), actual)
   }
 
   @Test
   def runAddThenAdd(): Unit = {
     val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenAdd(testData))).unsafePerformSync
-    Assert.assertEquals(Exists, actual)
+    Assert.assertEquals(Exists(testData.hash), actual)
   }
 
   @Test
   def runAddThenRemoveThenAdd(): Unit = {
     val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemoveThenAdd(testData))).unsafePerformSync
-    Assert.assertEquals(Added, actual)
+    Assert.assertEquals(Added(testData.hash), actual)
   }
 
   @Test
   def runAddThenRemoveThenRemove(): Unit = {
     val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemoveThenRemove(testData))).unsafePerformSync
-    Assert.assertEquals(NotFound, actual)
+    Assert.assertEquals(NotFound(testData.hash), actual)
   }
 
   @Test

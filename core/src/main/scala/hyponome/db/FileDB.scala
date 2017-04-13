@@ -126,7 +126,7 @@ object FileDB {
         isAdded <- added(db, hash)
         status <- {
           if (isAdded)
-            Exists.point[LocalStore.T]
+            Exists(hash).point[LocalStore.T]
           else {
             val ts = now()
             val mb = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
@@ -136,7 +136,7 @@ object FileDB {
             for {
               isRemoved <- removed(db, hash)
               _         <- if (isRemoved) addEventToDB(db, e) else addFileToDB(db, f, e)
-            } yield Added
+            } yield Added(hash)
           }
         }
       } yield status
@@ -147,13 +147,13 @@ object FileDB {
         isRemoved <- removed(db, hash)
         status <- {
           if (isRemoved)
-            NotFound.point[LocalStore.T]
+            NotFound(hash).point[LocalStore.T]
           else {
             val ts = now()
             val mb = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
             val id = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ mb)
             val e  = Event(id, ts, RemoveFromStore, hash, user, message)
-            addEventToDB(db, e).map((_: Unit) => Removed)
+            addEventToDB(db, e).map((_: Unit) => Removed(hash))
           }
         }
       } yield status

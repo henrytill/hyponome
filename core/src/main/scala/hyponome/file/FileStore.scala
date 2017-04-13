@@ -72,7 +72,8 @@ object FileStore {
         _           <- LocalStore.fromCanThrow(Files.createDirectories(destination.getParent))
         exists      <- fileExists(destination)
         status <- {
-          if (!exists) LocalStore.fromCanThrow(Files.copy(file, destination)).map((_: Path) => Added) else Exists.point[LocalStore.T]
+          if (!exists) LocalStore.fromCanThrow(Files.copy(file, destination)).map((_: Path) => Added(hash))
+          else Exists(hash).point[LocalStore.T]
         }
       } yield status
 
@@ -81,12 +82,12 @@ object FileStore {
         exists <- findFile(store, hash)
         status <- {
           if (exists.isEmpty)
-            NotFound.point[LocalStore.T]
+            NotFound(hash).point[LocalStore.T]
           else
             for {
               path <- resolvePath(store, hash)
               _    <- LocalStore.fromCanThrow(Files.delete(path))
-            } yield Removed
+            } yield Removed(hash)
         }
       } yield status
   }

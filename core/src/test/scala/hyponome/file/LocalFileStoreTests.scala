@@ -78,7 +78,7 @@ class LocalFileStoreTests {
   def runAddFile(): Unit = {
     val (status, Some(path)) = freshTestContext().flatMap((ctx: LocalStoreContext) => addFile(testPDF).run(ctx)).unsafePerformSync
     val copiedHash: FileHash = FileHash.fromPath(path).unsafePerformSync
-    Assert.assertEquals(Added, status)
+    Assert.assertEquals(Added(testPDFHash), status)
     Assert.assertArrayEquals(testPDFHash.getBytes, copiedHash.getBytes)
   }
 
@@ -87,7 +87,7 @@ class LocalFileStoreTests {
     val (status, Some(path)) =
       freshTestContext().flatMap((ctx: LocalStoreContext) => addAndThenRemoveFile(testPDF).run(ctx)).unsafePerformSync
     val fileExists: Boolean = Files.exists(path)
-    Assert.assertEquals(Removed, status)
+    Assert.assertEquals(Removed(testPDFHash), status)
     Assert.assertFalse(fileExists)
   }
 
@@ -96,7 +96,7 @@ class LocalFileStoreTests {
     val (status, Some(path)) =
       freshTestContext().flatMap((ctx: LocalStoreContext) => addAndThenAddFile(testPDF).run(ctx)).unsafePerformSync
     val fileExists: Boolean = Files.exists(path)
-    Assert.assertEquals(Exists, status)
+    Assert.assertEquals(Exists(testPDFHash), status)
     Assert.assertTrue(fileExists)
   }
 
@@ -104,7 +104,7 @@ class LocalFileStoreTests {
   def runRemoveNonExistentFile(): Unit = {
     val status: RemoveStatus =
       freshTestContext().flatMap((ctx: LocalStoreContext) => removeNonExistentFile(testPDFHash).run(ctx)).unsafePerformSync
-    Assert.assertEquals(NotFound, status)
+    Assert.assertEquals(NotFound(testPDFHash), status)
   }
 
   @Test
