@@ -22,8 +22,8 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import javax.xml.bind.DatatypeConverter.parseHexBinary
 import net.xngns.klados.hash.SHA256Hash
-import slick.driver.SQLiteDriver.api._
-import slick.driver.SQLiteDriver.{BaseColumnType, MappedColumnType}
+import slick.jdbc.SQLiteProfile.api._
+import slick.jdbc.SQLiteProfile.{BaseColumnType, MappedColumnType}
 
 trait Types {
 

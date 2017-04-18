@@ -11,7 +11,7 @@ lazy val commonDepsSettings = Seq(
 
 lazy val coreDepsSettings = Seq(
   libraryDependencies ++= Seq(
-    "com.typesafe.slick" %% "slick"       % "3.1.1",
+    "com.typesafe.slick" %% "slick"       % "3.2.0",
     "net.xngns"          %% "klados-hash" % "0.1.0-37e80e3",
     "org.xerial"          % "sqlite-jdbc" % "3.16.1"))
 

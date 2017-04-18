@@ -22,8 +22,8 @@ import hyponome._
 import hyponome.util._
 import hyponome.db.tables.{Events, Files}
 import scala.concurrent.{ExecutionContext, Future}
-import slick.driver.SQLiteDriver.api._
-import slick.driver.SQLiteDriver.backend.DatabaseDef
+import slick.jdbc.SQLiteProfile.api._
+import slick.jdbc.SQLiteProfile.backend.DatabaseDef
 import slick.jdbc.meta.MTable
 import slick.lifted.Query
 
