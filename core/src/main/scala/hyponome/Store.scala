@@ -16,12 +16,13 @@
 
 package hyponome
 
+import fs2.Strategy
+import fs2.interop.cats._
 import hyponome.db.FileDB
 import hyponome.file.FileStore
 import java.io.{File => JFile}
 import java.nio.file.{Files, Path}
 import scala.concurrent.ExecutionContext
-import scalaz.Scalaz._
 import slick.driver.SQLiteDriver.backend.DatabaseDef
 
 trait Store[M[_], P] {
@@ -45,6 +46,7 @@ object Store {
 
   @SuppressWarnings(Array("org.wartremover.warts.ExplicitImplicitTypes"))
   implicit def localStore(implicit ec: ExecutionContext,
+                          s: Strategy,
                           fs: FileStore[LocalStore.T, Path],
                           fdb: FileDB[LocalStore.T, DatabaseDef]): Store[LocalStore.T, Path] =
     new Store[LocalStore.T, Path] {
@@ -54,7 +56,7 @@ object Store {
           ctx       <- LocalStore.ask
           fdbStatus <- fdb.init(ctx.dbDef, ctx.dbSchemaVersion)
           fsStatus  <- fs.init(ctx.storePath)
-          status    <- StoreExists.point[LocalStore.T]
+          status    <- LocalStore.pure(StoreExists)
         } yield status
 
       def info(hash: FileHash): LocalStore.T[Option[File]] =
@@ -97,7 +99,7 @@ object Store {
       private def addToFileStore(store: Path, hash: FileHash, file: Path, addToDbStatus: AddStatus): LocalStore.T[AddStatus] =
         addToDbStatus match {
           case Added(hash) => fs.addFile(store, hash, file)
-          case x           => x.point[LocalStore.T]
+          case x           => LocalStore.pure(x)
         }
 
       def addFile(p: Path, metadata: Option[Metadata], user: User, message: Option[Message]): LocalStore.T[AddStatus] = {
@@ -132,7 +134,7 @@ object Store {
       private def removeFromFileStore(store: Path, hash: FileHash, removeFromDbStatus: RemoveStatus): LocalStore.T[RemoveStatus] =
         removeFromDbStatus match {
           case Removed(hash) => fs.removeFile(store, hash)
-          case x             => x.point[LocalStore.T]
+          case x             => LocalStore.pure(x)
         }
 
       def removeFile(hash: FileHash, user: User, message: Option[Message]): LocalStore.T[RemoveStatus] =

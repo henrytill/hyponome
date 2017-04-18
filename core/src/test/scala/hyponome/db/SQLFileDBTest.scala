@@ -16,18 +16,21 @@
 
 package hyponome.db
 
+import fs2.{Strategy, Task}
+import fs2.interop.cats._
 import hyponome._
 import hyponome.test._
 import org.junit.{Assert, Test}
 import scala.concurrent.ExecutionContext
-import scalaz.concurrent.Task
 import slick.driver.SQLiteDriver.backend.DatabaseDef
 
 @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
 class SQLFileDBTest {
 
-  import scala.concurrent.ExecutionContext.Implicits.global
   import hyponome.db.FileDB._
+
+  implicit val E: ExecutionContext = ExecutionContext.Implicits.global
+  implicit val S: Strategy         = Strategy.fromFixedDaemonPool(8, threadName = "worker")
 
   def safeRun[A, B, C](ctx: LocalStoreContext, thing: => LocalStore.T[C])(implicit ec: ExecutionContext,
                                                                           fileDB: FileDB[LocalStore.T, DatabaseDef]): Task[C] =
@@ -172,49 +175,49 @@ class SQLFileDBTest {
 
   @Test
   def runSingleAddTest(): Unit = {
-    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, singleAddTest(testData))).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, singleAddTest(testData))).unsafeRun
     Assert.assertEquals(Added(testData.hash), actual)
   }
 
   @Test
   def runAddThenRemove(): Unit = {
-    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemove(testData))).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemove(testData))).unsafeRun
     Assert.assertEquals(Removed(testData.hash), actual)
   }
 
   @Test
   def runAddThenAdd(): Unit = {
-    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenAdd(testData))).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenAdd(testData))).unsafeRun
     Assert.assertEquals(Exists(testData.hash), actual)
   }
 
   @Test
   def runAddThenRemoveThenAdd(): Unit = {
-    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemoveThenAdd(testData))).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemoveThenAdd(testData))).unsafeRun
     Assert.assertEquals(Added(testData.hash), actual)
   }
 
   @Test
   def runAddThenRemoveThenRemove(): Unit = {
-    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemoveThenRemove(testData))).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemoveThenRemove(testData))).unsafeRun
     Assert.assertEquals(NotFound(testData.hash), actual)
   }
 
   @Test
   def runAddThenFind(): Unit = {
-    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenFind(testData))).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenFind(testData))).unsafeRun
     Assert.assertEquals(Some(testFile), actual)
   }
 
   @Test
   def runAddThenRemoveThenFind(): Unit = {
-    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemoveThenFind(testData))).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, addThenRemoveThenFind(testData))).unsafeRun
     Assert.assertEquals(None, actual)
   }
 
   @Test
   def runDoubleInit(): Unit = {
-    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, doubleInit)).unsafePerformSync
+    val actual = freshTestContext().flatMap((ctx: LocalStoreContext) => safeRun(ctx, doubleInit)).unsafeRun
     Assert.assertEquals(DBExists, actual)
   }
 }

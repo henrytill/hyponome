@@ -16,6 +16,8 @@
 
 package hyponome.file
 
+import fs2.Strategy
+import fs2.interop.cats._
 import hyponome._
 import hyponome.test._
 import java.nio.file.{Files, Path}
@@ -24,8 +26,10 @@ import scala.concurrent.ExecutionContext
 
 class LocalFileStoreTests {
 
-  import ExecutionContext.Implicits.global
   import hyponome.file.FileStore._
+
+  implicit val E: ExecutionContext = ExecutionContext.Implicits.global
+  implicit val S: Strategy         = Strategy.fromFixedDaemonPool(8, threadName = "worker")
 
   def addFile(file: Path)(implicit ec: ExecutionContext,
                           fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[(AddStatus, Option[Path])] =
@@ -76,8 +80,8 @@ class LocalFileStoreTests {
 
   @Test
   def runAddFile(): Unit = {
-    val (status, Some(path)) = freshTestContext().flatMap((ctx: LocalStoreContext) => addFile(testPDF).run(ctx)).unsafePerformSync
-    val copiedHash: FileHash = FileHash.fromPath(path).unsafePerformSync
+    val (status, Some(path)) = freshTestContext().flatMap((ctx: LocalStoreContext) => addFile(testPDF).run(ctx)).unsafeRun
+    val copiedHash: FileHash = FileHash.fromPath(path).unsafeRun
     Assert.assertEquals(Added(testPDFHash), status)
     Assert.assertArrayEquals(testPDFHash.getBytes, copiedHash.getBytes)
   }
@@ -85,7 +89,7 @@ class LocalFileStoreTests {
   @Test
   def runAddAndThenRemoveFile(): Unit = {
     val (status, Some(path)) =
-      freshTestContext().flatMap((ctx: LocalStoreContext) => addAndThenRemoveFile(testPDF).run(ctx)).unsafePerformSync
+      freshTestContext().flatMap((ctx: LocalStoreContext) => addAndThenRemoveFile(testPDF).run(ctx)).unsafeRun
     val fileExists: Boolean = Files.exists(path)
     Assert.assertEquals(Removed(testPDFHash), status)
     Assert.assertFalse(fileExists)
@@ -94,7 +98,7 @@ class LocalFileStoreTests {
   @Test
   def runAddAndThenAddFile(): Unit = {
     val (status, Some(path)) =
-      freshTestContext().flatMap((ctx: LocalStoreContext) => addAndThenAddFile(testPDF).run(ctx)).unsafePerformSync
+      freshTestContext().flatMap((ctx: LocalStoreContext) => addAndThenAddFile(testPDF).run(ctx)).unsafeRun
     val fileExists: Boolean = Files.exists(path)
     Assert.assertEquals(Exists(testPDFHash), status)
     Assert.assertTrue(fileExists)
@@ -103,13 +107,13 @@ class LocalFileStoreTests {
   @Test
   def runRemoveNonExistentFile(): Unit = {
     val status: RemoveStatus =
-      freshTestContext().flatMap((ctx: LocalStoreContext) => removeNonExistentFile(testPDFHash).run(ctx)).unsafePerformSync
+      freshTestContext().flatMap((ctx: LocalStoreContext) => removeNonExistentFile(testPDFHash).run(ctx)).unsafeRun
     Assert.assertEquals(NotFound(testPDFHash), status)
   }
 
   @Test
   def runDoubleCreate(): Unit = {
-    val status: FileStoreStatus = freshTestContext().flatMap((ctx: LocalStoreContext) => doubleCreate.run(ctx)).unsafePerformSync
+    val status: FileStoreStatus = freshTestContext().flatMap((ctx: LocalStoreContext) => doubleCreate.run(ctx)).unsafeRun
     Assert.assertEquals(FileStoreExists, status)
   }
 }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs2.Strategy
 import java.nio.file.Path
 import scala.concurrent.ExecutionContext
 
@@ -23,6 +24,6 @@ package object hyponome extends Types {
 
   val LocalStore = new StoreF[LocalStoreContext]
 
-  def localStore(implicit ec: ExecutionContext, store: Store[LocalStore.T, Path]): Store[LocalStore.T, Path] =
+  def localStore(implicit ec: ExecutionContext, s: Strategy, store: Store[LocalStore.T, Path]): Store[LocalStore.T, Path] =
     store
 }

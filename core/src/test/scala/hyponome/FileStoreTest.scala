@@ -16,13 +16,13 @@
 
 package hyponome
 
+import fs2.{Strategy, Task}
+import fs2.interop.cats._
 import java.nio.file.{Files, Path}
 import org.scalacheck.{Properties, Prop}
 import scala.concurrent.ExecutionContext
-import scala.concurrent.ExecutionContext.Implicits.global
-import scalaz.Scalaz._
-import scalaz.concurrent.Task
 import org.log4s._
+import cats.implicits._
 
 import hyponome.test._
 
@@ -30,7 +30,7 @@ object FileStoreProperties {
 
   private val logger = getLogger
 
-  private def roundTrip(ps: List[Path])(implicit ec: ExecutionContext): Task[List[AddStatus]] =
+  private def roundTrip(ps: List[Path])(implicit ec: ExecutionContext, s: Strategy): Task[List[AddStatus]] =
     for {
       ctx <- freshTestContext()
       ls  <- Task.now(localStore)
@@ -39,7 +39,7 @@ object FileStoreProperties {
     } yield as
 
   @SuppressWarnings(Array("org.wartremover.warts.Any"))
-  def prop_roundTrip(implicit ec: ExecutionContext): Prop = Prop.forAll(genNEListOfNEByteArrays) { (bas: List[Array[Byte]]) =>
+  def prop_roundTrip(implicit ec: ExecutionContext, s: Strategy): Prop = Prop.forAll(genNEListOfNEByteArrays) { (bas: List[Array[Byte]]) =>
     (for {
       t  <- Task.now(Files.createTempDirectory("hyponome-test-uploads-"))
       hs <- Task.now(bas.map(FileHash.fromBytes))
@@ -49,11 +49,15 @@ object FileStoreProperties {
       _  <- Task.now(logger.debug(s"Round-tripping ${zs.length} files..."))
       as <- roundTrip(ps)
       rs <- Task.now(as.map(_.hash))
-    } yield hs.sameElements(rs)).unsafePerformSync
+    } yield hs.sameElements(rs)).unsafeRun
   }
 }
 
 @SuppressWarnings(Array("org.wartremover.warts.NonUnitStatements"))
 object FileStoreTest extends Properties("FileStore") {
+
+  implicit val E: ExecutionContext = ExecutionContext.Implicits.global
+  implicit val S: Strategy         = Strategy.fromFixedDaemonPool(8, threadName = "worker")
+
   property("roundTrip") = FileStoreProperties.prop_roundTrip
 }

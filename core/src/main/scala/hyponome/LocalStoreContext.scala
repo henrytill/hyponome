@@ -17,7 +17,7 @@
 package hyponome
 
 import java.nio.file.{Files, Path}
-import scalaz.concurrent.Task
+import fs2.Task
 import slick.driver.SQLiteDriver.api._
 import slick.driver.SQLiteDriver.backend.DatabaseDef
 

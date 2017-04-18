@@ -16,14 +16,18 @@
 
 package hyponome
 
+import cats.data.Kleisli
+import fs2.{Strategy, Task}
+import fs2.interop.cats._
 import hyponome.util._
 import scala.concurrent.{ExecutionContext, Future}
-import scalaz.Kleisli
-import scalaz.concurrent.Task
 
 final class StoreF[Context] {
 
   type T[A] = Kleisli[Task, Context, A]
+
+  def pure[A](a: A): T[A] =
+    Kleisli.pure(a)
 
   def apply[A](f: Context => Task[A]): T[A] =
     Kleisli(f)
@@ -31,13 +35,13 @@ final class StoreF[Context] {
   def ask: Kleisli[Task, Context, Context] =
     Kleisli.ask[Task, Context]
 
-  def fromCanThrow[A](x: => A): T[A] =
+  def fromCanThrow[A](x: => A)(implicit s: Strategy): T[A] =
     apply[A]((_: Context) => Task[A](x))
 
   def fromTask[A](t: => Task[A]): T[A] =
     apply[A]((_: Context) => t)
 
-  def fromFuture[A](x: => Future[A])(implicit ec: ExecutionContext): T[A] =
+  def fromFuture[A](x: => Future[A])(implicit ec: ExecutionContext, s: Strategy): T[A] =
     apply[A]((_: Context) => futureToTask(x))
 
   def throwError[A](x: => Throwable): T[A] =

@@ -1,20 +1,19 @@
-lazy val scalazVersion       = "7.2.4"
-
 lazy val commonDepsSettings = Seq(
   libraryDependencies ++= Seq(
     compilerPlugin("org.wartremover" %% "wartremover" % "1.2.1"),
-    "ch.qos.logback"      % "logback-classic"     % "1.1.3",
-    "com.novocode"        % "junit-interface"     % "0.11"   % "test",
-    "org.log4s"          %% "log4s"               % "1.3.4",
-    "org.scalacheck"     %% "scalacheck"          % "1.12.5" % "test",
-    "org.scalaz"         %% "scalaz-core"         % scalazVersion,
-    "org.scalaz"         %% "scalaz-concurrent"   % scalazVersion))
+    "ch.qos.logback"  % "logback-classic" % "1.1.3",
+    "co.fs2"         %% "fs2-core"        % "0.9.5",
+    "co.fs2"         %% "fs2-cats"        % "0.3.0",
+    "com.novocode"    % "junit-interface" % "0.11"   % "test",
+    "org.log4s"      %% "log4s"           % "1.3.4",
+    "org.scalacheck" %% "scalacheck"      % "1.12.5" % "test",
+    "org.typelevel"  %% "cats"            % "0.9.0"))
 
 lazy val coreDepsSettings = Seq(
   libraryDependencies ++= Seq(
-    "com.typesafe.slick" %% "slick"               % "3.1.1",
-    "net.xngns"          %% "klados-hash"         % "0.1.0-37e80e3",
-    "org.xerial"          % "sqlite-jdbc"         % "3.16.1"))
+    "com.typesafe.slick" %% "slick"       % "3.1.1",
+    "net.xngns"          %% "klados-hash" % "0.1.0-37e80e3",
+    "org.xerial"          % "sqlite-jdbc" % "3.16.1"))
 
 lazy val commonOptions = Seq(
   "-language:higherKinds",

@@ -16,12 +16,12 @@
 
 package hyponome
 
+import fs2.{Strategy, Task}
 import hyponome.util._
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import javax.xml.bind.DatatypeConverter.parseHexBinary
 import net.xngns.klados.hash.SHA256Hash
-import scalaz.concurrent.Task
 import slick.driver.SQLiteDriver.api._
 import slick.driver.SQLiteDriver.{BaseColumnType, MappedColumnType}
 
@@ -110,7 +110,7 @@ trait Types {
     def fromBytes(bs: Array[Byte]): FileHash =
       FileHash(SHA256Hash(bs).getBytes)
 
-    def fromPath(p: Path): Task[FileHash] = Task {
+    def fromPath(p: Path)(implicit s: Strategy): Task[FileHash] = Task {
       val hash: SHA256Hash = withInputStream(p)(SHA256Hash.apply)
       FileHash(hash.getBytes)
     }

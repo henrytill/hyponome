@@ -16,9 +16,10 @@
 
 package hyponome.file
 
+import fs2.Strategy
+import fs2.interop.cats._
 import hyponome._
 import java.nio.file.{Files, Path}
-import scalaz.Scalaz._
 
 trait FileStore[M[_], S] {
 
@@ -33,7 +34,7 @@ trait FileStore[M[_], S] {
 
 object FileStore {
 
-  implicit object LocalFileStore extends FileStore[LocalStore.T, Path] {
+  implicit def LocalFileStore(implicit s: Strategy): FileStore[LocalStore.T, Path] = new FileStore[LocalStore.T, Path] {
 
     def fileStoreExists(store: Path): LocalStore.T[Boolean] =
       LocalStore.fromCanThrow(Files.exists(store))
@@ -46,7 +47,7 @@ object FileStore {
         exists <- fileStoreExists(store)
         status <- {
           if (exists)
-            FileStoreExists.point[LocalStore.T]
+            LocalStore.pure(FileStoreExists)
           else
             createFileStore(store).map((_: Path) => FileStoreCreated)
         }
@@ -57,7 +58,7 @@ object FileStore {
 
     private def resolvePath(store: Path, hash: FileHash): LocalStore.T[Path] = {
       val (dir, file) = hash.toString.splitAt(2)
-      store.resolve(dir).resolve(file).toAbsolutePath.point[LocalStore.T]
+      LocalStore.pure(store.resolve(dir).resolve(file).toAbsolutePath)
     }
 
     def findFile(store: Path, hash: FileHash): LocalStore.T[Option[Path]] =
@@ -73,7 +74,7 @@ object FileStore {
         exists      <- fileExists(destination)
         status <- {
           if (!exists) LocalStore.fromCanThrow(Files.copy(file, destination)).map((_: Path) => Added(hash))
-          else Exists(hash).point[LocalStore.T]
+          else LocalStore.pure(Exists(hash))
         }
       } yield status
 
@@ -82,7 +83,7 @@ object FileStore {
         exists <- findFile(store, hash)
         status <- {
           if (exists.isEmpty)
-            NotFound(hash).point[LocalStore.T]
+            LocalStore.pure(NotFound(hash))
           else
             for {
               path <- resolvePath(store, hash)
