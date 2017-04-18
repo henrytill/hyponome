@@ -31,8 +31,7 @@ class LocalFileStoreTests {
   implicit val E: ExecutionContext = ExecutionContext.Implicits.global
   implicit val S: Strategy         = Strategy.fromFixedDaemonPool(8, threadName = "worker")
 
-  def addFile(file: Path)(implicit ec: ExecutionContext,
-                          fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[(AddStatus, Option[Path])] =
+  def addFile(file: Path)(implicit fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[(AddStatus, Option[Path])] =
     for {
       ctx  <- LocalStore.ask
       hash <- LocalStore.fromTask(FileHash.fromPath(file))
@@ -41,8 +40,7 @@ class LocalFileStoreTests {
       path <- fileStore.findFile(ctx.storePath, hash)
     } yield (as, path)
 
-  def addAndThenRemoveFile(file: Path)(implicit ec: ExecutionContext,
-                                       fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[(RemoveStatus, Option[Path])] =
+  def addAndThenRemoveFile(file: Path)(implicit fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[(RemoveStatus, Option[Path])] =
     for {
       ctx  <- LocalStore.ask
       hash <- LocalStore.fromTask(FileHash.fromPath(file))
@@ -52,8 +50,7 @@ class LocalFileStoreTests {
       rs   <- fileStore.removeFile(ctx.storePath, hash)
     } yield (rs, path)
 
-  def addAndThenAddFile(file: Path)(implicit ec: ExecutionContext,
-                                    fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[(AddStatus, Option[Path])] =
+  def addAndThenAddFile(file: Path)(implicit fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[(AddStatus, Option[Path])] =
     for {
       ctx  <- LocalStore.ask
       hash <- LocalStore.fromTask(FileHash.fromPath(file))
@@ -63,15 +60,14 @@ class LocalFileStoreTests {
       as   <- fileStore.addFile(ctx.storePath, hash, file)
     } yield (as, path)
 
-  def removeNonExistentFile(hash: FileHash)(implicit ec: ExecutionContext,
-                                            fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[RemoveStatus] =
+  def removeNonExistentFile(hash: FileHash)(implicit fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[RemoveStatus] =
     for {
       ctx <- LocalStore.ask
       _   <- fileStore.init(ctx.storePath)
       rs  <- fileStore.removeFile(ctx.storePath, hash)
     } yield rs
 
-  def doubleCreate(implicit ec: ExecutionContext, fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[FileStoreStatus] =
+  def doubleCreate(implicit fileStore: FileStore[LocalStore.T, Path]): LocalStore.T[FileStoreStatus] =
     for {
       ctx <- LocalStore.ask
       _   <- fileStore.init(ctx.storePath)

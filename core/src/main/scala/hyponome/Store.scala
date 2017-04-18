@@ -22,7 +22,6 @@ import hyponome.db.FileDB
 import hyponome.file.FileStore
 import java.io.{File => JFile}
 import java.nio.file.{Files, Path}
-import scala.concurrent.ExecutionContext
 import slick.driver.SQLiteDriver.backend.DatabaseDef
 
 trait Store[M[_], P] {
@@ -45,8 +44,7 @@ trait Store[M[_], P] {
 object Store {
 
   @SuppressWarnings(Array("org.wartremover.warts.ExplicitImplicitTypes"))
-  implicit def localStore(implicit ec: ExecutionContext,
-                          s: Strategy,
+  implicit def localStore(implicit s: Strategy,
                           fs: FileStore[LocalStore.T, Path],
                           fdb: FileDB[LocalStore.T, DatabaseDef]): Store[LocalStore.T, Path] =
     new Store[LocalStore.T, Path] {
