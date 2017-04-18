@@ -63,6 +63,9 @@ lazy val wartremoverOptions = List(
   "Var",
   "While").map((s: String) => s"-P:wartremover:traverser:org.wartremover.warts.$s")
 
+lazy val nonConsoleOptions =
+  wartremoverOptions ++ Seq("-Ywarn-unused-import", -"Xfatal-warnings")
+
 lazy val initialConsoleCommands =
   """|import hyponome._
      |import java.nio.file.FileSystems
@@ -80,10 +83,10 @@ lazy val commonSettings =
       scalaVersion := "2.12.2",
       crossScalaVersions := Seq("2.11.11", scalaVersion.value),
       scalacOptions ++= commonOptions ++ wartremoverOptions,
-      scalacOptions in console in Compile --= wartremoverOptions ++ Seq("-Ywarn-unused-import"),
-      scalacOptions in console in Test    --= wartremoverOptions ++ Seq("-Ywarn-unused-import"),
-      initialCommands in console in Compile := initialConsoleCommands,
-      initialCommands in console in Test    := initialTestConsoleCommands,
+      scalacOptions in (Compile, console) ~= (_ filterNot (nonConsoleOptions.contains(_))),
+      scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value,
+      initialCommands in (Compile, console) := initialConsoleCommands,
+      initialCommands in (Test, console) := initialTestConsoleCommands,
       resolvers ++= Seq(
         Resolver.sonatypeRepo("snapshots"),
         Resolver.sonatypeRepo("releases"),
