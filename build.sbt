@@ -80,7 +80,7 @@ lazy val commonSettings =
   commonDepsSettings ++
   Seq(organization := "net.xngns",
       version := "0.1.0-SNAPSHOT",
-      scalaVersion := "2.12.2",
+      scalaVersion := "2.12.1",
       crossScalaVersions := Seq("2.11.11", scalaVersion.value),
       scalacOptions ++= commonOptions ++ wartremoverOptions,
       scalacOptions in (Compile, console) ~= (_ filterNot (nonConsoleOptions.contains(_))),
