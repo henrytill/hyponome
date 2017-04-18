@@ -77,7 +77,8 @@ lazy val commonSettings =
   commonDepsSettings ++
   Seq(organization := "net.xngns",
       version := "0.1.0-SNAPSHOT",
-      scalaVersion := "2.11.8",
+      scalaVersion := "2.12.2",
+      crossScalaVersions := Seq("2.11.11", scalaVersion.value),
       scalacOptions ++= commonOptions ++ wartremoverOptions,
       scalacOptions in console in Compile --= wartremoverOptions ++ Seq("-Ywarn-unused-import"),
       scalacOptions in console in Test    --= wartremoverOptions ++ Seq("-Ywarn-unused-import"),
