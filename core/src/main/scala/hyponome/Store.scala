@@ -44,9 +44,9 @@ trait Store[M[_], P] {
 object Store {
 
   @SuppressWarnings(Array("org.wartremover.warts.ExplicitImplicitTypes"))
-  implicit def localStore(implicit s: Strategy,
-                          fs: FileStore[LocalStore.T, Path],
-                          fdb: FileDB[LocalStore.T, DatabaseDef]): Store[LocalStore.T, Path] =
+  implicit def localStoreInstance(implicit s: Strategy,
+                                  fs: FileStore[LocalStore.T, Path],
+                                  fdb: FileDB[LocalStore.T, DatabaseDef]): Store[LocalStore.T, Path] =
     new Store[LocalStore.T, Path] {
 
       def init(): LocalStore.T[StoreStatus] =
