@@ -81,9 +81,6 @@ object Store {
           result <- fs.findFile(ctx.storePath, hash)
         } yield result.map(_.toFile)
 
-      private def getContentType(p: Path): LocalStore.T[String] =
-        LocalStore.fromCanThrow(Files.probeContentType(p))
-
       private def addToFileDB(db: DatabaseDef,
                               hash: FileHash,
                               name: Option[String],

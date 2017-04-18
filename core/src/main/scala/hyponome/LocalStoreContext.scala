@@ -25,9 +25,6 @@ final case class LocalStoreContext(dbDef: DatabaseDef, dbSchemaVersion: DBSchema
 
 object LocalStoreContext {
 
-  private def existsAndIsDirectory(p: Path): Boolean =
-    Files.exists(p) && Files.isDirectory(p)
-
   private def existsAndIsFile(p: Path): Boolean =
     Files.exists(p) && Files.isRegularFile(p)
 
