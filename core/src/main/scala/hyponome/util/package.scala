@@ -31,4 +31,11 @@ package object util extends TaskHelpers {
     try op(fist)
     finally fist.close()
   }
+
+  /**
+    * Runs a computation for its side-effects only, discarding its result
+    *
+    * @param a The computation to run.
+    */
+  def ignore[A](a: => A): Unit = { val _: A = a; () }
 }
