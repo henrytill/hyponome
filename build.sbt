@@ -1,13 +1,14 @@
 import com.typesafe.sbt.SbtGit.GitKeys._
 
 lazy val circeVersion     = "0.7.1"
+lazy val fs2Version       = "0.9.6"
 lazy val shapelessVersion = "2.3.2"
 
 lazy val commonDepsSettings = Seq(
   libraryDependencies ++= Seq(
     compilerPlugin("org.wartremover" %% "wartremover" % "1.2.1"),
     "ch.qos.logback"  % "logback-classic" % "1.1.3",
-    "co.fs2"         %% "fs2-core"        % "0.9.5",
+    "co.fs2"         %% "fs2-core"        % fs2Version,
     "co.fs2"         %% "fs2-cats"        % "0.3.0",
     "com.novocode"    % "junit-interface" % "0.11"   % "test",
     "org.log4s"      %% "log4s"           % "1.3.4",
@@ -19,6 +20,10 @@ lazy val coreDepsSettings = Seq(
     "com.typesafe.slick" %% "slick"       % "3.2.0",
     "net.xngns"          %% "klados-hash" % "0.1.0-37e80e3",
     "org.xerial"          % "sqlite-jdbc" % "3.16.1"))
+
+lazy val daemonDepsSettings = Seq(
+  libraryDependencies ++= Seq(
+    "co.fs2" %% "fs2-io" % fs2Version))
 
 lazy val jsonDepsSettings = Seq(
   libraryDependencies ++= Seq(
@@ -119,6 +124,13 @@ lazy val core = (project in file("core"))
   .settings(commonSettings: _*)
   .settings(coreDepsSettings: _*)
 
+lazy val daemon = (project in file("daemon"))
+  .settings(commonSettings: _*)
+  .settings(daemonDepsSettings: _*)
+  .settings(name := "hyponome-daemon")
+  .dependsOn(core     % "test->test;compile->compile",
+             protobuf % "test->test;compile->compile")
+
 lazy val json = (project in file("json"))
   .settings(name := "hyponome-json")
   .settings(commonSettings: _*)
@@ -141,7 +153,8 @@ lazy val root = (project in file("."))
     addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
     scmInfo := Some(ScmInfo(url("https://github.com/henrytill/hyponome"), "git@github.com:henrytill/hyponome.git")),
     git.remoteRepo := scmInfo.value.get.connection)
-  .aggregate(core, json, protobuf)
+  .aggregate(core, daemon, json, protobuf)
   .dependsOn(core     % "test->test;compile->compile",
+             daemon   % "test->test;compile->compile",
              json     % "test->test;compile->compile",
              protobuf % "test->test;compile->compile")
