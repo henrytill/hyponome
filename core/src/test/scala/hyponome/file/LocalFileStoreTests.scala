@@ -16,12 +16,14 @@
 
 package hyponome.file
 
+import java.nio.file.{Files, Path}
+
 import fs2.Strategy
 import fs2.interop.cats._
 import hyponome._
 import hyponome.test._
-import java.nio.file.{Files, Path}
 import org.junit.{Assert, Test}
+
 import scala.concurrent.ExecutionContext
 
 class LocalFileStoreTests {

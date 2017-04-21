@@ -17,9 +17,10 @@
 package hyponome
 
 import cats.data.Kleisli
-import fs2.{Strategy, Task}
 import fs2.interop.cats._
+import fs2.{Strategy, Task}
 import hyponome.util._
+
 import scala.concurrent.{ExecutionContext, Future}
 
 final class StoreF[Context] {

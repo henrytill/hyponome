@@ -19,13 +19,14 @@ package hyponome.db
 import fs2.Strategy
 import fs2.interop.cats._
 import hyponome._
-import hyponome.util._
 import hyponome.db.tables.{Events, Files}
-import scala.concurrent.{ExecutionContext, Future}
+import hyponome.util._
 import slick.jdbc.SQLiteProfile.api._
 import slick.jdbc.SQLiteProfile.backend.DatabaseDef
 import slick.jdbc.meta.MTable
 import slick.lifted.Query
+
+import scala.concurrent.{ExecutionContext, Future}
 
 trait FileDB[M[_], D] {
 
@@ -79,18 +80,14 @@ object FileDB {
         schemaVersion == currentSchemaVersion
 
       def init(db: DatabaseDef, schemaVersion: DBSchemaVersion): LocalStore.T[DBStatus] =
-        for {
-          extant <- exists(db)
-          status <- {
-            if (!extant) {
-              create(db).map((_: Unit) => DBInitialized)
-            } else if (isCurrent(schemaVersion)) {
-              LocalStore.pure(DBExists)
-            } else {
-              migrate(db, schemaVersion)
-            }
-          }
-        } yield status
+        exists(db).flatMap { (extant: Boolean) =>
+          if (!extant) {
+            create(db).map((_: Unit) => DBInitialized)
+          } else if (isCurrent(schemaVersion))
+            LocalStore.pure(DBExists)
+          else
+            migrate(db, schemaVersion)
+        }
 
       def close(db: DatabaseDef): Unit = db.close
 
@@ -124,56 +121,54 @@ object FileDB {
                   metadata: Option[Metadata],
                   user: User,
                   message: Option[Message]): LocalStore.T[AddStatus] = {
-        for {
-          isAdded <- added(db, hash)
-          status <- {
-            if (isAdded)
-              LocalStore.pure(Exists(hash))
-            else {
-              val ts = now()
-              val mb = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
-              val id = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ mb)
-              val f  = File(hash, name, contentType, length, metadata)
-              val e  = Event(id, ts, AddToStore, hash, user, message)
-              for {
-                isRemoved <- removed(db, hash)
-                _         <- if (isRemoved) addEventToDB(db, e) else addFileToDB(db, f, e)
-              } yield Added(hash)
-            }
+        def add(isAdded: Boolean): LocalStore.T[AddStatus] = {
+          if (isAdded)
+            LocalStore.pure(Exists(hash))
+          else {
+            val ts = now()
+            val mb = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
+            val id = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ mb)
+            val f  = File(hash, name, contentType, length, metadata)
+            val e  = Event(id, ts, AddToStore, hash, user, message)
+            removed(db, hash)
+              .flatMap((isRemoved: Boolean) => if (isRemoved) addEventToDB(db, e) else addFileToDB(db, f, e))
+              .map((_: Unit) => Added(hash))
           }
-        } yield status
+        }
+        added(db, hash).flatMap { (isAdded: Boolean) =>
+          add(isAdded)
+        }
       }
 
       def removeFile(db: DatabaseDef, hash: FileHash, user: User, message: Option[Message]): LocalStore.T[RemoveStatus] = {
-        for {
-          isRemoved <- removed(db, hash)
-          status <- {
-            if (isRemoved)
-              LocalStore.pure(NotFound(hash))
-            else {
-              val ts = now()
-              val mb = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
-              val id = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ mb)
-              val e  = Event(id, ts, RemoveFromStore, hash, user, message)
-              addEventToDB(db, e).map((_: Unit) => Removed(hash))
-            }
+        def remove(isRemoved: Boolean): LocalStore.T[RemoveStatus] =
+          if (isRemoved)
+            LocalStore.pure(NotFound(hash))
+          else {
+            val ts = now()
+            val mb = message.fold("".getBytes)((m: Message) => m.msg.getBytes)
+            val id = IdHash.fromBytes(hash.getBytes ++ ts.bytes ++ user.toString.getBytes ++ mb)
+            val e  = Event(id, ts, RemoveFromStore, hash, user, message)
+            addEventToDB(db, e).map((_: Unit) => Removed(hash))
           }
-        } yield status
+        removed(db, hash).flatMap { (isRemoved: Boolean) =>
+          remove(isRemoved)
+        }
       }
 
-      def findFile(db: DatabaseDef, hash: FileHash): LocalStore.T[Option[File]] =
-        for {
-          isRemoved <- removed(db, hash)
-          maybeFile <- {
-            if (isRemoved)
-              LocalStore.pure(None)
-            else {
-              val files: TableQuery[Files] = TableQuery[Files]
-              val q                        = files.filter(_.hash === hash)
-              LocalStore.fromFuture(db.run(q.result.headOption))
-            }
+      def findFile(db: DatabaseDef, hash: FileHash): LocalStore.T[Option[File]] = {
+        def find(isRemoved: Boolean): LocalStore.T[Option[File]] =
+          if (isRemoved)
+            LocalStore.pure(None)
+          else {
+            val files: TableQuery[Files] = TableQuery[Files]
+            val q                        = files.filter(_.hash === hash)
+            LocalStore.fromFuture(db.run(q.result.headOption))
           }
-        } yield maybeFile
+        removed(db, hash).flatMap { (isRemoved: Boolean) =>
+          find(isRemoved)
+        }
+      }
 
       def countFiles(db: DatabaseDef): LocalStore.T[Long] = {
         val q = files.length
@@ -185,7 +180,7 @@ object FileDB {
         q match {
           case StoreQuery(None, None, None, None, None, None, None, _, _) =>
             LocalStore.pure(Seq.empty[StoreQueryResponse])
-          case StoreQuery(hash, name, user, txLo, txHi, timeLo, timeHi, sortBy, sortOrder) =>
+          case StoreQuery(hash, name, user, _, _, timeLo, timeHi, sortBy, sortOrder) =>
             def notRemoved: Q = {
               val removes = events.filter(_.operation === (RemoveFromStore: Operation))
               val adds = for {
@@ -221,11 +216,11 @@ object FileDB {
             }
             def filterByTimestamp: Q => Q = { (in: Q) =>
               (timeLo, timeHi) match {
-                case (Some(lo), Some(hi)) =>
+                case (Some(_), Some(_)) =>
                   in.filter(_._2.timestamp >= timeLo).filter(_._2.timestamp <= timeHi)
-                case (Some(lo), None) =>
+                case (Some(_), None) =>
                   in.filter(_._2.timestamp >= timeLo)
-                case (None, Some(hi)) =>
+                case (None, Some(_)) =>
                   in.filter(_._2.timestamp <= timeHi)
                 case (None, None) =>
                   in

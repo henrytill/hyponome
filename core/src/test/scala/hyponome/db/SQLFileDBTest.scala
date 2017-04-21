@@ -16,13 +16,14 @@
 
 package hyponome.db
 
-import fs2.{Strategy, Task}
 import fs2.interop.cats._
+import fs2.{Strategy, Task}
 import hyponome._
 import hyponome.test._
 import org.junit.{Assert, Test}
+import slick.jdbc.SQLiteProfile.backend.DatabaseDef
+
 import scala.concurrent.ExecutionContext
-import slick.driver.SQLiteDriver.backend.DatabaseDef
 
 @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
 class SQLFileDBTest {
@@ -54,117 +55,117 @@ class SQLFileDBTest {
 
   def addThenRemove(testData: TestData)(implicit fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[RemoveStatus] =
     for {
-      ctx <- LocalStore.ask
-      iss <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
-      afs <- fileDB.addFile(ctx.dbDef,
-                            testData.hash,
-                            testData.name,
-                            testData.contentType,
-                            testData.length,
-                            testData.metadata,
-                            testData.user,
-                            testData.message)
-      rfs <- fileDB.removeFile(ctx.dbDef, testData.hash, testData.user, testMessageRemove)
-    } yield rfs
+      c <- LocalStore.ask
+      _ <- fileDB.init(c.dbDef, c.dbSchemaVersion)
+      _ <- fileDB.addFile(c.dbDef,
+                          testData.hash,
+                          testData.name,
+                          testData.contentType,
+                          testData.length,
+                          testData.metadata,
+                          testData.user,
+                          testData.message)
+      r <- fileDB.removeFile(c.dbDef, testData.hash, testData.user, testMessageRemove)
+    } yield r
 
   def addThenAdd(testData: TestData)(implicit fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[AddStatus] =
     for {
-      ctx <- LocalStore.ask
-      iss <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
-      as1 <- fileDB.addFile(ctx.dbDef,
-                            testData.hash,
-                            testData.name,
-                            testData.contentType,
-                            testData.length,
-                            testData.metadata,
-                            testData.user,
-                            testData.message)
-      as2 <- fileDB.addFile(ctx.dbDef,
-                            testData.hash,
-                            testData.name,
-                            testData.contentType,
-                            testData.length,
-                            testData.metadata,
-                            testData.user,
-                            testData.message)
-    } yield as2
+      c <- LocalStore.ask
+      _ <- fileDB.init(c.dbDef, c.dbSchemaVersion)
+      _ <- fileDB.addFile(c.dbDef,
+                          testData.hash,
+                          testData.name,
+                          testData.contentType,
+                          testData.length,
+                          testData.metadata,
+                          testData.user,
+                          testData.message)
+      r <- fileDB.addFile(c.dbDef,
+                          testData.hash,
+                          testData.name,
+                          testData.contentType,
+                          testData.length,
+                          testData.metadata,
+                          testData.user,
+                          testData.message)
+    } yield r
 
   def addThenRemoveThenAdd(testData: TestData)(implicit fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[AddStatus] =
     for {
-      ctx <- LocalStore.ask
-      iss <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
-      as1 <- fileDB.addFile(ctx.dbDef,
-                            testData.hash,
-                            testData.name,
-                            testData.contentType,
-                            testData.length,
-                            testData.metadata,
-                            testData.user,
-                            testData.message)
-      rfs <- fileDB.removeFile(ctx.dbDef, testData.hash, testData.user, testMessageRemove)
-      as2 <- fileDB.addFile(ctx.dbDef,
-                            testData.hash,
-                            testData.name,
-                            testData.contentType,
-                            testData.length,
-                            testData.metadata,
-                            testData.user,
-                            testData.message)
-    } yield as2
+      c <- LocalStore.ask
+      _ <- fileDB.init(c.dbDef, c.dbSchemaVersion)
+      _ <- fileDB.addFile(c.dbDef,
+                          testData.hash,
+                          testData.name,
+                          testData.contentType,
+                          testData.length,
+                          testData.metadata,
+                          testData.user,
+                          testData.message)
+      _ <- fileDB.removeFile(c.dbDef, testData.hash, testData.user, testMessageRemove)
+      r <- fileDB.addFile(c.dbDef,
+                          testData.hash,
+                          testData.name,
+                          testData.contentType,
+                          testData.length,
+                          testData.metadata,
+                          testData.user,
+                          testData.message)
+    } yield r
 
   def addThenRemoveThenRemove(testData: TestData)(implicit fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[RemoveStatus] =
     for {
-      ctx <- LocalStore.ask
-      iss <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
-      afs <- fileDB.addFile(ctx.dbDef,
-                            testData.hash,
-                            testData.name,
-                            testData.contentType,
-                            testData.length,
-                            testData.metadata,
-                            testData.user,
-                            testData.message)
-      rs1 <- fileDB.removeFile(ctx.dbDef, testData.hash, testData.user, testMessageRemove)
-      rs2 <- fileDB.removeFile(ctx.dbDef, testData.hash, testData.user, testMessageRemove)
-    } yield rs2
+      c <- LocalStore.ask
+      _ <- fileDB.init(c.dbDef, c.dbSchemaVersion)
+      _ <- fileDB.addFile(c.dbDef,
+                          testData.hash,
+                          testData.name,
+                          testData.contentType,
+                          testData.length,
+                          testData.metadata,
+                          testData.user,
+                          testData.message)
+      _ <- fileDB.removeFile(c.dbDef, testData.hash, testData.user, testMessageRemove)
+      r <- fileDB.removeFile(c.dbDef, testData.hash, testData.user, testMessageRemove)
+    } yield r
 
   def addThenFind(testData: TestData)(implicit fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[Option[File]] =
     for {
-      ctx <- LocalStore.ask
-      iss <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
-      afs <- fileDB.addFile(ctx.dbDef,
-                            testData.hash,
-                            testData.name,
-                            testData.contentType,
-                            testData.length,
-                            testData.metadata,
-                            testData.user,
-                            testData.message)
-      fff <- fileDB.findFile(ctx.dbDef, testData.hash)
-    } yield fff
+      c <- LocalStore.ask
+      _ <- fileDB.init(c.dbDef, c.dbSchemaVersion)
+      _ <- fileDB.addFile(c.dbDef,
+                          testData.hash,
+                          testData.name,
+                          testData.contentType,
+                          testData.length,
+                          testData.metadata,
+                          testData.user,
+                          testData.message)
+      r <- fileDB.findFile(c.dbDef, testData.hash)
+    } yield r
 
   def addThenRemoveThenFind(testData: TestData)(implicit fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[Option[File]] =
     for {
-      ctx <- LocalStore.ask
-      iss <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
-      afs <- fileDB.addFile(ctx.dbDef,
-                            testData.hash,
-                            testData.name,
-                            testData.contentType,
-                            testData.length,
-                            testData.metadata,
-                            testData.user,
-                            testData.message)
-      rfs <- fileDB.removeFile(ctx.dbDef, testData.hash, testData.user, testMessageRemove)
-      fff <- fileDB.findFile(ctx.dbDef, testData.hash)
-    } yield fff
+      c <- LocalStore.ask
+      _ <- fileDB.init(c.dbDef, c.dbSchemaVersion)
+      _ <- fileDB.addFile(c.dbDef,
+                          testData.hash,
+                          testData.name,
+                          testData.contentType,
+                          testData.length,
+                          testData.metadata,
+                          testData.user,
+                          testData.message)
+      _ <- fileDB.removeFile(c.dbDef, testData.hash, testData.user, testMessageRemove)
+      r <- fileDB.findFile(c.dbDef, testData.hash)
+    } yield r
 
   def doubleInit(implicit fileDB: FileDB[LocalStore.T, DatabaseDef]): LocalStore.T[DBStatus] =
     for {
-      ctx <- LocalStore.ask
-      _   <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
-      ds  <- fileDB.init(ctx.dbDef, ctx.dbSchemaVersion)
-    } yield ds
+      c <- LocalStore.ask
+      _ <- fileDB.init(c.dbDef, c.dbSchemaVersion)
+      r <- fileDB.init(c.dbDef, c.dbSchemaVersion)
+    } yield r
 
   @Test
   def runSingleAddTest(): Unit = {

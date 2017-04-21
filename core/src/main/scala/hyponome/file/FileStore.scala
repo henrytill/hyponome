@@ -16,10 +16,11 @@
 
 package hyponome.file
 
+import java.nio.file.{Files, Path}
+
 import fs2.Strategy
 import fs2.interop.cats._
 import hyponome._
-import java.nio.file.{Files, Path}
 
 trait FileStore[M[_], S] {
 
@@ -43,15 +44,12 @@ object FileStore {
       LocalStore.fromCanThrow(Files.createDirectories(store))
 
     def init(store: Path): LocalStore.T[FileStoreStatus] =
-      for {
-        exists <- fileStoreExists(store)
-        status <- {
-          if (exists)
-            LocalStore.pure(FileStoreExists)
-          else
-            createFileStore(store).map((_: Path) => FileStoreCreated)
-        }
-      } yield status
+      fileStoreExists(store).flatMap { (exists: Boolean) =>
+        if (exists)
+          LocalStore.pure(FileStoreExists)
+        else
+          createFileStore(store).map((_: Path) => FileStoreCreated)
+      }
 
     private def fileExists(p: Path): LocalStore.T[Boolean] =
       LocalStore.fromCanThrow(Files.exists(p))
@@ -67,29 +65,33 @@ object FileStore {
         exists <- fileExists(path)
       } yield if (exists) Some(path) else None
 
-    def addFile(store: Path, hash: FileHash, file: Path): LocalStore.T[AddStatus] =
+    def addFile(store: Path, hash: FileHash, file: Path): LocalStore.T[AddStatus] = {
+      def add(exists: Boolean, destination: Path): LocalStore.T[AddStatus] =
+        if (!exists)
+          LocalStore.fromCanThrow(Files.copy(file, destination)).map((_: Path) => Added(hash))
+        else
+          LocalStore.pure(Exists(hash))
       for {
         destination <- resolvePath(store, hash)
         _           <- LocalStore.fromCanThrow(Files.createDirectories(destination.getParent))
         exists      <- fileExists(destination)
-        status <- {
-          if (!exists) LocalStore.fromCanThrow(Files.copy(file, destination)).map((_: Path) => Added(hash))
-          else LocalStore.pure(Exists(hash))
-        }
+        status      <- add(exists, destination)
       } yield status
+    }
 
-    def removeFile(store: Path, hash: FileHash): LocalStore.T[RemoveStatus] =
-      for {
-        exists <- findFile(store, hash)
-        status <- {
-          if (exists.isEmpty)
-            LocalStore.pure(NotFound(hash))
-          else
-            for {
-              path <- resolvePath(store, hash)
-              _    <- LocalStore.fromCanThrow(Files.delete(path))
-            } yield Removed(hash)
-        }
-      } yield status
+    def removeFile(store: Path, hash: FileHash): LocalStore.T[RemoveStatus] = {
+      def remove(maybePath: Option[Path]): LocalStore.T[RemoveStatus] =
+        if (maybePath.isEmpty)
+          LocalStore.pure(NotFound(hash))
+        else
+          resolvePath(store, hash).flatMap { (path: Path) =>
+            LocalStore.fromCanThrow(Files.delete(path)).map { (_: Unit) =>
+              Removed(hash)
+            }
+          }
+      findFile(store, hash).flatMap { (maybePath: Option[Path]) =>
+        remove(maybePath)
+      }
+    }
   }
 }

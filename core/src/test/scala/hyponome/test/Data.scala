@@ -1,9 +1,11 @@
 package hyponome.test
 
-import hyponome._
 import java.nio.file.{FileSystem, FileSystems, Path}
 
-trait TestData {
+import hyponome._
+
+trait Data {
+
   private val fs: FileSystem = FileSystems.getDefault
 
   val testPDF: Path                      = fs.getPath(getClass.getResource("/test.pdf").getPath)

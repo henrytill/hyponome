@@ -18,13 +18,14 @@ package hyponome.db.tables
 
 import hyponome._
 import slick.jdbc.SQLiteProfile.api._
+import slick.lifted.ProvenShape
 
 @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
 class Files(tag: Tag) extends Table[File](tag, "FILES") {
-  def hash        = column[FileHash]("HASH", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
-  def name        = column[Option[String]]("NAME")
-  def contentType = column[Option[String]]("CONTENT_TYPE")
-  def length      = column[Long]("LENGTH")
-  def metadata    = column[Option[Metadata]]("METADATA")
-  def *           = (hash, name, contentType, length, metadata) <> (File.tupled, File.unapply)
+  def hash: Rep[hyponome.FileHash]             = column[FileHash]("HASH", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
+  def name: Rep[Option[String]]                = column[Option[String]]("NAME")
+  def contentType: Rep[Option[String]]         = column[Option[String]]("CONTENT_TYPE")
+  def length: Rep[Long]                        = column[Long]("LENGTH")
+  def metadata: Rep[Option[hyponome.Metadata]] = column[Option[Metadata]]("METADATA")
+  def * : ProvenShape[hyponome.File]           = (hash, name, contentType, length, metadata) <> (File.tupled, File.unapply)
 }

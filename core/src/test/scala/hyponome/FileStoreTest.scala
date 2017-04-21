@@ -16,15 +16,16 @@
 
 package hyponome
 
-import fs2.{Strategy, Task}
-import fs2.interop.cats._
 import java.nio.file.{Files, Path}
-import org.scalacheck.{Properties, Prop}
-import scala.concurrent.ExecutionContext
-import org.log4s._
-import cats.implicits._
 
+import cats.implicits._
+import fs2.interop.cats._
+import fs2.{Strategy, Task}
 import hyponome.test._
+import org.log4s._
+import org.scalacheck.{Prop, Properties}
+
+import scala.concurrent.ExecutionContext
 
 object FileStoreProperties {
 
@@ -34,7 +35,7 @@ object FileStoreProperties {
     for {
       ctx <- freshTestContext()
       ls  <- Task.now(localStore)
-      _   <- ls.init.run(ctx)
+      _   <- ls.init().run(ctx)
       as  <- ps.map((p: Path) => ls.addFile(p, None, testUser, None).run(ctx)).sequence
     } yield as
 
@@ -49,7 +50,7 @@ object FileStoreProperties {
       _  <- Task.now(logger.debug(s"Round-tripping ${zs.length} files..."))
       as <- roundTrip(ps)
       rs <- Task.now(as.map(_.hash))
-    } yield hs.sameElements(rs)).unsafeRun
+    } yield hs == rs).unsafeRun
   }
 }
 

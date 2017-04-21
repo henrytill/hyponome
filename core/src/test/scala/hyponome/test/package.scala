@@ -19,10 +19,12 @@ package hyponome
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{FileVisitResult, Files, Path, SimpleFileVisitor}
 import java.util.UUID
-import scala.util.{Success, Try}
+
 import org.log4s._
 
-package object test extends TestData with Generators {
+import scala.util.{Success, Try}
+
+package object test extends Data with Generators {
 
   private val logger = getLogger
 

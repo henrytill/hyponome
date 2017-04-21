@@ -18,15 +18,16 @@ package hyponome.db.tables
 
 import hyponome._
 import slick.jdbc.SQLiteProfile.api._
+import slick.lifted.{ForeignKeyQuery, ProvenShape}
 
 @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
 class Events(tag: Tag) extends Table[Event](tag, "EVENTS") {
-  def id        = column[IdHash]("ID", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
-  def timestamp = column[Long]("TIMESTAMP")
-  def operation = column[Operation]("OPERATION")
-  def hash      = column[FileHash]("HASH", O.SqlType("CHARACTER(64)"))
-  def user      = column[User]("USER")
-  def message   = column[Option[Message]]("MESSAGE")
-  def *         = (id, timestamp, operation, hash, user, message) <> (Event.tupled, Event.unapply)
-  def file      = foreignKey("HASH_FK", hash, TableQuery[Files])(_.hash)
+  def id: Rep[hyponome.IdHash]                    = column[IdHash]("ID", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
+  def timestamp: Rep[Long]                        = column[Long]("TIMESTAMP")
+  def operation: Rep[hyponome.Operation]          = column[Operation]("OPERATION")
+  def hash: Rep[hyponome.FileHash]                = column[FileHash]("HASH", O.SqlType("CHARACTER(64)"))
+  def user: Rep[hyponome.User]                    = column[User]("USER")
+  def message: Rep[Option[hyponome.Message]]      = column[Option[Message]]("MESSAGE")
+  def * : ProvenShape[hyponome.Event]             = (id, timestamp, operation, hash, user, message) <> (Event.tupled, Event.unapply)
+  def file: ForeignKeyQuery[Files, hyponome.File] = foreignKey("HASH_FK", hash, TableQuery[Files])(_.hash)
 }

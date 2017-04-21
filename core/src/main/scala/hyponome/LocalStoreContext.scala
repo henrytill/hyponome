@@ -17,6 +17,7 @@
 package hyponome
 
 import java.nio.file.{Files, Path}
+
 import fs2.Task
 import slick.jdbc.SQLiteProfile.api._
 import slick.jdbc.SQLiteProfile.backend.DatabaseDef

@@ -16,13 +16,14 @@
 
 package hyponome
 
+import java.io.{File => JFile}
+import java.nio.file.{Files, Path}
+
 import fs2.Strategy
 import fs2.interop.cats._
 import hyponome.db.FileDB
 import hyponome.file.FileStore
-import java.io.{File => JFile}
-import java.nio.file.{Files, Path}
-import slick.driver.SQLiteDriver.backend.DatabaseDef
+import slick.jdbc.SQLiteProfile.backend.DatabaseDef
 
 trait Store[M[_], P] {
 
@@ -51,29 +52,25 @@ object Store {
 
       def init(): LocalStore.T[StoreStatus] =
         for {
-          ctx       <- LocalStore.ask
-          fdbStatus <- fdb.init(ctx.dbDef, ctx.dbSchemaVersion)
-          fsStatus  <- fs.init(ctx.storePath)
-          status    <- LocalStore.pure(StoreExists)
-        } yield status
+          ctx <- LocalStore.ask
+          _   <- fdb.init(ctx.dbDef, ctx.dbSchemaVersion)
+          _   <- fs.init(ctx.storePath)
+        } yield StoreExists
 
       def info(hash: FileHash): LocalStore.T[Option[File]] =
-        for {
-          ctx       <- LocalStore.ask
-          maybeFile <- fdb.findFile(ctx.dbDef, hash)
-        } yield maybeFile
+        LocalStore.ask.flatMap { (ctx: LocalStoreContext) =>
+          fdb.findFile(ctx.dbDef, hash)
+        }
 
       def count(): LocalStore.T[Long] =
-        for {
-          ctx   <- LocalStore.ask
-          count <- fdb.countFiles(ctx.dbDef)
-        } yield count
+        LocalStore.ask.flatMap { (ctx: LocalStoreContext) =>
+          fdb.countFiles(ctx.dbDef)
+        }
 
       def query(q: StoreQuery): LocalStore.T[Seq[StoreQueryResponse]] =
-        for {
-          ctx    <- LocalStore.ask
-          result <- fdb.query(ctx.dbDef, q)
-        } yield result
+        LocalStore.ask.flatMap { (ctx: LocalStoreContext) =>
+          fdb.query(ctx.dbDef, q)
+        }
 
       def findFile(hash: FileHash): LocalStore.T[Option[JFile]] =
         for {
@@ -93,11 +90,11 @@ object Store {
 
       private def addToFileStore(store: Path, hash: FileHash, file: Path, addToDbStatus: AddStatus): LocalStore.T[AddStatus] =
         addToDbStatus match {
-          case Added(hash) => fs.addFile(store, hash, file)
-          case x           => LocalStore.pure(x)
+          case Added(h) => fs.addFile(store, h, file)
+          case x        => LocalStore.pure(x)
         }
 
-      def addFile(p: Path, metadata: Option[Metadata], user: User, message: Option[Message]): LocalStore.T[AddStatus] = {
+      def addFile(p: Path, metadata: Option[Metadata], user: User, message: Option[Message]): LocalStore.T[AddStatus] =
         for {
           ctx    <- LocalStore.ask
           hash   <- LocalStore.fromTask(FileHash.fromPath(p))
@@ -107,29 +104,14 @@ object Store {
           as1    <- addToFileDB(ctx.dbDef, hash, name, ctype, length, metadata, user, message)
           as2    <- addToFileStore(ctx.storePath, hash, p, as1)
         } yield as2
-      }
-
-      /*
-       * def exists(h: FileHash): LocalStore.T[Boolean] =
-       *  for {
-       *    ctx       <- LocalStore.ask
-       *    maybeFile <- info(h)
-       *    result <- {
-       *      if (maybeFile.isEmpty)
-       *        false.point[LocalStore.T]
-       *      else
-       *        fs.findFile(ctx.storePath, h).map(_.isDefined)
-       *    }
-       * } yield result
-       */
 
       private def removeFromFileDB(db: DatabaseDef, hash: FileHash, user: User, message: Option[Message]): LocalStore.T[RemoveStatus] =
         fdb.removeFile(db, hash, user, message)
 
       private def removeFromFileStore(store: Path, hash: FileHash, removeFromDbStatus: RemoveStatus): LocalStore.T[RemoveStatus] =
         removeFromDbStatus match {
-          case Removed(hash) => fs.removeFile(store, hash)
-          case x             => LocalStore.pure(x)
+          case Removed(h) => fs.removeFile(store, h)
+          case x          => LocalStore.pure(x)
         }
 
       def removeFile(hash: FileHash, user: User, message: Option[Message]): LocalStore.T[RemoveStatus] =

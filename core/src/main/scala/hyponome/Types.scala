@@ -16,11 +16,12 @@
 
 package hyponome
 
-import fs2.{Strategy, Task}
-import hyponome.util._
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import javax.xml.bind.DatatypeConverter.parseHexBinary
+
+import fs2.{Strategy, Task}
+import hyponome.util._
 import net.xngns.klados.hash.SHA256Hash
 import slick.jdbc.SQLiteProfile.api._
 import slick.jdbc.SQLiteProfile.{BaseColumnType, MappedColumnType}

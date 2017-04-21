@@ -17,6 +17,7 @@
 package hyponome.util
 
 import fs2.{Strategy, Task}
+
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
