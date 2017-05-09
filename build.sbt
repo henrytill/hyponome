@@ -1,3 +1,5 @@
+import com.typesafe.sbt.SbtGit.GitKeys._
+
 lazy val commonDepsSettings = Seq(
   libraryDependencies ++= Seq(
     compilerPlugin("org.wartremover" %% "wartremover" % "1.2.1"),
@@ -101,6 +103,13 @@ lazy val core = (project in file("core"))
   .settings(coreDepsSettings: _*)
 
 lazy val root = (project in file("."))
+  .settings(commonSettings: _*)
+  .enablePlugins(GhpagesPlugin)
+  .enablePlugins(ScalaUnidocPlugin)
+  .settings(
+    siteSubdirName in ScalaUnidoc := "latest/api",
+    addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
+    scmInfo := Some(ScmInfo(url("https://github.com/henrytill/hyponome"), "git@github.com:henrytill/hyponome.git")),
+    git.remoteRepo := scmInfo.value.get.connection)
   .aggregate(core)
   .dependsOn(core % "test->test;compile->compile")
-  .settings(commonSettings: _*)
