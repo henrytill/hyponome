@@ -6,7 +6,7 @@ lazy val commonDepsSettings = Seq(
     "co.fs2"         %% "fs2-cats"        % "0.3.0",
     "com.novocode"    % "junit-interface" % "0.11"   % "test",
     "org.log4s"      %% "log4s"           % "1.3.4",
-    "org.scalacheck" %% "scalacheck"      % "1.12.5" % "test",
+    "org.scalacheck" %% "scalacheck"      % "1.13.4" % "test",
     "org.typelevel"  %% "cats"            % "0.9.0"))
 
 lazy val coreDepsSettings = Seq(
