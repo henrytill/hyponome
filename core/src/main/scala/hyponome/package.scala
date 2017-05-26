@@ -16,7 +16,7 @@
 
 import java.nio.file.Path
 
-package object hyponome extends Types {
+package object hyponome {
 
   val currentSchemaVersion: DBSchemaVersion = DBSchemaVersion(1)
 
