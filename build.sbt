@@ -1,5 +1,8 @@
 import com.typesafe.sbt.SbtGit.GitKeys._
 
+lazy val circeVersion     = "0.7.1"
+lazy val shapelessVersion = "2.3.2"
+
 lazy val commonDepsSettings = Seq(
   libraryDependencies ++= Seq(
     compilerPlugin("org.wartremover" %% "wartremover" % "1.2.1"),
@@ -16,6 +19,14 @@ lazy val coreDepsSettings = Seq(
     "com.typesafe.slick" %% "slick"       % "3.2.0",
     "net.xngns"          %% "klados-hash" % "0.1.0-37e80e3",
     "org.xerial"          % "sqlite-jdbc" % "3.16.1"))
+
+lazy val jsonDepsSettings = Seq(
+  libraryDependencies ++= Seq(
+    "com.chuusai" %% "shapeless"            % shapelessVersion,
+    "io.circe"    %% "circe-core"           % circeVersion,
+    "io.circe"    %% "circe-generic"        % circeVersion,
+    "io.circe"    %% "circe-generic-extras" % circeVersion,
+    "io.circe"    %% "circe-parser"         % circeVersion))
 
 lazy val commonOptions = Seq(
   "-language:higherKinds",
@@ -102,6 +113,12 @@ lazy val core = (project in file("core"))
   .settings(commonSettings: _*)
   .settings(coreDepsSettings: _*)
 
+lazy val json = (project in file("json"))
+  .settings(name := "hyponome-json")
+  .settings(commonSettings: _*)
+  .settings(jsonDepsSettings: _*)
+  .dependsOn(core % "test->test;compile->compile")
+
 lazy val root = (project in file("."))
   .settings(commonSettings: _*)
   .enablePlugins(GhpagesPlugin)
@@ -111,5 +128,6 @@ lazy val root = (project in file("."))
     addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
     scmInfo := Some(ScmInfo(url("https://github.com/henrytill/hyponome"), "git@github.com:henrytill/hyponome.git")),
     git.remoteRepo := scmInfo.value.get.connection)
-  .aggregate(core)
-  .dependsOn(core % "test->test;compile->compile")
+  .aggregate(core, json)
+  .dependsOn(core % "test->test;compile->compile",
+             json % "test->test;compile->compile")
