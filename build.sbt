@@ -34,8 +34,8 @@ lazy val commonOptions = Seq(
   "-unchecked")
 
 lazy val wartremoverOptions = List(
-  "Any",
-  "AsInstanceOf",
+  // "Any",
+  // "AsInstanceOf",
   "DefaultArguments",
   "EitherProjectionPartial",
   "Enumeration",
@@ -50,7 +50,7 @@ lazy val wartremoverOptions = List(
   "MutableDataStructures",
   "NoNeedForMonad",
   "NonUnitStatements",
-  "Nothing",
+  // "Nothing",
   "Null",
   "Option2Iterable",
   "Overloading",

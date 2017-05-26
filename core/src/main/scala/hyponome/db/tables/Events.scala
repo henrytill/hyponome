@@ -20,7 +20,6 @@ import hyponome._
 import slick.jdbc.SQLiteProfile.api._
 import slick.lifted.{ForeignKeyQuery, ProvenShape}
 
-@SuppressWarnings(Array("org.wartremover.warts.Nothing"))
 class Events(tag: Tag) extends Table[Event](tag, "EVENTS") {
   def id: Rep[hyponome.IdHash]                    = column[IdHash]("ID", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
   def timestamp: Rep[Long]                        = column[Long]("TIMESTAMP")

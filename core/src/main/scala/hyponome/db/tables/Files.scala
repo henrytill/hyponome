@@ -20,7 +20,6 @@ import hyponome._
 import slick.jdbc.SQLiteProfile.api._
 import slick.lifted.ProvenShape
 
-@SuppressWarnings(Array("org.wartremover.warts.Nothing"))
 class Files(tag: Tag) extends Table[File](tag, "FILES") {
   def hash: Rep[hyponome.FileHash]             = column[FileHash]("HASH", O.PrimaryKey, O.SqlType("CHARACTER(64)"))
   def name: Rep[Option[String]]                = column[Option[String]]("NAME")

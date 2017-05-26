@@ -39,7 +39,6 @@ object FileStoreProperties {
       as  <- ps.map((p: Path) => ls.addFile(p, None, testUser, None).run(ctx)).sequence
     } yield as
 
-  @SuppressWarnings(Array("org.wartremover.warts.Any"))
   def prop_roundTrip(implicit ec: ExecutionContext, s: Strategy): Prop = Prop.forAll(genNEListOfNEByteArrays) { (bas: List[Array[Byte]]) =>
     (for {
       t  <- Task.now(Files.createTempDirectory("hyponome-test-uploads-"))

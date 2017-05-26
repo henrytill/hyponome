@@ -175,7 +175,6 @@ object FileDB {
         LocalStore.fromFuture(db.run(q.result)).map(_.longValue)
       }
 
-      @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
       def query(db: DatabaseDef, q: StoreQuery): LocalStore.T[Seq[StoreQueryResponse]] =
         q match {
           case StoreQuery(None, None, None, None, None, None, None, _, _) =>

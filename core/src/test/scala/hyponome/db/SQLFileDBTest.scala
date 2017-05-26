@@ -25,7 +25,6 @@ import slick.jdbc.SQLiteProfile.backend.DatabaseDef
 
 import scala.concurrent.ExecutionContext
 
-@SuppressWarnings(Array("org.wartremover.warts.Nothing"))
 class SQLFileDBTest {
 
   import hyponome.db.FileDB._
