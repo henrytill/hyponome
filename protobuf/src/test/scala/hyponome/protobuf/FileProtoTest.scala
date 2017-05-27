@@ -23,7 +23,6 @@ import java.security.MessageDigest
 import com.google.protobuf.ByteString
 import fs2.Strategy
 import hyponome._
-import hyponome.protobuf.FileChunkProto.FileChunk
 import hyponome.test._
 import org.junit.{Assert, Test}
 
@@ -38,7 +37,7 @@ class FileProtoTest {
 
   implicit val S: Strategy = Strategy.fromFixedDaemonPool(8, threadName = "worker")
 
-  def splitFile(path: Path, chunkSize: Int = 512): (FileProto.File, Array[FileChunk]) = {
+  def splitFile(path: Path, chunkSize: Int = 512): (FileProto.File, Array[FileChunkProto.FileChunk]) = {
     val fis: FileInputStream = new FileInputStream(path.toFile)
     try {
       val name: String        = path.getFileName.toString
@@ -52,13 +51,13 @@ class FileProtoTest {
           (0 until (numberOfChunks - 1)).map(_ => chunkSize) :+ lastChunkSize
         }
       val buffer = new Array[Byte](chunkSize)
-      val chunks = new Array[FileChunk](numberOfChunks)
+      val chunks = new Array[FileChunkProto.FileChunk](numberOfChunks)
       val hashes = new Array[ByteString](numberOfChunks)
       for (i <- 0 until numberOfChunks) {
         val chunkLength = chunkSizes(i)
         fis.read(buffer, 0, chunkLength)
-        val hash: ByteString = ByteString.copyFrom(MessageDigest.getInstance("SHA-1").digest(buffer.take(chunkLength)))
-        val chunk: FileChunk = FileChunkProto.FileChunk
+        val hash: ByteString = ByteString.copyFrom(MessageDigest.getInstance("SHA-256").digest(buffer.take(chunkLength)))
+        val chunk: FileChunkProto.FileChunk = FileChunkProto.FileChunk
           .newBuilder()
           .setHash(hash)
           .setData(ByteString.copyFrom(buffer, 0, chunkLength))
@@ -78,22 +77,22 @@ class FileProtoTest {
     }
   }
 
-  def validateChunks(chunks: Array[FileChunk]): Boolean =
+  def validateChunks(chunks: Array[FileChunkProto.FileChunk]): Boolean =
     chunks.indices.forall { (i: Int) =>
-      val current: FileChunk = chunks(i)
-      val bytes: Array[Byte] = current.getData.toByteArray
-      val hash: Array[Byte]  = MessageDigest.getInstance("SHA-1").digest(bytes)
+      val current: FileChunkProto.FileChunk = chunks(i)
+      val bytes: Array[Byte]                = current.getData.toByteArray
+      val hash: Array[Byte]                 = MessageDigest.getInstance("SHA-256").digest(bytes)
       hash sameElements current.getHash.toByteArray
     }
 
-  def validateChunksInFile(chunks: Array[FileChunk], file: FileProto.File): Boolean = {
+  def validateChunksInFile(chunks: Array[FileChunkProto.FileChunk], file: FileProto.File): Boolean = {
     file.getHashesList.toArray sameElements chunks.map(_.getHash)
   }
 
-  def assembleFile(path: Path, file: FileProto.File, chunks: Array[FileChunk]): Unit = {
+  def assembleFile(path: Path, file: FileProto.File, chunks: Array[FileChunkProto.FileChunk]): Unit = {
     val fos = new FileOutputStream(path.resolve(file.getName()).toFile)
     try {
-      chunks.foreach { (c: FileChunk) =>
+      chunks.foreach { (c: FileChunkProto.FileChunk) =>
         fos.write(c.getData().toByteArray)
       }
     } finally {
