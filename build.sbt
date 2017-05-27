@@ -2,6 +2,7 @@ import com.typesafe.sbt.SbtGit.GitKeys._
 
 lazy val circeVersion     = "0.7.1"
 lazy val fs2Version       = "0.9.6"
+lazy val http4sVersion    = "0.17.0-M2"
 lazy val shapelessVersion = "2.3.2"
 
 lazy val commonDepsSettings = Seq(
@@ -24,6 +25,13 @@ lazy val coreDepsSettings = Seq(
 lazy val daemonDepsSettings = Seq(
   libraryDependencies ++= Seq(
     "co.fs2" %% "fs2-io" % fs2Version))
+
+lazy val httpDepsSettings = Seq(
+  libraryDependencies ++= Seq(
+    "org.http4s" %% "http4s-blaze-server" % http4sVersion,
+    "org.http4s" %% "http4s-circe"        % http4sVersion,
+    "org.http4s" %% "http4s-client"       % http4sVersion % "test",
+    "org.http4s" %% "http4s-dsl"          % http4sVersion))
 
 lazy val jsonDepsSettings = Seq(
   libraryDependencies ++= Seq(
@@ -133,6 +141,12 @@ lazy val daemon = (project in file("daemon"))
   .dependsOn(core     % "test->test;compile->compile",
              protobuf % "test->test;compile->compile")
 
+lazy val http = (project in file("http"))
+  .settings(name := "hyponome-http")
+  .settings(commonSettings: _*)
+  .settings(httpDepsSettings: _*)
+  .dependsOn(core, json)
+
 lazy val json = (project in file("json"))
   .settings(name := "hyponome-json")
   .settings(commonSettings: _*)
@@ -156,8 +170,9 @@ lazy val root = (project in file("."))
     addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
     scmInfo := Some(ScmInfo(url("https://github.com/henrytill/hyponome"), "git@github.com:henrytill/hyponome.git")),
     git.remoteRepo := scmInfo.value.get.connection)
-  .aggregate(core, daemon, json, protobuf)
+  .aggregate(core, daemon, http, json, protobuf)
   .dependsOn(core     % "test->test;compile->compile",
              daemon   % "test->test;compile->compile",
+             http     % "test->test;compile->compile",
              json     % "test->test;compile->compile",
              protobuf % "test->test;compile->compile")
