@@ -18,3 +18,7 @@ cache:
 before_cache:
   - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
   - find $HOME/.sbt -name "*.lock" -type f -delete
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y protobuf-compiler

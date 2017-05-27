@@ -1,4 +1,5 @@
 import com.typesafe.sbt.SbtGit.GitKeys._
+import sbtprotobuf.ProtobufPlugin
 
 lazy val circeVersion     = "0.7.1"
 lazy val shapelessVersion = "2.3.2"
@@ -119,6 +120,13 @@ lazy val json = (project in file("json"))
   .settings(jsonDepsSettings: _*)
   .dependsOn(core % "test->test;compile->compile")
 
+lazy val protobuf = (project in file("protobuf"))
+  .settings(ProtobufPlugin.protobufSettings: _*)
+  .settings(commonSettings: _*)
+  .settings(name := "hyponome-protobuf",
+            javaSource in ProtobufPlugin.protobufConfig := (sourceManaged in Compile).value)
+  .dependsOn(core % "test->test;compile->compile")
+
 lazy val root = (project in file("."))
   .settings(commonSettings: _*)
   .enablePlugins(GhpagesPlugin)
@@ -128,6 +136,7 @@ lazy val root = (project in file("."))
     addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
     scmInfo := Some(ScmInfo(url("https://github.com/henrytill/hyponome"), "git@github.com:henrytill/hyponome.git")),
     git.remoteRepo := scmInfo.value.get.connection)
-  .aggregate(core, json)
-  .dependsOn(core % "test->test;compile->compile",
-             json % "test->test;compile->compile")
+  .aggregate(core, json, protobuf)
+  .dependsOn(core     % "test->test;compile->compile",
+             json     % "test->test;compile->compile",
+             protobuf % "test->test;compile->compile")
