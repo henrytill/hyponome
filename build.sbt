@@ -84,7 +84,9 @@ lazy val initialConsoleCommands =
   """|import hyponome._
      |import java.nio.file.FileSystems
      |import scala.concurrent.ExecutionContext.Implicits.global
+     |import fs2.Strategy
      |val fs = FileSystems.getDefault
+     |implicit val strat: Strategy = Strategy.fromFixedDaemonPool(8, threadName = "worker")
      |""".stripMargin
 
 lazy val initialTestConsoleCommands =
