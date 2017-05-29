@@ -37,7 +37,7 @@ class FileProtoTest {
 
   implicit val S: Strategy = Strategy.fromFixedDaemonPool(8, threadName = "worker")
 
-  def splitFile(path: Path, chunkSize: Int = 512): (FileProto.File, Array[FileChunkProto.FileChunk]) = {
+  def splitFile(path: Path, chunkSize: Int = 512): (FileInfoProto.FileInfo, Array[FileChunkProto.FileChunk]) = {
     val fis: FileInputStream = new FileInputStream(path.toFile)
     try {
       val name: String        = path.getFileName.toString
@@ -65,7 +65,7 @@ class FileProtoTest {
         chunks.update(i, chunk)
         hashes.update(i, hash)
       }
-      val file = FileProto.File
+      val file = FileInfoProto.FileInfo
         .newBuilder()
         .setName(name)
         .setLength(fileLength)
@@ -85,11 +85,11 @@ class FileProtoTest {
       hash sameElements current.getHash.toByteArray
     }
 
-  def validateChunksInFile(chunks: Array[FileChunkProto.FileChunk], file: FileProto.File): Boolean = {
+  def validateChunksInFile(chunks: Array[FileChunkProto.FileChunk], file: FileInfoProto.FileInfo): Boolean = {
     file.getHashesList.toArray sameElements chunks.map(_.getHash)
   }
 
-  def assembleFile(path: Path, file: FileProto.File, chunks: Array[FileChunkProto.FileChunk]): Unit = {
+  def assembleFile(path: Path, file: FileInfoProto.FileInfo, chunks: Array[FileChunkProto.FileChunk]): Unit = {
     val fos = new FileOutputStream(path.resolve(file.getName()).toFile)
     try {
       chunks.foreach { (c: FileChunkProto.FileChunk) =>
