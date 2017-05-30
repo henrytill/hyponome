@@ -25,4 +25,7 @@ trait Generators {
   val genNEListOfNEByteArrays: Gen[List[Array[Byte]]] = Gen.nonEmptyContainerOf[List, Array[Byte]](genNEByteArray)
 
   def sizedByteArray(size: Int): Gen[Array[Byte]] = Gen.listOfN(size, Arbitrary.arbitrary[Byte]).map(_.toArray)
+
+  def sizedListOfSizedByteArrays(listSize: Int, byteArraySize: Int): Gen[List[Array[Byte]]] =
+    Gen.listOfN(listSize, sizedByteArray(byteArraySize))
 }
