@@ -13,11 +13,14 @@ hyponome started life as a simple paste server, with the premise that URLs of up
 
 ## Status
 
-In its current state, hyponome should be considered experimental and unstable.  Discussion of ongoing development can be found in the [issue tracker](https://github.com/henrytill/hyponome-scala/issues) and the [wiki](https://github.com/henrytill/hyponome-scala/wiki).
+In its current state, hyponome should be considered experimental and unstable.
 
-## Other Versions
+## History
 
-The [original version](https://bitbucket.org/henrytill/hyponome-clojure) was written in Clojure.
+* Fall 2015: An [early version](https://bitbucket.org/henrytill/hyponome-clojure) is written in Clojure.
+* Winter 2016: The [next version](https://github.com/henrytill/hyponome/tree/akka-version) is written in Scala using the [Akka](http://akka.io) framework.
+* Spring 2016: [Another version](https://github.com/henrytill/hyponome/tree/http4s-rewrite) is written in Scala, removing Akka in favor of a [Scalaz](https://github.com/scalaz/scalaz) `Task`-based implementation.
+* Spring 2017: Development of a new version is underway.
 
 ## Inspiration:
 
