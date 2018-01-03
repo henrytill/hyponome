@@ -1,0 +1,16 @@
+AlignTrailingComments: true
+AllowShortFunctionsOnASingleLine: Inline
+AlwaysBreakTemplateDeclarations: true
+BasedOnStyle: LLVM
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBraces: Attach
+Cpp11BracedListStyle: true
+DerivePointerAlignment: false
+IndentCaseLabels: false
+NamespaceIndentation: All
+PointerAlignment: Right
+SpacesBeforeTrailingComments: 2
+Standard: Cpp11
+ReflowComments: true
+UseTab: Never
