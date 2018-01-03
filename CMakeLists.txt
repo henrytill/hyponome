@@ -20,4 +20,7 @@ capnp_generate_cpp(
 add_library(CapnProtoDefs ${CAPNP_SRCS})
 target_include_directories(CapnProtoDefs PUBLIC ${CAPNPC_OUTPUT_DIR})
 
+find_package(sodium REQUIRED)
+
 add_subdirectory(bin)
+add_subdirectory(tests)
