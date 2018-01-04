@@ -7,12 +7,12 @@
 namespace hyponome {
   namespace hash {
 
-    std::vector<unsigned char> sha256(std::vector<unsigned char>);
+    std::vector<unsigned char> sha256(const std::vector<unsigned char> &);
 
-    std::vector<unsigned char> blake2b(std::vector<unsigned char>);
+    std::vector<unsigned char> blake2b(const std::vector<unsigned char> &);
 
-    std::vector<unsigned char> blake2b(std::vector<unsigned char>, std::vector<unsigned char>);
-
+    std::vector<unsigned char> blake2b(const std::vector<unsigned char> &,
+                                       const std::vector<unsigned char> &);
   }
 }
 
