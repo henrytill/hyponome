@@ -20,6 +20,5 @@ namespace hyponome {
       sodium_hex2bin(&out[0], bin_len, &hex[0], hex_len, NULL, NULL, NULL);
       return out;
     }
-
   }
 }

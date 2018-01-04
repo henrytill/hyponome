@@ -25,6 +25,5 @@ namespace hyponome {
           &out[0], out.size(), &msg[0], msg.size(), &key[0], key.size());
       return out;
     }
-
   }
 }
