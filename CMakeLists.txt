@@ -22,5 +22,8 @@ target_include_directories(CapnProtoDefs PUBLIC ${CAPNPC_OUTPUT_DIR})
 
 find_package(sodium REQUIRED)
 
+include_directories(include)
+
 add_subdirectory(bin)
+add_subdirectory(lib)
 add_subdirectory(tests)

@@ -22,6 +22,7 @@ add_executable(
   hash_tests.cpp
   )
 target_link_libraries(hash_tests CapnProtoDefs)
+target_link_libraries(hash_tests Hyponome)
 target_link_libraries(hash_tests sodium)
 
 add_dependencies(hash_tests Catch)

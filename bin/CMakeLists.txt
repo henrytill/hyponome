@@ -1,2 +1,2 @@
-add_executable(hyponome hyponome.cpp)
-target_link_libraries(hyponome CapnProtoDefs)
+add_executable(hyponome-server hyponome.cpp)
+target_link_libraries(hyponome-server CapnProtoDefs)
