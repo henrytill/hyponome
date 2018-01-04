@@ -25,8 +25,7 @@ std::string round_trip(const std::string &path, const std::string &data) {
   }
 }
 
-TEST_CASE("Round-trip a string to/from the filesystem as binary",
-          "[crypto_hash_sha256]") {
+TEST_CASE("Round-trip a string to/from the filesystem as binary", "[crypto_hash_sha256]") {
   if (sodium_init() < 0)
     throw std::runtime_error("sodium_init() failed");
 
@@ -36,9 +35,8 @@ TEST_CASE("Round-trip a string to/from the filesystem as binary",
 
   std::string str = round_trip("test.txt", expected);
   std::vector<unsigned char> msg(str.length());
-  std::transform(str.begin(), str.end(), msg.begin(), [](char c) {
-    return static_cast<unsigned char>(c);
-  });
+  std::transform(
+      str.begin(), str.end(), msg.begin(), [](char c) { return static_cast<unsigned char>(c); });
   auto hash = hash::sha256(msg);
   auto hash_hex = util::bin2hex(hash);
   REQUIRE(expected == str);

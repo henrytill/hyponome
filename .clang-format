@@ -5,6 +5,7 @@ BasedOnStyle: LLVM
 BinPackArguments: false
 BinPackParameters: false
 BreakBeforeBraces: Attach
+ColumnLimit: 100
 Cpp11BracedListStyle: true
 DerivePointerAlignment: false
 IndentCaseLabels: false

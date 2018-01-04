@@ -21,8 +21,7 @@ namespace hyponome {
     std::vector<unsigned char> blake2b(const std::vector<unsigned char> &msg,
                                        const std::vector<unsigned char> &key) {
       std::vector<unsigned char> out(crypto_generichash_BYTES_MAX);
-      crypto_generichash(
-          &out[0], out.size(), &msg[0], msg.size(), &key[0], key.size());
+      crypto_generichash(&out[0], out.size(), &msg[0], msg.size(), &key[0], key.size());
       return out;
     }
   }
