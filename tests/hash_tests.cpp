@@ -25,22 +25,21 @@ std::string round_trip(const std::string &path, const std::string &data) {
   }
 }
 
-TEST_CASE("Round-trip a string to/from the filesystem as binary", "[crypto_hash_sha256]") {
+TEST_CASE("Hash with SHA256", "[crypto_hash_sha256]") {
   if (sodium_init() < 0)
     throw std::runtime_error("sodium_init() failed");
 
   const std::string expected = "This is a test file.\n";
-  const std::string expected_hash =
+  const std::string expected_hash_hex =
       "649b8b471e7d7bc175eec758a7006ac693c434c8297c07db15286788c837154a";
 
-  std::string str = round_trip("test.txt", expected);
-  std::vector<unsigned char> msg(str.length());
-  std::transform(
-      str.begin(), str.end(), msg.begin(), [](char c) { return static_cast<unsigned char>(c); });
-  auto hash = hash::sha256(msg);
-  auto hash_hex = util::bin2hex(hash);
-  REQUIRE(expected == str);
-  REQUIRE(expected_hash == hash_hex);
+  std::vector<unsigned char> msg(expected.length());
+  std::transform(expected.begin(), expected.end(), msg.begin(), [](char c) {
+    return static_cast<unsigned char>(c);
+  });
+  auto actual_hash = hash::sha256(msg);
+  auto actual_hash_hex = util::bin2hex(actual_hash);
+  REQUIRE(expected_hash_hex == actual_hash_hex);
 }
 
 TEST_CASE("Hash with BLAKE2", "[crypto_generichash]") {
@@ -60,4 +59,23 @@ TEST_CASE("Hash with BLAKE2", "[crypto_generichash]") {
   auto actual = hash::blake2b(util::hex2bin(in), util::hex2bin(key));
   auto actual_hex = util::bin2hex(actual);
   REQUIRE(expected == actual_hex);
+}
+
+TEST_CASE("Round-trip a string to/from the filesystem as binary") {
+  if (sodium_init() < 0)
+    throw std::runtime_error("sodium_init() failed");
+
+  const std::string expected = "This is a test file.\n";
+  const std::string expected_hash_hex =
+      "649b8b471e7d7bc175eec758a7006ac693c434c8297c07db15286788c837154a";
+
+  std::string actual = round_trip("test.txt", expected);
+  std::vector<unsigned char> msg(actual.length());
+  std::transform(actual.begin(), actual.end(), msg.begin(), [](char c) {
+    return static_cast<unsigned char>(c);
+  });
+  auto actual_hash = hash::sha256(msg);
+  auto actual_hash_hex = util::bin2hex(actual_hash);
+  REQUIRE(expected == actual);
+  REQUIRE(expected_hash_hex == actual_hash_hex);
 }
