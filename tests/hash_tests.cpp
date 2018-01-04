@@ -44,3 +44,22 @@ TEST_CASE("Round-trip a string to/from the filesystem as binary",
   REQUIRE(expected == str);
   REQUIRE(expected_hash == hash_hex);
 }
+
+TEST_CASE("Hash with BLAKE2", "[crypto_generichash]") {
+  if (sodium_init() < 0)
+    throw std::runtime_error("sodium_init() failed");
+
+  // Source:
+  // https://github.com/BLAKE2/BLAKE2/blob/5cbb39c9ef8007f0b63723e3aea06cd0887e36ad/testvectors/blake2b-kat.txt
+  const std::string in = "00";
+  const std::string key = "000102030405060708090a0b0c0d0e0f10111213141516171819"
+                          "1a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30313233"
+                          "3435363738393a3b3c3d3e3f";
+  const std::string expected = "961f6dd1e4dd30f63901690c512e78e4b45e4742ed197c3"
+                               "c5e45c549fd25f2e4187b0bc9fe30492b16b0d0bc4ef9b0"
+                               "f34c7003fac09a5ef1532e69430234cebd";
+
+  auto actual = hash::blake2b(util::hex2bin(in), util::hex2bin(key));
+  auto actual_hex = util::bin2hex(actual);
+  REQUIRE(expected == actual_hex);
+}

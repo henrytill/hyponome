@@ -9,6 +9,8 @@ namespace hyponome {
 
     std::string bin2hex(std::vector<unsigned char>);
 
+    std::vector<unsigned char> hex2bin(std::string);
+
   }
 }
 
