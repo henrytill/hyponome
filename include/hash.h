@@ -7,7 +7,7 @@
 namespace hyponome {
   namespace hash {
 
-    std::vector<unsigned char> sha256(std::string);
+    std::vector<unsigned char> sha256(std::vector<unsigned char>);
 
   }
 }

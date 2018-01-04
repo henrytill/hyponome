@@ -35,7 +35,11 @@ TEST_CASE("Round-trip a string to/from the filesystem as binary",
       "649b8b471e7d7bc175eec758a7006ac693c434c8297c07db15286788c837154a";
 
   std::string str = round_trip("test.txt", expected);
-  auto hash = hash::sha256(str);
+  std::vector<unsigned char> msg(str.length());
+  std::transform(str.begin(), str.end(), msg.begin(), [](char c) {
+    return static_cast<unsigned char>(c);
+  });
+  auto hash = hash::sha256(msg);
   auto hash_hex = util::bin2hex(hash);
   REQUIRE(expected == str);
   REQUIRE(expected_hash == hash_hex);
