@@ -17,7 +17,7 @@ namespace hyponome {
       const std::size_t hex_len = hex.length();
       const std::size_t bin_len = hex_len * 0.5;
       std::vector<unsigned char> out(bin_len);
-      sodium_hex2bin(&out[0], bin_len, &hex[0], hex_len, NULL, NULL, NULL);
+      sodium_hex2bin(&out[0], bin_len, &hex[0], hex_len, nullptr, nullptr, nullptr);
       return out;
     }
   }
