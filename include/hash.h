@@ -17,3 +17,9 @@ namespace hyponome {
 }
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:
+//
+// vim: set filetype=cpp:
