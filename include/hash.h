@@ -7,6 +7,8 @@
 namespace hyponome {
   namespace hash {
 
+    struct Error {};
+
     std::vector<unsigned char> sha256(const std::vector<unsigned char> &);
 
     std::vector<unsigned char> blake2b(const std::vector<unsigned char> &);

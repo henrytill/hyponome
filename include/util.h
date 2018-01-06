@@ -7,6 +7,8 @@
 namespace hyponome {
   namespace util {
 
+    struct Codec_error {};
+
     std::string bin2hex(const std::vector<unsigned char> &);
 
     std::vector<unsigned char> hex2bin(const std::string &);
