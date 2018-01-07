@@ -5,16 +5,46 @@
 #include <vector>
 
 namespace hyponome {
+
+  ///
+  /// \namespace hyponome::hash
+  /// \brief Hashing functions
+  ///
   namespace hash {
 
     struct Error {};
 
-    std::vector<unsigned char> sha256(const std::vector<unsigned char> &);
+    ///
+    /// Creates a hash from the given input using SHA256.
+    ///
+    /// \param msg Data to hash
+    /// \returns Hash of the data
+    ///
+    /// \throws Error
+    ///
+    std::vector<unsigned char> sha256(const std::vector<unsigned char> &msg);
 
-    std::vector<unsigned char> blake2b(const std::vector<unsigned char> &);
+    ///
+    /// Creates a hash from the given input using BLAKE2b.
+    ///
+    /// \param msg Data to hash
+    /// \returns Hash of the data
+    ///
+    /// \throws Error
+    ///
+    std::vector<unsigned char> blake2b(const std::vector<unsigned char> &msg);
 
-    std::vector<unsigned char> blake2b(const std::vector<unsigned char> &,
-                                       const std::vector<unsigned char> &);
+    ///
+    /// Creates a hash from the given input and key using BLAKE2b.
+    ///
+    /// \param msg Data to hash
+    /// \param key Key for hashing
+    /// \returns Keyed hash of the data
+    ///
+    /// \throws Error
+    ///
+    std::vector<unsigned char> blake2b(const std::vector<unsigned char> &msg,
+                                       const std::vector<unsigned char> &key);
   }
 }
 

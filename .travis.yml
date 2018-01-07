@@ -16,6 +16,10 @@ install:
   - make -j
   - sudo make install
   - popd
+addons:
+  apt:
+    packages:
+      - doxygen
 before_script: mkdir build && cd build
 script:
   - cmake ../.

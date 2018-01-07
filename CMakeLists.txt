@@ -4,6 +4,27 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/vendor/cm
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wpedantic")
 enable_testing(true)
 
+option(ENABLE_DOCS "Build documentation" ON)
+if(ENABLE_DOCS)
+  find_package(Doxygen REQUIRED)
+  if(DOXYGEN_FOUND)
+    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in)
+    set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+
+    configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+
+    add_custom_target(
+      doc ALL
+      COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMENT "Generating API documentation with Doxygen"
+      VERBATIM
+      )
+  endif(DOXYGEN_FOUND)
+else()
+  message("Building of documentation is disabled")
+endif()
+
 find_package(CapnProto REQUIRED)
 set(CAPNPC_SRC_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/schemas)
 set(CAPNPC_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/schemas)
