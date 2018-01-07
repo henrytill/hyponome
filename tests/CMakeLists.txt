@@ -27,3 +27,16 @@ target_link_libraries(hash_tests sodium)
 
 add_dependencies(hash_tests Catch)
 add_test(HashTests hash_tests)
+
+add_executable(
+  rpc_tests
+  main.cpp
+  rpc_tests.cpp
+  )
+target_link_libraries(rpc_tests capnp capnp-rpc kj-async kj)
+target_link_libraries(rpc_tests CapnProtoDefs)
+target_link_libraries(rpc_tests Hyponome)
+target_link_libraries(rpc_tests sodium)
+
+add_dependencies(rpc_tests Catch)
+add_test(RpcTests rpc_tests)

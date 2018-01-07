@@ -36,6 +36,7 @@ capnp_generate_cpp(
   ${CAPNPC_SRC_PREFIX}/file.capnp
   ${CAPNPC_SRC_PREFIX}/file_chunk.capnp
   ${CAPNPC_SRC_PREFIX}/file_info.capnp
+  ${CAPNPC_SRC_PREFIX}/hasher.capnp
   )
 
 add_library(CapnProtoDefs ${CAPNP_SRCS})
