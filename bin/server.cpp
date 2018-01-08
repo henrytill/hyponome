@@ -1,5 +1,5 @@
 #include "hasher.capnp.h"
-#include "rpc.h"
+#include "hyponome.h"
 #include <capnp/ez-rpc.h>
 #include <capnp/message.h>
 #include <iostream>
@@ -11,7 +11,7 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  capnp::EzRpcServer server(kj::heap<hyponome::HasherImpl>(), argv[1], 5923);
+  capnp::EzRpcServer server(kj::heap<hyponome::rpc::HasherImpl>(), argv[1], 5923);
   auto &waitScope = server.getWaitScope();
   kj::NEVER_DONE.wait(waitScope);
 }

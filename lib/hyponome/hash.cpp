@@ -1,4 +1,4 @@
-#include "hash.h"
+#include "hyponome/hash.h"
 #include <sodium.h>
 #include <string>
 #include <vector>

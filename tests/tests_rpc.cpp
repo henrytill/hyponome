@@ -1,8 +1,8 @@
 #include "catch.hpp"
-#include "hash.h"
 #include "hasher.capnp.h"
-#include "rpc.h"
-#include "util.h"
+#include "hyponome/hash.h"
+#include "hyponome/rpc.h"
+#include "hyponome/util.h"
 #include <algorithm>
 #include <capnp/ez-rpc.h>
 #include <capnp/message.h>
@@ -22,7 +22,7 @@ TEST_CASE("Hash a string using the Hasher RPC Service") {
   auto data =
       capnp::Data::Reader(reinterpret_cast<const unsigned char *>(&expected[0]), expected.length());
 
-  capnp::EzRpcServer server(kj::heap<hyponome::HasherImpl>(), "localhost:5923");
+  capnp::EzRpcServer server(kj::heap<hyponome::rpc::HasherImpl>(), "localhost:5923");
   auto &serverWaitScope = server.getWaitScope();
   auto portPromise = server.getPort();
   auto serverReady = portPromise.wait(serverWaitScope);

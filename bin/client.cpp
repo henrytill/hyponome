@@ -1,11 +1,9 @@
 #include "hasher.capnp.h"
-#include "util.h"
-#include <algorithm>
+#include "hyponome.h"
 #include <capnp/ez-rpc.h>
 #include <capnp/message.h>
 #include <cstring>
 #include <iostream>
-#include <string>
 
 int main(int argc, const char *argv[]) {
   if (argc != 3) {

@@ -17,26 +17,26 @@ set(CATCH_INCLUDE_DIR ${source_dir}/single_include CACHE INTERNAL "Path to Catch
 include_directories(${CATCH_INCLUDE_DIR} ${COMMON_INCLUDES})
 
 add_executable(
-  hash_tests
+  tests_hash
   main.cpp
-  hash_tests.cpp
+  tests_hash.cpp
   )
-target_link_libraries(hash_tests CapnProtoDefs)
-target_link_libraries(hash_tests Hyponome)
-target_link_libraries(hash_tests sodium)
+target_link_libraries(tests_hash CapnProtoDefs)
+target_link_libraries(tests_hash Hyponome)
+target_link_libraries(tests_hash sodium)
 
-add_dependencies(hash_tests Catch)
-add_test(HashTests hash_tests)
+add_dependencies(tests_hash Catch)
+add_test(Hash tests_hash)
 
 add_executable(
-  rpc_tests
+  tests_rpc
   main.cpp
-  rpc_tests.cpp
+  tests_rpc.cpp
   )
-target_link_libraries(rpc_tests capnp capnp-rpc kj-async kj)
-target_link_libraries(rpc_tests CapnProtoDefs)
-target_link_libraries(rpc_tests Hyponome)
-target_link_libraries(rpc_tests sodium)
+target_link_libraries(tests_rpc capnp capnp-rpc kj-async kj)
+target_link_libraries(tests_rpc CapnProtoDefs)
+target_link_libraries(tests_rpc Hyponome)
+target_link_libraries(tests_rpc sodium)
 
-add_dependencies(rpc_tests Catch)
-add_test(RpcTests rpc_tests)
+add_dependencies(tests_rpc Catch)
+add_test(Rpc tests_rpc)

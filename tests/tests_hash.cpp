@@ -1,6 +1,6 @@
 #include "catch.hpp"
-#include "hash.h"
-#include "util.h"
+#include "hyponome/hash.h"
+#include "hyponome/util.h"
 #include <exception>
 #include <fstream>
 #include <iostream>
