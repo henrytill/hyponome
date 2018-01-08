@@ -1,8 +1,12 @@
 add_library(
   Hyponome
   hash.cpp
-  util.cpp
   rpc.cpp
+  util.cpp
   )
-
-target_link_libraries(Hyponome sodium CapnProtoDefs)
+target_link_libraries(
+  Hyponome
+  CapnProtoDefs
+  ${CAPNP_LIBRARIES}
+  ${SODIUM_LIBRARY}
+  )

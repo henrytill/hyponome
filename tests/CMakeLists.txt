@@ -21,10 +21,12 @@ add_executable(
   main.cpp
   tests_hash.cpp
   )
-target_link_libraries(tests_hash CapnProtoDefs)
-target_link_libraries(tests_hash Hyponome)
-target_link_libraries(tests_hash sodium)
-
+target_link_libraries(
+  tests_hash
+  Hyponome
+  CapnProtoDefs
+  ${SODIUM_LIBRARY}
+  )
 add_dependencies(tests_hash Catch)
 add_test(Hash tests_hash)
 
@@ -33,10 +35,11 @@ add_executable(
   main.cpp
   tests_rpc.cpp
   )
-target_link_libraries(tests_rpc capnp capnp-rpc kj-async kj)
-target_link_libraries(tests_rpc CapnProtoDefs)
-target_link_libraries(tests_rpc Hyponome)
-target_link_libraries(tests_rpc sodium)
-
+target_link_libraries(
+  tests_rpc
+  Hyponome
+  CapnProtoDefs
+  ${CAPNP_LIBRARIES}
+  )
 add_dependencies(tests_rpc Catch)
 add_test(Rpc tests_rpc)

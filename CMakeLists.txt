@@ -43,6 +43,8 @@ add_library(CapnProtoDefs ${CAPNP_SRCS})
 target_include_directories(CapnProtoDefs PUBLIC ${CAPNPC_OUTPUT_DIR})
 
 find_package(sodium REQUIRED)
+include_directories(${sodium_INCLUDE_DIR})
+find_library(SODIUM_LIBRARY sodium)
 
 include_directories(include)
 
