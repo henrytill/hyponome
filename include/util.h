@@ -12,7 +12,7 @@ namespace hyponome {
   ///
   namespace util {
 
-    struct Codec_error {};
+    struct CodecError {};
 
     ///
     /// Creates a hexadecimal string from a given binary input.
@@ -26,7 +26,7 @@ namespace hyponome {
     ///
     /// \param hex Hex string
     ///
-    /// \throws Codec_error
+    /// \throws CodecError
     ///
     std::vector<unsigned char> hex2bin(const std::string &hex);
   }

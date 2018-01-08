@@ -9,7 +9,7 @@
 
 using namespace hyponome;
 
-std::string round_trip(const std::string &path, const std::string &data) {
+std::string roundTrip(const std::string &path, const std::string &data) {
   std::ofstream(path, std::ios::binary) << data;
   if (std::ifstream is{path, std::ios::binary | std::ios::ate}) {
     auto size = is.tellg();
@@ -30,16 +30,16 @@ TEST_CASE("Hash with SHA256", "[crypto_hash_sha256]") {
     throw std::runtime_error("sodium_init() failed");
 
   const std::string expected = "This is a test file.\n";
-  const std::string expected_hash_hex =
+  const std::string expectedHashHex =
       "649b8b471e7d7bc175eec758a7006ac693c434c8297c07db15286788c837154a";
 
   std::vector<unsigned char> msg(expected.length());
   std::transform(expected.begin(), expected.end(), msg.begin(), [](char c) {
     return static_cast<unsigned char>(c);
   });
-  auto actual_hash = hash::sha256(msg);
-  auto actual_hash_hex = util::bin2hex(actual_hash);
-  REQUIRE(expected_hash_hex == actual_hash_hex);
+  auto actualHash = hash::sha256(msg);
+  auto actualHashHex = util::bin2hex(actualHash);
+  REQUIRE(expectedHashHex == actualHashHex);
 }
 
 TEST_CASE("Hash with BLAKE2", "[crypto_generichash]") {
@@ -56,9 +56,9 @@ TEST_CASE("Hash with BLAKE2", "[crypto_generichash]") {
                                "c5e45c549fd25f2e4187b0bc9fe30492b16b0d0bc4ef9b0"
                                "f34c7003fac09a5ef1532e69430234cebd";
 
-  auto actual = hash::blake2b(util::hex2bin(in), util::hex2bin(key));
-  auto actual_hex = util::bin2hex(actual);
-  REQUIRE(expected == actual_hex);
+  auto actualHash = hash::blake2b(util::hex2bin(in), util::hex2bin(key));
+  auto actualHashHex = util::bin2hex(actualHash);
+  REQUIRE(expected == actualHashHex);
 }
 
 TEST_CASE("Round-trip a string to/from the filesystem as binary") {
@@ -66,16 +66,16 @@ TEST_CASE("Round-trip a string to/from the filesystem as binary") {
     throw std::runtime_error("sodium_init() failed");
 
   const std::string expected = "This is a test file.\n";
-  const std::string expected_hash_hex =
+  const std::string expectedHashHex =
       "649b8b471e7d7bc175eec758a7006ac693c434c8297c07db15286788c837154a";
 
-  std::string actual = round_trip("test.txt", expected);
+  std::string actual = roundTrip("test.txt", expected);
   std::vector<unsigned char> msg(actual.length());
   std::transform(actual.begin(), actual.end(), msg.begin(), [](char c) {
     return static_cast<unsigned char>(c);
   });
-  auto actual_hash = hash::sha256(msg);
-  auto actual_hash_hex = util::bin2hex(actual_hash);
+  auto actualHash = hash::sha256(msg);
+  auto actualHashHex = util::bin2hex(actualHash);
   REQUIRE(expected == actual);
-  REQUIRE(expected_hash_hex == actual_hash_hex);
+  REQUIRE(expectedHashHex == actualHashHex);
 }
