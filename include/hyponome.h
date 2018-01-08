@@ -1,5 +1,5 @@
-#ifndef HYPONOME_H
-#define HYPONOME_H
+#ifndef HYPONOME_H_
+#define HYPONOME_H_
 
 #include "hyponome/hash.h"
 #include "hyponome/rpc.h"

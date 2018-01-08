@@ -1,5 +1,5 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef HYPONOME_UTIL_H_
+#define HYPONOME_UTIL_H_
 
 #include <string>
 #include <vector>

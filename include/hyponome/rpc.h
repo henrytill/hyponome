@@ -1,5 +1,5 @@
-#ifndef HASHER_H
-#define HASHER_H
+#ifndef HYPONOME_RPC_H_
+#define HYPONOME_RPC_H_
 
 #include "hasher.capnp.h"
 #include <kj/async.h>

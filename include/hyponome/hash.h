@@ -1,5 +1,5 @@
-#ifndef HASH_H
-#define HASH_H
+#ifndef HYPONOME_HASH_H_
+#define HYPONOME_HASH_H_
 
 #include <string>
 #include <vector>
