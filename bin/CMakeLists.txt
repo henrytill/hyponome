@@ -13,3 +13,5 @@ target_link_libraries(
   CapnProtoDefs
   ${CAPNP_LIBRARIES}
   )
+
+install (TARGETS hyponome-server hyponome-client DESTINATION bin)

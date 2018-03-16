@@ -1,4 +1,3 @@
-#include "catch.hpp"
 #include "hasher.capnp.h"
 #include "hyponome/hash.h"
 #include "hyponome/rpc.h"
@@ -6,6 +5,7 @@
 #include <algorithm>
 #include <capnp/ez-rpc.h>
 #include <capnp/message.h>
+#include <catch/catch.hpp>
 #include <iostream>
 #include <kj/async.h>
 #include <sodium.h>
