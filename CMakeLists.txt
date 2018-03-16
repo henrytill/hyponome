@@ -13,13 +13,11 @@ if(ENABLE_DOCS)
 
     configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
 
-    add_custom_target(
-      doc ALL
+    add_custom_target(doc ALL
       COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       COMMENT "Generating API documentation with Doxygen"
-      VERBATIM
-      )
+      VERBATIM)
   endif(DOXYGEN_FOUND)
 else()
   message("Building of documentation is disabled")
@@ -31,13 +29,11 @@ set(CAPNPC_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/schemas)
 include_directories(${CAPNP_INCLUDE_DIRS})
 file(MAKE_DIRECTORY ${CAPNPC_OUTPUT_DIR})
 add_definitions(${CAPNP_DEFINITIONS})
-capnp_generate_cpp(
-  CAPNP_SRCS CAPNP_HDRS
+capnp_generate_cpp(CAPNP_SRCS CAPNP_HDRS
   ${CAPNPC_SRC_PREFIX}/file.capnp
   ${CAPNPC_SRC_PREFIX}/file_chunk.capnp
   ${CAPNPC_SRC_PREFIX}/file_info.capnp
-  ${CAPNPC_SRC_PREFIX}/hasher.capnp
-  )
+  ${CAPNPC_SRC_PREFIX}/hasher.capnp)
 
 add_library(CapnProtoDefs ${CAPNP_SRCS})
 target_include_directories(CapnProtoDefs PUBLIC ${CAPNPC_OUTPUT_DIR})
