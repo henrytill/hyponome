@@ -141,6 +141,7 @@ lazy val protobuf = (project in file("protobuf"))
   .settings(commonSettings: _*)
   .settings(protobufDepsSettings: _*)
   .settings(name := "hyponome-protobuf",
+            javacOptions in Compile ++= Seq("-Xlint:deprecation"),
             PB.targets in Compile := Seq(PB.gens.java -> (sourceManaged in Compile).value))
   .dependsOn(core % "test->test;compile->compile")
 
