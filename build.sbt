@@ -125,8 +125,10 @@ lazy val core = (project in file("core"))
   .settings(coreDepsSettings: _*)
 
 lazy val daemon = (project in file("daemon"))
+  .configs(IntegrationTest)
   .settings(commonSettings: _*)
   .settings(daemonDepsSettings: _*)
+  .settings(Defaults.itSettings: _*)
   .settings(name := "hyponome-daemon")
   .dependsOn(core     % "test->test;compile->compile",
              protobuf % "test->test;compile->compile")
