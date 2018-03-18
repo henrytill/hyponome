@@ -1,5 +1,4 @@
 import com.typesafe.sbt.SbtGit.GitKeys._
-import sbtprotobuf.ProtobufPlugin
 
 lazy val circeVersion     = "0.7.1"
 lazy val shapelessVersion = "2.3.2"
@@ -28,6 +27,10 @@ lazy val jsonDepsSettings = Seq(
     "io.circe"    %% "circe-generic"        % circeVersion,
     "io.circe"    %% "circe-generic-extras" % circeVersion,
     "io.circe"    %% "circe-parser"         % circeVersion))
+
+lazy val protobufDepsSettings = Seq(
+  libraryDependencies ++= Seq(
+    "com.thesamet.scalapb" %% "compilerplugin" % "0.7.0"))
 
 lazy val commonOptions = Seq(
   "-language:higherKinds",
@@ -123,10 +126,10 @@ lazy val json = (project in file("json"))
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val protobuf = (project in file("protobuf"))
-  .settings(ProtobufPlugin.protobufSettings: _*)
   .settings(commonSettings: _*)
+  .settings(protobufDepsSettings: _*)
   .settings(name := "hyponome-protobuf",
-            javaSource in ProtobufPlugin.protobufConfig := (sourceManaged in Compile).value)
+            PB.targets in Compile := Seq(PB.gens.java -> (sourceManaged in Compile).value))
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val root = (project in file("."))

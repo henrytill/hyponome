@@ -8,4 +8,4 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.0")
 
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.0")
 
-addSbtPlugin("com.github.gseitz" % "sbt-protobuf" % "0.5.5")
+addSbtPlugin("com.thesamet" % "sbt-protoc" % "0.99.15")
