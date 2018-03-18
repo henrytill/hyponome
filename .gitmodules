@@ -1,3 +1,3 @@
 [submodule "protobuf/src/main/protobuf"]
 	path = protobuf/src/main/protobuf
-	url = https://github.com/henrytill/hyponome-protos.git
+	url = https://github.com/henrytill/hyponome-schemas.git
