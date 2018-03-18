@@ -78,7 +78,7 @@ lazy val wartremoverOptions = List(
   "While").map((s: String) => s"-P:wartremover:traverser:org.wartremover.warts.$s")
 
 lazy val nonConsoleOptions =
-  wartremoverOptions ++ Seq("-Ywarn-unused-import", -"Xfatal-warnings")
+  wartremoverOptions ++ Seq("-Ywarn-unused-import", "-Xfatal-warnings")
 
 lazy val initialConsoleCommands =
   """|import hyponome._
