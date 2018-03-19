@@ -7,19 +7,7 @@ let
 
   version = lib.fileContents ./VERSION;
 
-  buildDeps = with pkgs;
-    [ catch
-      cmake
-      doxygen
-      pkgconfig
-    ];
-
-  deps = with pkgs;
-    [ capnproto
-      libsodium
-    ];
-
-  jobs = rec {
+  jobs = with import ./common.nix { inherit pkgs; }; rec {
 
     tarball =
       pkgs.releaseTools.sourceTarball {
