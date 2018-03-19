@@ -1,5 +1,9 @@
-cmake_minimum_required(VERSION 2.8)
-project(hyponome CXX)
+cmake_minimum_required(VERSION 3.0)
+
+file(STRINGS VERSION VERSION_NUMBER)
+MESSAGE(STATUS "VERSION_NUMBER: " ${VERSION_NUMBER})
+project(hyponome VERSION ${VERSION_NUMBER} LANGUAGES CXX)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/vendor/cmake/Modules)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wpedantic")
 enable_testing(true)
@@ -23,6 +27,7 @@ else()
   message("Building of documentation is disabled")
 endif()
 
+set(CAPNP_LIB_CAPNP-JSON "")
 find_package(CapnProto REQUIRED)
 set(CAPNPC_SRC_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/schemas)
 set(CAPNPC_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/schemas)
@@ -47,3 +52,13 @@ include_directories(include)
 add_subdirectory(bin)
 add_subdirectory(lib)
 add_subdirectory(tests)
+
+set(CPACK_GENERATOR "TGZ")
+set(CPACK_SOURCE_GENERATOR "TGZ")
+set(CPACK_SOURCE_IGNORE_FILES "/build/;/.git/;${CPACK_SOURCE_IGNORE_FILES}" )
+
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+
+include(CPack)
