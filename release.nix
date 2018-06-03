@@ -10,6 +10,14 @@ let
 
   jobs = with import ./common.nix { inherit pkgs; }; rec {
 
+    env =
+      pkgs.stdenv.mkDerivation {
+        name = "hyponome-env";
+        src = hyponome;
+        nativeBuildInputs = buildDeps;
+        buildInputs = deps;
+      };
+
     tarball =
       pkgs.releaseTools.sourceTarball {
         inherit version;
