@@ -2,16 +2,18 @@
 
 rec {
 
-  texliveEnv = with pkgs; texlive.combine { inherit (texlive) scheme-basic epstopdf; };
+  doxygenDeps = with pkgs;
+    [ doxygen
+      ghostscript
+      graphviz
+      texlive.combined.scheme-full
+    ];
 
   buildDeps = with pkgs;
     [ catch
       cmake
-      doxygen
-      ghostscript
       pkgconfig
-      texliveEnv
-    ];
+    ] ++ doxygenDeps;
 
   deps = with pkgs;
     [ capnproto
